@@ -702,13 +702,13 @@ type DynamicItem struct {
 			} `json:"desc"`
 			Major *struct {
 				Draw struct {
-					Id    int `json:"id"`
+					Id    json.Number `json:"id"`
 					Items []struct {
-						Height int     `json:"height"`
-						Size   float64 `json:"size"`
-						Src    string  `json:"src"`
-						Tags   []any   `json:"tags"`
-						Width  int     `json:"width"`
+						Height json.Number `json:"height"`
+						Size   json.Number `json:"size"`
+						Src    string      `json:"src"`
+						Tags   []any       `json:"tags"`
+						Width  json.Number `json:"width"`
 					} `json:"items"`
 				} `json:"draw,omitempty"`
 				Type    string `json:"type"`
