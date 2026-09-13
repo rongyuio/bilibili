@@ -46,13 +46,16 @@ var refreshCsrfRegex = regexp.MustCompile(`<div\s+id="1-name"\s*>(.*?)</div>`)
 func (c *Client) GetWebCookieRefreshCsrf(param GetWebCookieRefreshCsrfParam) (*GetWebCookieRefreshCsrfResult, error) {
 	correspondPath, err := getCorrespondPath(param.Timestamp)
 	if err != nil {
-		return nil, errors.Errorf("getCorrespondPath failed: %v", err)
+		return nil, fmt.Errorf("getCorrespondPath failed: %w", err)
 	}
 
 	url := "https://www.bilibili.com/correspond/1/" + correspondPath
 	response, err := c.sendRaw(c.newRequest(context.Background()), resty.MethodGet, url)
-	if err != nil || response == nil || !response.IsSuccess() {
-		return nil, errors.Errorf("Request RefreshCsrf failed: %v", err)
+	if err != nil {
+		return nil, fmt.Errorf("request refresh CSRF: %w", err)
+	}
+	if !response.IsSuccess() {
+		return nil, fmt.Errorf("request refresh CSRF: HTTP status %d", response.StatusCode())
 	}
 
 	matches := refreshCsrfRegex.FindStringSubmatch(response.String())

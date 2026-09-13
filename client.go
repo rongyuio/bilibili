@@ -1,6 +1,8 @@
 package bilibili
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -29,40 +31,26 @@ func New() *Client {
 	return NewWithClient(restyClient)
 }
 
-// NewAnonymousClient 返回一个带有游客cookie的 bilibili.Client
-func NewAnonymousClient() *Client {
-	url := "https://www.bilibili.com/"
-	method := resty.MethodGet
-
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, nil)
-
-	if err != nil {
-		return nil
+// NewAnonymousClient fetches guest cookies using the default client configuration.
+// It returns initialization failures, including cancellation, to the caller.
+func NewAnonymousClient(ctx context.Context) (*Client, error) {
+	if ctx == nil {
+		return nil, fmt.Errorf("anonymous client context is nil")
 	}
-
-	req.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
-	req.Header.Add("Accept-Language", "zh-CN,zh;q=0.9")
-	req.Header.Add("Pragma", "no-cache")
-	req.Header.Add("Priority", "u=0, i")
-	req.Header.Add("Sec-Ch-Ua", "Not")
-	req.Header.Add("Sec-Ch-Ua-Mobile", "?0")
-	req.Header.Add("Sec-Ch-Ua-Platform", "Windows")
-	req.Header.Add("Sec-Fetch-Dest", "document")
-	req.Header.Add("Sec-Fetch-Mode", "navigate")
-	req.Header.Add("Sec-Fetch-Site", "none")
-	req.Header.Add("Sec-Fetch-User", "?1")
-	req.Header.Add("Upgrade-Insecure-Requests", "1")
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0")
-	res, err := client.Do(req)
+	client := New()
+	r := client.newRequest(ctx).SetHeader("Accept", "text/html,application/xhtml+xml")
+	const endpoint = "https://www.bilibili.com/"
+	resp, err := client.sendRaw(r, resty.MethodGet, endpoint)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("initialize anonymous client: %w", err)
 	}
-	defer func() { _ = res.Body.Close() }()
-
-	bili_client := New()
-	bili_client.SetCookies(res.Cookies())
-	return bili_client
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("initialize anonymous client: HTTP status %d", resp.StatusCode())
+	}
+	if len(client.GetCookies()) == 0 {
+		return nil, fmt.Errorf("initialize anonymous client: response contains no valid cookies")
+	}
+	return client, nil
 }
 
 // NewWithClient 接收一个自定义的*resty.Client为参数

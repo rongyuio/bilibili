@@ -21,7 +21,7 @@ var (
 // 第一个返回值如果是"live"，则第二个返回值是直播间id (int)。
 func (c *Client) UnwrapShortUrl(shortUrl string) (string, any, error) {
 	resp, err := c.sendRaw(c.newRequest(context.Background()), resty.MethodGet, shortUrl)
-	if resp == nil {
+	if err != nil {
 		return "", nil, errors.WithStack(err)
 	}
 	if resp.StatusCode() != 302 {
