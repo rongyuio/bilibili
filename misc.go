@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 	"regexp"
@@ -19,7 +20,7 @@ var (
 // 第一个返回值如果是"bvid"，则第二个返回值是视频的bvid (string)。
 // 第一个返回值如果是"live"，则第二个返回值是直播间id (int)。
 func (c *Client) UnwrapShortUrl(shortUrl string) (string, any, error) {
-	resp, err := c.resty.R().Get(shortUrl)
+	resp, err := c.sendRaw(c.newRequest(context.Background()), resty.MethodGet, shortUrl)
 	if resp == nil {
 		return "", nil, errors.WithStack(err)
 	}

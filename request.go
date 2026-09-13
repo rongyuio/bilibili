@@ -45,7 +45,7 @@ func (c *Client) Do(ctx context.Context, req Request, out any) error {
 	if req.Form != nil && req.JSON != nil {
 		return errors.New("Form and JSON cannot both be set")
 	}
-	r := c.resty.R().SetContext(ctx)
+	r := c.newRequest(ctx)
 	r.Header = req.Headers.Clone()
 	if r.Header == nil {
 		r.Header = make(http.Header)
@@ -98,13 +98,12 @@ func (c *Client) fillWbi() paramHandler {
 				r.QueryParam[key] = append([]string(nil), values...)
 			}
 		}
-		c.wbi.WithCookies(c.GetCookies())
 		query, err := c.wbi.signQueryContext(r.Context(), r.QueryParam, time.Now())
 		if err != nil {
 			return fmt.Errorf("sign WBI query: %w", err)
 		}
 		r.QueryParam = query
-		// Resty already adds the client's cookies when building the HTTP request.
+		// Cookies were captured when the request was created.
 		// An empty value overrides a Referer inherited from the Resty client.
 		r.SetHeader("Referer", "")
 		return nil
@@ -112,7 +111,10 @@ func (c *Client) fillWbi() paramHandler {
 }
 
 func execute[Out any](c *Client, method, endpoint string, in any, handlers ...paramHandler) (out Out, err error) {
-	r := c.resty.R().SetContext(context.Background())
+	return executeRequest[Out](c, c.newRequest(context.Background()), method, endpoint, in, handlers...)
+}
+
+func executeRequest[Out any](c *Client, r *resty.Request, method, endpoint string, in any, handlers ...paramHandler) (out Out, err error) {
 	if err = withParams(r, in); err != nil {
 		return out, err
 	}
@@ -126,22 +128,21 @@ func execute[Out any](c *Client, method, endpoint string, in any, handlers ...pa
 }
 
 func (c *Client) send(r *resty.Request, method, endpoint string, out any) error {
-	resp, err := r.Execute(method, endpoint)
+	resp, err := c.sendRaw(r, method, endpoint)
 	if err != nil {
-		return fmt.Errorf("%s %s: %w", method, safeEndpoint(endpoint), err)
+		return err
 	}
 	if resp.StatusCode() != http.StatusOK {
 		return fmt.Errorf("%s %s: HTTP status %d", method, safeEndpoint(endpoint), resp.StatusCode())
 	}
-	c.SetCookies(resp.Cookies())
 	return decodeResponse(method, endpoint, resp.Body(), out)
 }
 
 type paramHandler func(*resty.Request) error
 
-func fillCsrf(c *Client) paramHandler {
+func fillCsrf(_ *Client) paramHandler {
 	return func(r *resty.Request) error {
-		csrf := c.getCookie("bili_jct")
+		csrf := cookieValue(r.Cookies, "bili_jct")
 		if len(csrf) == 0 {
 			return errors.New("B站登录过期")
 		}
@@ -156,4 +157,24 @@ func fillParam(key, value string) paramHandler {
 		r.SetQueryParam(key, value)
 		return nil
 	}
+}
+
+// newRequest snapshots cookies once. Configuration is immutable while requests run.
+func (c *Client) newRequest(ctx context.Context) *resty.Request {
+	return c.resty.R().SetContext(ctx).SetCookies(c.GetCookies())
+}
+
+// sendRaw merges response cookies even when the status or business code is an error.
+func (c *Client) sendRaw(r *resty.Request, method, endpoint string) (*resty.Response, error) {
+	resp, err := r.Execute(method, endpoint)
+	if resp != nil && resp.RawResponse != nil {
+		c.SetCookies(resp.Cookies())
+	}
+	if err != nil {
+		return resp, fmt.Errorf("%s %s: %w", method, safeEndpoint(endpoint), err)
+	}
+	if resp == nil || resp.RawResponse == nil {
+		return nil, fmt.Errorf("%s %s: missing HTTP response", method, safeEndpoint(endpoint))
+	}
+	return resp, nil
 }

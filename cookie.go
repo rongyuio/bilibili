@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -49,7 +50,7 @@ func (c *Client) GetWebCookieRefreshCsrf(param GetWebCookieRefreshCsrfParam) (*G
 	}
 
 	url := "https://www.bilibili.com/correspond/1/" + correspondPath
-	response, err := resty.New().R().SetCookies(c.resty.Cookies).Get(url)
+	response, err := c.sendRaw(c.newRequest(context.Background()), resty.MethodGet, url)
 	if err != nil || response == nil || !response.IsSuccess() {
 		return nil, errors.Errorf("Request RefreshCsrf failed: %v", err)
 	}
@@ -78,8 +79,9 @@ type (
 
 // RefreshCookie 刷新Cookie
 func (c *Client) RefreshCookie(param RefreshCookieParam) (*RefreshCookieResult, error) {
+	r := c.newRequest(context.Background())
 	if param.Csrf == "" {
-		param.Csrf = c.getCookie("bili_jct")
+		param.Csrf = cookieValue(r.Cookies, "bili_jct")
 	}
 	if param.Source == "" {
 		param.Source = "main_web"
@@ -89,7 +91,7 @@ func (c *Client) RefreshCookie(param RefreshCookieParam) (*RefreshCookieResult, 
 		url    = "https://passport.bilibili.com/x/passport-login/web/cookie/refresh"
 	)
 
-	return execute[*RefreshCookieResult](c, method, url, param)
+	return executeRequest[*RefreshCookieResult](c, r, method, url, param)
 }
 
 func init() {

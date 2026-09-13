@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"strconv"
 	"time"
 
@@ -169,6 +170,7 @@ type StartLiveResult struct {
 //
 // 注意：为了方便使用，这个函数的很多参数做了自动填入，使用例子可以参考：https://github.com/CuteReimu/bilibili/issues/121
 func (c *Client) StartLive(param StartLiveParam) (*StartLiveResult, error) {
+	r := c.newRequest(context.Background())
 	const (
 		method = resty.MethodPost
 		url    = "https://api.live.bilibili.com/room/v1/Room/startLive"
@@ -186,7 +188,7 @@ func (c *Client) StartLive(param StartLiveParam) (*StartLiveResult, error) {
 			param.Ts = int(time.Now().Unix())
 		}
 		param.Appkey = appKey
-		csrf := c.getCookie("bili_jct")
+		csrf := cookieValue(r.Cookies, "bili_jct")
 		signParams := map[string]string{
 			"appkey":     param.Appkey,
 			"build":      strconv.Itoa(param.Build),
@@ -201,7 +203,7 @@ func (c *Client) StartLive(param StartLiveParam) (*StartLiveResult, error) {
 		param.Sign = calculateAppSign(signParams, appSecret)
 	}
 
-	return execute[*StartLiveResult](c, method, url, param, fillCsrf(c))
+	return executeRequest[*StartLiveResult](c, r, method, url, param, fillCsrf(c))
 }
 
 type StopLiveParam struct {

@@ -481,11 +481,12 @@ func (c *Client) GetDynamicPortal() (*DynamicPortal, error) {
 
 // UploadDynamicBfs 为图片动态上传图片
 func (c *Client) UploadDynamicBfs(fileName string, file io.Reader, category string) (url string, size Size, err error) {
-	biliJct := c.getCookie("bili_jct")
+	r := c.newRequest(context.Background())
+	biliJct := cookieValue(r.Cookies, "bili_jct")
 	if len(biliJct) == 0 {
 		return "", Size{}, errors.New("B站登录过期")
 	}
-	r := c.resty.R().SetContext(context.Background()).
+	r.
 		SetFileReader("file_up", fileName, file).SetQueryParams(map[string]string{
 		"category": category,
 		"csrf":     biliJct,

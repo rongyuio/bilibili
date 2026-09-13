@@ -3,14 +3,17 @@ package bilibili
 import (
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
 )
 
 type Client struct {
-	wbi   *WBI
-	resty *resty.Client
+	wbi      *WBI
+	resty    *resty.Client
+	cookieMu sync.Mutex
+	cookies  []*http.Cookie
 }
 
 // New 返回一个默认的 bilibili.Client
@@ -64,12 +67,17 @@ func NewAnonymousClient() *Client {
 
 // NewWithClient 接收一个自定义的*resty.Client为参数
 func NewWithClient(restyClient *resty.Client) *Client {
+	if restyClient == nil {
+		return New()
+	}
 	client := &Client{
 		wbi:   NewDefaultWbi(),
 		resty: restyClient,
 	}
-	client.wbi.http = restyClient
-	client.wbi.clientCookies = true
+	client.SetCookies(restyClient.Cookies)
+	restyClient.Cookies = nil
+	restyClient.SetCookieJar(nil)
+	client.wbi.owner = client
 	return client
 }
 
@@ -79,9 +87,9 @@ func (c *Client) Resty() *resty.Client {
 
 // GetCookiesString 获取字符串格式的cookies，方便自行存储后下次使用。配合下面的 SetCookiesString 使用。
 func (c *Client) GetCookiesString() string {
-	cookies := c.resty.Cookies
+	cookies := c.GetCookies()
 	cookieStrings := make([]string, 0, len(cookies))
-	for _, cookie := range c.resty.Cookies {
+	for _, cookie := range cookies {
 		cookieStrings = append(cookieStrings, cookie.String())
 	}
 	return strings.Join(cookieStrings, "\n")
@@ -105,33 +113,61 @@ func (c *Client) SetRawCookies(rawCookies string) {
 
 // SetCookie 设置单个cookie
 func (c *Client) SetCookie(cookie *http.Cookie) {
-	for i, c0 := range c.resty.Cookies {
-		if c0.Name == cookie.Name {
-			c.resty.Cookies[i] = cookie
-			return
+	c.SetCookies([]*http.Cookie{cookie})
+}
+
+// SetCookies merges independent copies by name. Call manually only between requests.
+func (c *Client) SetCookies(cookies []*http.Cookie) {
+	incoming := cloneCookies(cookies)
+	c.cookieMu.Lock()
+	defer c.cookieMu.Unlock()
+	now := time.Now()
+	for _, cookie := range incoming {
+		remove := cookie.MaxAge < 0 || (cookie.MaxAge == 0 && !cookie.Expires.IsZero() && !cookie.Expires.After(now))
+		if cookie.MaxAge > 0 {
+			// Normalize once to an absolute deadline; snapshots must not renew MaxAge.
+			seconds := min(int64(cookie.MaxAge), int64((1<<63-1)/time.Second))
+			cookie.Expires = now.Add(time.Duration(seconds) * time.Second)
+			cookie.MaxAge = 0
+		}
+		found := false
+		for i, current := range c.cookies {
+			if current.Name != cookie.Name {
+				continue
+			}
+			if remove {
+				c.cookies = append(c.cookies[:i], c.cookies[i+1:]...)
+			} else {
+				c.cookies[i] = cookie
+			}
+			found = true
+			break
+		}
+		if !found && !remove {
+			c.cookies = append(c.cookies, cookie)
 		}
 	}
-	c.resty.Cookies = append(c.resty.Cookies, cookie)
 }
 
-// SetCookies 设置cookies
-func (c *Client) SetCookies(cookies []*http.Cookie) {
-	for _, cookie := range cookies {
-		c.SetCookie(cookie)
-	}
-}
-
-// GetCookies 获取当前的cookies
+// GetCookies returns a deep copy of the currently valid cookies.
 func (c *Client) GetCookies() []*http.Cookie {
-	return c.resty.Cookies
+	c.cookieMu.Lock()
+	defer c.cookieMu.Unlock()
+	now := time.Now()
+	valid := c.cookies[:0]
+	for _, cookie := range c.cookies {
+		if cookie.Expires.IsZero() || cookie.Expires.After(now) {
+			valid = append(valid, cookie)
+		}
+	}
+	clear(c.cookies[len(valid):])
+	c.cookies = valid
+	return cloneCookies(valid)
 }
 
-// 根据key获取指定的cookie值
-func (c *Client) getCookie(name string) string { //nolint:unparam
-	now := time.Now()
-	// 查找指定name的cookie
-	for _, cookie := range c.resty.Cookies {
-		if cookie.Name == name && (cookie.Expires.IsZero() || cookie.Expires.After(now)) {
+func cookieValue(cookies []*http.Cookie, name string) string {
+	for _, cookie := range cookies {
+		if cookie != nil && cookie.Name == name {
 			return cookie.Value
 		}
 	}

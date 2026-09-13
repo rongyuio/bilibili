@@ -79,10 +79,10 @@ type WBI struct {
 	lastInitTime          time.Time
 	storage               Storage
 
-	mu            sync.Mutex
-	refresh       chan struct{}
-	http          *resty.Client
-	clientCookies bool
+	mu      sync.Mutex
+	refresh chan struct{}
+	http    *resty.Client
+	owner   *Client
 }
 
 func NewDefaultWbi() *WBI {
@@ -312,7 +312,7 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 	wbi.mu.Lock()
 	cookies := cloneCookies(wbi.cookies)
 	transport := wbi.http
-	clientCookies := wbi.clientCookies
+	owner := wbi.owner
 	wbi.mu.Unlock()
 	result := struct {
 		Code    int    `json:"code"`
@@ -325,17 +325,23 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		}
 	}{}
 
-	r := transport.R().SetContext(ctx).
+	r := transport.R().SetContext(ctx).SetCookies(cookies)
+	if owner != nil {
+		r = owner.newRequest(ctx)
+	}
+	r.
 		SetHeader("Accept", "application/json").
 		SetHeader("Accept-Language", "zh-CN,zh;q=0.9").
 		SetHeader("Origin", "https://www.bilibili.com").
 		SetHeader("Referer", "https://www.bilibili.com/").
 		SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
-	// Client-owned signers inherit cookies; standalone signers add their own.
-	if !clientCookies {
-		r.SetCookies(cookies)
+	var resp *resty.Response
+	var err error
+	if owner != nil {
+		resp, err = owner.sendRaw(r, resty.MethodGet, "https://api.bilibili.com/x/web-interface/nav")
+	} else {
+		resp, err = r.Get("https://api.bilibili.com/x/web-interface/nav")
 	}
-	resp, err := r.Get("https://api.bilibili.com/x/web-interface/nav")
 
 	if err != nil {
 		return errors.WithStack(err)
@@ -353,7 +359,7 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		}
 	}
 
-	if len(resp.Cookies()) > 0 {
+	if owner == nil && len(resp.Cookies()) > 0 {
 		// update cookie
 		wbi.WithCookies(resp.Cookies())
 	}
@@ -374,6 +380,7 @@ func cloneCookies(cookies []*http.Cookie) []*http.Cookie {
 	for _, cookie := range cookies {
 		if cookie != nil {
 			copy := *cookie
+			copy.Unparsed = append([]string(nil), cookie.Unparsed...)
 			result = append(result, &copy)
 		}
 	}
