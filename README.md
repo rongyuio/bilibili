@@ -209,7 +209,7 @@ if err != nil {
 ```
 
 > [!TIP]
-> 我们的所有`error`都包含堆栈信息。如有需要，你可以用`log.Printf("%+v", err)`打印出堆栈信息，方便追踪错误。
+> 通过 `errors.As` 检查业务错误和解码错误，通过 `errors.Is` 检查取消、超时等底层错误。新的统一请求流程不保证所有错误都携带堆栈；不要依赖错误字符串进行判断。
 
 ### 可能用到的工具接口
 
@@ -241,6 +241,78 @@ regionDailyCount, err := client.GetRegionDailyCount()
 client.Resty().SetTimeout(20 * time.Second) // 设置超时时间
 client.Resty().SetLogger(logger) // 自定义logger
 ```
+
+## 自定义接口与重构迁移
+
+当前工作区的模块名是 `bilibili`，Go 版本以 `go.mod` 为准（目前为 1.27）。本文前面的上游安装路径和旧版本说明保留作历史参考，本次重构不调整模块路径或发布版本。
+
+### 调用尚未封装的接口
+
+使用 `Client.Do` 复用客户端的 Cookie、网络配置、签名和解码流程。以下函数只演示调用方式，需由调用方提供 context 和客户端：
+
+```go
+func loadAccount(ctx context.Context, client *bilibili.Client, mid string) error {
+    var result struct {
+        Mid  int64  `json:"mid"`
+        Name string `json:"name"`
+    }
+    err := client.Do(ctx, bilibili.Request{
+        Method: http.MethodGet,
+        URL:    "https://api.bilibili.com/x/space/wbi/acc/info",
+        Query:  url.Values{"mid": {mid}},
+        WBI:    true,
+    }, &result)
+    if err != nil {
+        return err
+    }
+    fmt.Println(result.Name)
+    return nil
+}
+```
+
+示例所需导入为 `bilibili`、`context`、`fmt`、`net/http`、`net/url`。
+
+- `out` 接收响应的 `data`，不要再次包裹 `code/message/data`。传 `nil` 只检查 HTTP 状态及业务错误；传 `*json.RawMessage` 保留原始 `data`。
+- `Query` 可与 `Form` 或 `JSON` 并用，但 `Form` 与 `JSON` 互斥。`JSON` 按标准库规则编码，包括字符串值；`Headers` 使用 `http.Header`。
+- URL 自带查询参数会参与请求，同名键以 `Request.Query` 为准。WBI 只签查询参数，不签表单；签名请求的每个查询键必须只有一个值。CSRF 由调用方按接口要求放在查询或表单中。
+- context 会传到 HTTP 请求和 WBI 密钥刷新；旧的内置 API 方法签名保持不变。此入口不额外启用重试；通过 Resty 自行配置的重试策略仍然有效。
+- `Resty()` 保留给特殊请求，但直接调用它不会自动签名或获得 `DecodeError`。请在请求开始前完成客户端配置，不要并发修改配置、Cookie 或自定义 WBI 存储；本次没有承诺整个客户端可并发调用。
+
+### 定位反序列化失败
+
+```go
+var de *bilibili.DecodeError
+if errors.As(err, &de) {
+    log.Printf("接口=%s 类型=%s Go字段=%s JSON路径=%s 预期=%s 实际=%s 偏移=%d 精确=%t",
+        de.Endpoint, de.RootType, de.GoField, de.JSONPath,
+        de.Expected, de.Actual, de.Offset, de.Exact)
+}
+```
+
+`JSONPath` 包含数组下标，例如 `$.data.items[3].modules.module_author.mid`；匿名结构通过根类型与 Go 字段链定位。`Offset` 从响应体第一个字节起按 1 计数，零表示不可用。原始错误保留在错误链中，包括可通过 `errors.As` 提取的 `*json.UnmarshalTypeError`。
+
+正常响应只使用标准库解码；失败时才额外扫描 JSON。自定义解码器不重复执行，最多定位到其字段边界，多个不确定边界退回共同父级并标记 `Exact=false`；语法错误只报告可用偏移量。诊断记录首个能确认的不匹配，不保证枚举所有问题。错误文本不包含字段值、完整响应或查询参数；JSON 路径中的 map 键仍来自响应，分享日志前请注意这一点。
+
+先判断业务 `code`，再解码 `data`，避免业务错误被结果类型不匹配掩盖。失败时不向 `out` 写入部分结果，不自动将无效值转成零。`out=nil` 时不会检查 `data` 的字段类型。
+
+### 字段与调用迁移
+
+| 旧用法 | 新用法 |
+| --- | --- |
+| `client.Wbi`、`FillWbiHandler(...)` | `Client.Do(ctx, Request{WBI: true, ...}, &data)`；签名器由客户端管理 |
+| 自定义接口 `SetResult(&response)` | `Do(..., &response.Data)`，并处理返回的业务错误 |
+| `VideoStatusNumber.View` 为 `json.Number` | 改为 `NumberOrString`，仍提供 `String()`、`Int64()`、`Float64()` |
+| 根据错误字符串或堆栈定位 | `errors.As(err, &decodeError)` 获取结构化位置 |
+
+`NumberOrString` 保留数字、字符串（包括 `"--"`）与 `null`，`Kind()` 返回 `number`、`string` 或 `null`。数值转换会显式返回错误，JSON 再编码保留原始类别；零值表示 `null`。原有直接赋值 `json.Number` 或强制转换为字符串的代码需要迁移到这些方法；需要构造值时可使用 `json.Unmarshal`。
+
+其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。动态数据中的 `Following` 在历史提交和本地修改之间存在 `bool/json.Number` 差异；消息参数 `SendPrivateMessageParam.Content` 也包含多种语义，后续应结合实际响应／请求证据定点处理，本次不推测改型。
+
+### 维护与验证
+
+请求、参数、响应、诊断分别位于同包内的独立文件；内置接口继续按业务分类组织。本地 `test/` 工具已迁移到新入口，但该目录被 Git 忽略，不随库提交分发。
+
+本次仅使用 `go build ./...` 和 `go vet ./...` 验证，不新增或运行测试、不调用实机 API。完整路径诊断、WBI 并发刷新和真实接口兼容性仍未经运行验证。后续若进行测试，应先获得明确任务要求。
 
 ## Star History
 
