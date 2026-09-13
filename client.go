@@ -11,6 +11,9 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// Client supports concurrent ordinary requests after configuration.
+// Login, session replacement and configuration changes must happen between requests.
+// A Client must not be copied after first use.
 type Client struct {
 	wbi      *WBI
 	resty    *resty.Client
@@ -53,7 +56,9 @@ func NewAnonymousClient(ctx context.Context) (*Client, error) {
 	return client, nil
 }
 
-// NewWithClient 接收一个自定义的*resty.Client为参数
+// NewWithClient takes exclusive ownership of restyClient; nil creates a default client.
+// Explicit Cookies are copied into Client storage and removed from Resty. Its Jar
+// is disabled; callers must export any existing Jar session before this call.
 func NewWithClient(restyClient *resty.Client) *Client {
 	if restyClient == nil {
 		return New()
@@ -69,6 +74,9 @@ func NewWithClient(restyClient *resty.Client) *Client {
 	return client
 }
 
+// Resty exposes configuration and a low-level escape hatch. Configure it only
+// between requests. Direct Resty requests do not use Client cookie storage.
+// Do not re-enable its Jar or set its Cookies; use Client.SetCookies instead.
 func (c *Client) Resty() *resty.Client {
 	return c.resty
 }

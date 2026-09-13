@@ -276,7 +276,7 @@ func loadAccount(ctx context.Context, client *bilibili.Client, mid string) error
 - `Query` 可与 `Form` 或 `JSON` 并用，但 `Form` 与 `JSON` 互斥。`JSON` 按标准库规则编码，包括字符串值；`Headers` 使用 `http.Header`。
 - URL 自带查询参数会参与请求，同名键以 `Request.Query` 为准。WBI 只签查询参数，不签表单；签名请求的每个查询键必须只有一个值。CSRF 由调用方按接口要求放在查询或表单中。
 - context 会传到 HTTP 请求和 WBI 密钥刷新；旧的内置 API 方法签名保持不变。此入口不额外启用重试；通过 Resty 自行配置的重试策略仍然有效。
-- `Resty()` 保留给特殊请求，但直接调用它不会自动签名或获得 `DecodeError`。请在请求开始前完成客户端配置，不要并发修改配置、Cookie 或自定义 WBI 存储；本次没有承诺整个客户端可并发调用。
+- `Resty()` 保留给特殊请求，但直接调用它不会自动签名、共享 Client 的 Cookie 存储或获得 `DecodeError`。普通 Client 请求支持并发；登录、主动刷新登录态、账号切换、手动修改 Cookie 和配置必须在请求之外串行执行。自定义中间件的并发安全由调用方负责。
 
 ### 定位反序列化失败
 
@@ -312,7 +312,55 @@ if errors.As(err, &de) {
 
 请求、参数、响应、诊断分别位于同包内的独立文件；内置接口继续按业务分类组织。本地 `test/` 工具已迁移到新入口，但该目录被 Git 忽略，不随库提交分发。
 
-本次仅使用 `go build ./...` 和 `go vet ./...` 验证，不新增或运行测试、不调用实机 API。完整路径诊断、WBI 并发刷新和真实接口兼容性仍未经运行验证。后续若进行测试，应先获得明确任务要求。
+本次仅使用 `go build ./...` 和 `go vet ./...` 验证，不新增或运行测试、不调用实机 API。并发行为未经运行或 race 检查验证，编译通过不能证明并发正确性。后续若进行测试，应先获得明确任务要求。
+
+## 客户端会话状态迁移
+
+### Cookie 所有权
+
+`Client` 现在独立保存 Cookie，读写都会复制 Cookie 及其 `Unparsed` 切片。修改 `GetCookies()` 返回的切片或对象不会改变客户端；需要更新时应在请求结束后调用 `SetCookie` / `SetCookies`。
+
+仍按 Cookie 名称合并，不实现域名、路径或 Secure 匹配。同名响应 Cookie 以最后完成合并的响应为准；HTTP 或业务失败响应也可更新 Cookie。`MaxAge < 0` 删除同名项；正 `MaxAge` 优先于 `Expires`，导入时转换成绝对到期时间并清零 `MaxAge`，读取或重新导入快照不会续期。过期 Cookie 不进入新请求。传 nil 项会被忽略，`SetCookies(nil)` 不表示清空会话；切换账号推荐创建新的 Client。
+
+每次请求只取一次 Cookie 快照，内置 CSRF 和直播签名使用这份快照；自动合并响应期间不持锁等待网络。一次批量操作应复用已配置的客户端，但不要与登录或手动替换会话并行，也不要复制已使用的 Client。
+
+### 接管自定义 Resty
+
+`NewWithClient` 接管传入 Resty 的独占使用权，自动复制其显式 `Cookies` 并清空原切片，同时关闭 HTTP CookieJar，避免两套会话来源。传 nil 与 `New()` 等效。不要将同一 Resty 再交给另一个 Client，也不要重新启用 Jar、设置 `Resty().Cookies` 或用默认 Cookie 请求头管理会话。
+
+CookieJar 没有通用的全量导出方法。对于已经登录过的外部 Resty，必须在构造前从已知 URL 提取需要的 Cookie，再显式导入，例如：
+
+```go
+// existingResty 是调用方已配置的 *resty.Client；此处不发送请求。
+target := &url.URL{Scheme: "https", Host: "api.bilibili.com", Path: "/"}
+var imported []*http.Cookie
+if jar := existingResty.GetClient().Jar; jar != nil {
+    imported = jar.Cookies(target)
+}
+client := bilibili.NewWithClient(existingResty)
+client.SetCookies(imported)
+```
+
+这只能取出该 URL 对应的 Cookie，不保留 Jar 的完整作用域和过期元数据。不同 URL 导出的同名项仍按名称合并。底层直接请求需要调用方自行提供 Cookie，其响应也不会自动进入 Client 存储。
+
+### 游客初始化
+
+旧的 `NewAnonymousClient()` 改为接收 context 并返回错误：
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+defer cancel()
+client, err := bilibili.NewAnonymousClient(ctx)
+if err != nil {
+    log.Printf("游客初始化失败: %v", err)
+    return
+}
+// 后续使用 client；构造失败时不要继续调用其方法。
+```
+
+nil context、取消、网络故障、非 HTTP 200 或没有有效 Cookie 都会返回错误。初始化复用默认配置；短链接仍要求 HTTP 302，刷新口令页面保持 HTML 解析，WBI 保留非零业务码但存在有效密钥的特殊处理。
+
+参数编码另外修复了非空、非结构体指针导致的 panic，并保留标签值中的等号；nil 参数与 nil 指针继续视为未传参。现有内置接口的方法签名、参数位置及请求体编码规则不变。
 
 ## Star History
 
