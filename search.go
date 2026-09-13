@@ -110,5 +110,5 @@ func (c *Client) IntergratedSearch(param SearchParam) (*SearchRespData, error) {
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/wbi/search/all/v2"
 	)
-	return execute[*SearchRespData](c, method, url, param, fillWbiHandler(c.wbi, c.GetCookies()))
+	return execute[*SearchRespData](c, method, url, param, c.fillWbi())
 }

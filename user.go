@@ -76,7 +76,7 @@ func (c *Client) GetUserVideos(param GetUserVideosParam) (*UserVideos, error) {
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/space/wbi/arc/search"
 	)
-	return execute[*UserVideos](c, method, url, param, fillWbiHandler(c.wbi, c.GetCookies()))
+	return execute[*UserVideos](c, method, url, param, c.fillWbi())
 }
 
 type GetUserSpaceDetailParam struct {
@@ -235,7 +235,7 @@ func (c *Client) GetUserSpaceDetail(param GetUserSpaceDetailParam) (*UserSpaceDe
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/space/wbi/acc/info"
 	)
-	return execute[*UserSpaceDetail](c, method, url, param, fillWbiHandler(c.wbi, c.GetCookies()))
+	return execute[*UserSpaceDetail](c, method, url, param, c.fillWbi())
 }
 
 type GetUserCardParam struct {
@@ -718,7 +718,7 @@ func (c *Client) GetUserRelation2(param GetUserRelation2Param) (*GetUserRelation
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/space/wbi/acc/relation"
 	)
-	return execute[*GetUserRelation2Result](c, method, url, param, fillWbiHandler(c.wbi, c.GetCookies()))
+	return execute[*GetUserRelation2Result](c, method, url, param, c.fillWbi())
 }
 
 type BatchGetUserRelationParam struct {

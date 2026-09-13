@@ -747,5 +747,5 @@ func (c *Client) GetVideoStream(param GetVideoStreamParam) (*GetVideoStreamResul
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/player/wbi/playurl"
 	)
-	return execute[*GetVideoStreamResult](c, method, url, param, fillWbiHandler(c.wbi, c.GetCookies()))
+	return execute[*GetVideoStreamResult](c, method, url, param, c.fillWbi())
 }

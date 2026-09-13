@@ -64,10 +64,13 @@ func NewAnonymousClient() *Client {
 
 // NewWithClient 接收一个自定义的*resty.Client为参数
 func NewWithClient(restyClient *resty.Client) *Client {
-	return &Client{
+	client := &Client{
 		wbi:   NewDefaultWbi(),
 		resty: restyClient,
 	}
+	client.wbi.http = restyClient
+	client.wbi.clientCookies = true
+	return client
 }
 
 func (c *Client) Resty() *resty.Client {

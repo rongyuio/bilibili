@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"maps"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
-	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -28,10 +28,6 @@ var (
 		33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40,
 		61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59, 6, 63, 57, 62, 11,
 		36, 20, 34, 44, 52,
-	}
-
-	_defaultStorage = &MemoryStorage{
-		data: make(map[string]any, 15),
 	}
 )
 
@@ -49,6 +45,9 @@ func (impl *MemoryStorage) Set(key string, value any) {
 	impl.mu.Lock()
 	defer impl.mu.Unlock()
 
+	if impl.data == nil {
+		impl.data = make(map[string]any)
+	}
 	impl.data[key] = value
 }
 
@@ -80,7 +79,10 @@ type WBI struct {
 	lastInitTime          time.Time
 	storage               Storage
 
-	sfg singleflight.Group
+	mu            sync.Mutex
+	refresh       chan struct{}
+	http          *resty.Client
+	clientCookies bool
 }
 
 func NewDefaultWbi() *WBI {
@@ -89,17 +91,23 @@ func NewDefaultWbi() *WBI {
 		mixinKeyEncTab: _defaultMixinKeyEncTab,
 
 		updateCheckerInterval: 60 * time.Minute,
-		storage:               _defaultStorage,
+		storage:               &MemoryStorage{},
+		refresh:               make(chan struct{}, 1),
+		http:                  resty.New().SetTimeout(20 * time.Second),
 	}
 }
 
 func (wbi *WBI) WithUpdateInterval(updateInterval time.Duration) *WBI {
+	wbi.mu.Lock()
+	defer wbi.mu.Unlock()
 	wbi.updateCheckerInterval = updateInterval
 	return wbi
 }
 
 func (wbi *WBI) WithCookies(cookies []*http.Cookie) *WBI {
-	wbi.cookies = cookies
+	wbi.mu.Lock()
+	defer wbi.mu.Unlock()
+	wbi.cookies = cloneCookies(cookies)
 	return wbi
 }
 
@@ -108,33 +116,65 @@ func (wbi *WBI) WithRawCookies(rawCookies string) *WBI {
 	header.Add("Cookie", rawCookies)
 	req := http.Request{Header: header}
 
-	wbi.cookies = req.Cookies()
-	return wbi
+	return wbi.WithCookies(req.Cookies())
 }
 
 func (wbi *WBI) WithMixinKeyEncTab(mixinKeyEncTab []int) *WBI {
-	wbi.mixinKeyEncTab = mixinKeyEncTab
+	wbi.mu.Lock()
+	defer wbi.mu.Unlock()
+	wbi.mixinKeyEncTab = append([]int(nil), mixinKeyEncTab...)
 	return wbi
 }
 
 func (wbi *WBI) WithStorage(storage Storage) *WBI {
+	wbi.mu.Lock()
+	defer wbi.mu.Unlock()
+	if storage == nil {
+		storage = &MemoryStorage{}
+	}
 	wbi.storage = storage
+	wbi.lastInitTime = time.Time{}
 	return wbi
 }
 
 func (wbi *WBI) GetKeys() (imgKey string, subKey string, err error) {
-	imgKey, subKey = wbi.getKeys()
+	return wbi.getKeysContext(context.Background())
+}
 
-	// 更新检查
-	if imgKey == "" || subKey == "" || time.Since(wbi.lastInitTime) > wbi.updateCheckerInterval {
-		if err = wbi.initWbi(); err != nil {
-			return "", "", err
-		}
+func (wbi *WBI) cachedKeys() (string, string, bool) {
+	wbi.mu.Lock()
+	defer wbi.mu.Unlock()
+	img, sub := wbi.getKeys()
+	return img, sub, img != "" && sub != "" && time.Since(wbi.lastInitTime) < wbi.updateCheckerInterval
+}
 
-		return wbi.GetKeys()
+func (wbi *WBI) getKeysContext(ctx context.Context) (string, string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", "", err
 	}
-
-	return imgKey, subKey, nil
+	if img, sub, valid := wbi.cachedKeys(); valid {
+		return img, sub, nil
+	}
+	// A cancellable gate serializes refreshes without spawning background requests.
+	select {
+	case wbi.refresh <- struct{}{}:
+	case <-ctx.Done():
+		return "", "", ctx.Err()
+	}
+	defer func() { <-wbi.refresh }()
+	if err := ctx.Err(); err != nil {
+		return "", "", err
+	}
+	if img, sub, valid := wbi.cachedKeys(); valid {
+		return img, sub, nil
+	}
+	if err := wbi.doInitWbi(ctx); err != nil {
+		return "", "", err
+	}
+	wbi.mu.Lock()
+	defer wbi.mu.Unlock()
+	img, sub := wbi.getKeys()
+	return img, sub, nil
 }
 
 func (wbi *WBI) getKeys() (imgKey string, subKey string) {
@@ -150,26 +190,39 @@ func (wbi *WBI) getKeys() (imgKey string, subKey string) {
 }
 
 func (wbi *WBI) SetKeys(imgKey, subKey string) {
+	wbi.mu.Lock()
+	defer wbi.mu.Unlock()
 	wbi.storage.Set(cacheImgKey, imgKey)
 	wbi.storage.Set(cacheSubKey, subKey)
 	wbi.lastInitTime = time.Now()
 }
 
-func (wbi *WBI) GetMixinKey() (string, error) {
-	imgKey, subKey, err := wbi.GetKeys()
+func (wbi *WBI) GetMixinKey() (string, error) { return wbi.mixinKeyContext(context.Background()) }
+
+func (wbi *WBI) mixinKeyContext(ctx context.Context) (string, error) {
+	imgKey, subKey, err := wbi.getKeysContext(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	return wbi.GenerateMixinKey(imgKey + subKey), nil
+	key := wbi.GenerateMixinKey(imgKey + subKey)
+	if len(key) != 32 {
+		return "", errors.New("invalid WBI mixin key")
+	}
+	return key, nil
 }
 
 func (wbi *WBI) GenerateMixinKey(orig string) string {
+	wbi.mu.Lock()
+	defer wbi.mu.Unlock()
 	var str strings.Builder
 	for _, v := range wbi.mixinKeyEncTab {
-		if v < len(orig) {
+		if v >= 0 && v < len(orig) {
 			str.WriteByte(orig[v])
 		}
+	}
+	if str.Len() < 32 {
+		return ""
 	}
 	return str.String()[:32]
 }
@@ -182,13 +235,20 @@ func (wbi *WBI) sanitizeString(s string) string {
 	return s
 }
 
-func (wbi *WBI) SignQuery(query url.Values, ts time.Time) (newQuery url.Values, err error) {
+func (wbi *WBI) SignQuery(query url.Values, ts time.Time) (url.Values, error) {
+	return wbi.signQueryContext(context.Background(), query, ts)
+}
+
+func (wbi *WBI) signQueryContext(ctx context.Context, query url.Values, ts time.Time) (newQuery url.Values, err error) {
 	payload := make(map[string]string, 10)
 	for k := range query {
+		if len(query[k]) != 1 {
+			return nil, errors.New("WBI query requires one value per key")
+		}
 		payload[k] = query.Get(k)
 	}
 
-	newPayload, err := wbi.SignMap(payload, ts)
+	newPayload, err := wbi.signMapContext(ctx, payload, ts)
 	if err != nil {
 		return query, err
 	}
@@ -201,8 +261,16 @@ func (wbi *WBI) SignQuery(query url.Values, ts time.Time) (newQuery url.Values, 
 	return newQuery, nil
 }
 
-func (wbi *WBI) SignMap(payload map[string]string, ts time.Time) (newPayload map[string]string, err error) {
+func (wbi *WBI) SignMap(payload map[string]string, ts time.Time) (map[string]string, error) {
+	return wbi.signMapContext(context.Background(), payload, ts)
+}
+
+func (wbi *WBI) signMapContext(ctx context.Context, payload map[string]string, ts time.Time) (newPayload map[string]string, err error) {
 	newPayload = maps.Clone(payload)
+	if newPayload == nil {
+		newPayload = make(map[string]string)
+	}
+	delete(newPayload, "w_rid")
 
 	newPayload["wts"] = strconv.FormatInt(ts.Unix(), 10)
 
@@ -228,7 +296,7 @@ func (wbi *WBI) SignMap(payload map[string]string, ts time.Time) (newPayload map
 	signQueryStr := signQuery.Encode()
 
 	// Get mixin key
-	mixinKey, err := wbi.GetMixinKey()
+	mixinKey, err := wbi.mixinKeyContext(ctx)
 	if err != nil {
 		return payload, err
 	}
@@ -240,19 +308,12 @@ func (wbi *WBI) SignMap(payload map[string]string, ts time.Time) (newPayload map
 	return newPayload, nil
 }
 
-func (wbi *WBI) initWbi() error {
-	_, err, _ := wbi.sfg.Do("initWbi", func() (any, error) {
-		return nil, wbi.doInitWbi()
-	})
-
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
-}
-
-func (wbi *WBI) doInitWbi() error {
+func (wbi *WBI) doInitWbi(ctx context.Context) error {
+	wbi.mu.Lock()
+	cookies := cloneCookies(wbi.cookies)
+	transport := wbi.http
+	clientCookies := wbi.clientCookies
+	wbi.mu.Unlock()
 	result := struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
@@ -264,15 +325,17 @@ func (wbi *WBI) doInitWbi() error {
 		}
 	}{}
 
-	resp, err := resty.New().R().
+	r := transport.R().SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetHeader("Accept-Language", "zh-CN,zh;q=0.9").
 		SetHeader("Origin", "https://www.bilibili.com").
 		SetHeader("Referer", "https://www.bilibili.com/").
-		SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0").
-		SetCookies(wbi.cookies).
-		SetResult(&result).
-		Get("https://api.bilibili.com/x/web-interface/nav")
+		SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
+	// Client-owned signers inherit cookies; standalone signers add their own.
+	if !clientCookies {
+		r.SetCookies(cookies)
+	}
+	resp, err := r.Get("https://api.bilibili.com/x/web-interface/nav")
 
 	if err != nil {
 		return errors.WithStack(err)
@@ -281,6 +344,9 @@ func (wbi *WBI) doInitWbi() error {
 		return errors.Errorf("status code: %d", resp.StatusCode())
 	}
 
+	if err := decodeWBIResponse(resp.Body(), &result); err != nil {
+		return err
+	}
 	if result.Code != 0 {
 		if result.Data.WbiImg.ImgUrl == "" || result.Data.WbiImg.SubUrl == "" {
 			return errors.Errorf("init wbi 失败, 错误码: %d, 错误信息: %s", result.Code, result.Message)
@@ -289,12 +355,27 @@ func (wbi *WBI) doInitWbi() error {
 
 	if len(resp.Cookies()) > 0 {
 		// update cookie
-		wbi.cookies = resp.Cookies()
+		wbi.WithCookies(resp.Cookies())
 	}
 
 	imgKey := strings.Split(strings.Split(result.Data.WbiImg.ImgUrl, "/")[len(strings.Split(result.Data.WbiImg.ImgUrl, "/"))-1], ".")[0]
 	subKey := strings.Split(strings.Split(result.Data.WbiImg.SubUrl, "/")[len(strings.Split(result.Data.WbiImg.SubUrl, "/"))-1], ".")[0]
 
+	if len(imgKey) != 32 || len(subKey) != 32 {
+		return errors.New("WBI response contains invalid keys")
+	}
 	wbi.SetKeys(imgKey, subKey)
 	return nil
+}
+
+// Configuration setters are synchronized; configure custom storage before requests.
+func cloneCookies(cookies []*http.Cookie) []*http.Cookie {
+	result := make([]*http.Cookie, 0, len(cookies))
+	for _, cookie := range cookies {
+		if cookie != nil {
+			copy := *cookie
+			result = append(result, &copy)
+		}
+	}
+	return result
 }
