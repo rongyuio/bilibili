@@ -67,8 +67,8 @@ func jsonKind(raw []byte) string {
 }
 
 func newDecodeError(method, endpoint string, raw []byte, typ reflect.Type, path string, base int64, cause error) *DecodeError {
-	e := &DecodeError{Method: method, Endpoint: safeEndpoint(endpoint), RootType: typ.String(),
-		JSONPath: path, Expected: typ.String(), Actual: jsonKind(raw), Err: cause}
+	e := &DecodeError{Method: method, Endpoint: safeEndpoint(endpoint), RootType: diagnosticTypeName(typ),
+		JSONPath: path, Expected: diagnosticTypeName(typ), Actual: jsonKind(raw), Err: cause}
 	var syntax *json.SyntaxError
 	if errors.As(cause, &syntax) {
 		e.Offset = base + syntax.Offset
@@ -78,7 +78,7 @@ func newDecodeError(method, endpoint string, raw []byte, typ reflect.Type, path 
 	var mismatch *json.UnmarshalTypeError
 	if errors.As(cause, &mismatch) {
 		e.Offset = base + mismatch.Offset
-		e.Expected = mismatch.Type.String()
+		e.Expected = diagnosticTypeName(mismatch.Type)
 		e.GoField = mismatch.Field
 	}
 	if !json.Valid(raw) {
@@ -109,7 +109,7 @@ func hasDecoder(t reflect.Type) bool {
 // diagnoseValue never invokes user-defined decoders. A custom decoder is an
 // opaque boundary; if multiple boundaries could fail, retain their common parent.
 func diagnoseValue(raw []byte, t reflect.Type, path, field string, offset int64, quoted bool) (*DecodeError, bool) {
-	location := &DecodeError{JSONPath: path, GoField: field, Expected: t.String(), Actual: jsonKind(raw), Offset: offset + 1}
+	location := &DecodeError{JSONPath: path, GoField: field, Expected: diagnosticTypeName(t), Actual: jsonKind(raw), Offset: offset + 1}
 	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
@@ -179,7 +179,7 @@ func diagnoseValue(raw []byte, t reflect.Type, path, field string, offset int64,
 			probe := append(append([]byte{'{'}, keyJSON...), []byte(":null}")...)
 			if err := json.Unmarshal(probe, reflect.New(reflect.MapOf(t.Key(), rawMessageType)).Interface()); err != nil {
 				location.JSONPath = appendJSONKey(path, child.key)
-				location.Expected = t.Key().String()
+				location.Expected = diagnosticTypeName(t.Key())
 				location.Actual = "object key"
 				location.Offset = offset + child.offset + 1
 				return location, true
@@ -337,4 +337,35 @@ func validJSONTag(tag string) bool {
 		}
 	}
 	return true
+}
+
+// Keep named types recognizable without expanding anonymous response schemas.
+// JSONPath and GoField carry the field-level location separately.
+func diagnosticTypeName(t reflect.Type) string {
+	if t.Name() != "" {
+		name := t.String()
+		// Generic arguments may themselves contain an entire anonymous struct.
+		if strings.Contains(name, "struct {") {
+			if index := strings.IndexByte(name, '['); index >= 0 {
+				return name[:index] + "[...]"
+			}
+		}
+		return name
+	}
+	switch t.Kind() {
+	case reflect.Pointer:
+		return "*" + diagnosticTypeName(t.Elem())
+	case reflect.Slice:
+		return "[]" + diagnosticTypeName(t.Elem())
+	case reflect.Array:
+		return "[" + strconv.Itoa(t.Len()) + "]" + diagnosticTypeName(t.Elem())
+	case reflect.Map:
+		return "map[" + diagnosticTypeName(t.Key()) + "]" + diagnosticTypeName(t.Elem())
+	case reflect.Struct:
+		return "struct{...}"
+	case reflect.Interface:
+		return "interface{...}"
+	default:
+		return t.Kind().String()
+	}
 }
