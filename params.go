@@ -26,6 +26,9 @@ func withParams(r *resty.Request, in any) error {
 		}
 		inType = inType.Elem()
 		inValue = inValue.Elem()
+		if inType.Kind() != reflect.Struct {
+			return errors.New("参数类型错误")
+		}
 	case reflect.Struct:
 	default:
 		return errors.New("参数类型错误")
@@ -120,7 +123,7 @@ func parseTag(tag string) map[string]string {
 
 	pMap := make(map[string]string, 10)
 	for _, part := range parts {
-		kv := strings.Split(part, "=")
+		kv := strings.SplitN(part, "=", 2)
 		if len(kv) == 1 {
 			pMap[kv[0]] = ""
 		} else {
