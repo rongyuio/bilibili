@@ -2,6 +2,7 @@ package bilibili
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -50,7 +51,10 @@ func (c *Client) Do(ctx context.Context, req Request, out any) error {
 		r.Header = make(http.Header)
 	}
 	// Move URL query parameters into the request before signing, including duplicates.
-	r.QueryParam = u.Query()
+	r.QueryParam, err = url.ParseQuery(u.RawQuery)
+	if err != nil {
+		return errors.New("request URL contains an invalid query")
+	}
 	for key, values := range req.Query {
 		r.QueryParam[key] = append([]string(nil), values...)
 	}
@@ -61,7 +65,11 @@ func (c *Client) Do(ctx context.Context, req Request, out any) error {
 		r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
 	}
 	if req.JSON != nil {
-		r.SetBody(req.JSON)
+		body, err := json.Marshal(req.JSON)
+		if err != nil {
+			return fmt.Errorf("encode JSON request body: %w", err)
+		}
+		r.SetBody(body)
 		r.SetHeader("Content-Type", "application/json")
 	}
 	if req.WBI {

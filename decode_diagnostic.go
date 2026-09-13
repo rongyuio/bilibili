@@ -130,7 +130,7 @@ func diagnoseValue(raw []byte, t reflect.Type, path, field string, offset int64,
 	}
 	// Validate leaves through encoding/json itself, including ,string and overflow.
 	if quoted || t == numberType || (t.Kind() != reflect.Struct && t.Kind() != reflect.Map && t.Kind() != reflect.Array && t.Kind() != reflect.Slice) ||
-		(t.Kind() == reflect.Slice && t.Elem().Kind() == reflect.Uint8) {
+		(t.Kind() == reflect.Slice && t.Elem().Kind() == reflect.Uint8 && !hasDecoder(t.Elem())) {
 		if t.Kind() == reflect.Interface {
 			return nil, false
 		}
