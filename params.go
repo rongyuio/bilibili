@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"net/url"
 	"reflect"
 	"strings"
 	"unicode"
@@ -10,9 +11,34 @@ import (
 	"github.com/spf13/cast"
 )
 
+type encodedParams struct {
+	query       url.Values
+	body        map[string]any
+	contentType string
+	present     bool
+}
+
 func withParams(r *resty.Request, in any) error {
-	if in == nil {
+	params, err := encodeParams(in)
+	if err != nil {
+		return err
+	}
+	if !params.present {
 		return nil
+	}
+	for key, values := range params.query {
+		r.QueryParam[key] = values
+	}
+	r.SetHeader("Content-Type", params.contentType)
+	if len(params.body) > 0 {
+		r.SetBody(params.body)
+	}
+	return nil
+}
+
+func encodeParams(in any) (params encodedParams, err error) {
+	if in == nil {
+		return params, nil
 	}
 
 	inType := reflect.TypeOf(in)
@@ -22,18 +48,20 @@ func withParams(r *resty.Request, in any) error {
 	case reflect.Ptr:
 		// 如果是空指针，直接返回
 		if inValue.IsNil() {
-			return nil
+			return params, nil
 		}
 		inType = inType.Elem()
 		inValue = inValue.Elem()
 		if inType.Kind() != reflect.Struct {
-			return errors.New("参数类型错误")
+			return params, errors.New("参数类型错误")
 		}
 	case reflect.Struct:
 	default:
-		return errors.New("参数类型错误")
+		return params, errors.New("参数类型错误")
 	}
 
+	params.present = true
+	params.query = make(url.Values)
 	bodyMap := make(map[string]any, 4)
 	contentType := ""
 	for i := range inType.NumField() {
@@ -104,18 +132,16 @@ func withParams(r *resty.Request, in any) error {
 					realVal = strings.Join(strSlice, ",")
 				}
 			}
-			r.SetQueryParam(fieldName, cast.ToString(realVal))
+			params.query.Set(fieldName, cast.ToString(realVal))
 		} else {
 			bodyMap[fieldName] = realVal
 		}
 	}
 
-	r.SetHeader("Content-Type", contentType)
-	if len(bodyMap) > 0 {
-		r.SetBody(bodyMap)
-	}
+	params.contentType = contentType
+	params.body = bodyMap
 
-	return nil
+	return params, nil
 }
 
 func parseTag(tag string) map[string]string {
