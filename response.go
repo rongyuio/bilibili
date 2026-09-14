@@ -2,6 +2,7 @@ package bilibili
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -29,7 +30,7 @@ func decodeResponse(method, endpoint string, body []byte, out any) error {
 		return newDecodeError(method, endpoint, body, reflect.TypeOf(envelope), "$", 0, err)
 	}
 	if envelope.Code != 0 {
-		return Error{Code: envelope.Code, Message: envelope.Message}
+		return fmt.Errorf("%s %s: %w", method, safeEndpoint(endpoint), Error{Code: envelope.Code, Message: envelope.Message})
 	}
 	if out == nil {
 		return nil

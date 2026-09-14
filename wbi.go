@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"maps"
 	"net/http"
 	"net/url"
@@ -361,7 +362,7 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 	}
 	if result.Code != 0 {
 		if result.Data.WbiImg.ImgUrl == "" || result.Data.WbiImg.SubUrl == "" {
-			return errors.Errorf("init wbi 失败, 错误码: %d, 错误信息: %s", result.Code, result.Message)
+			return fmt.Errorf("%s %s: %w", resty.MethodGet, safeEndpoint("https://api.bilibili.com/x/web-interface/nav"), Error{Code: result.Code, Message: result.Message})
 		}
 	}
 
