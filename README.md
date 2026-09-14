@@ -4,6 +4,7 @@
 
 模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.27 或更新版本，依赖以 [go.mod](go.mod) 为准。接口可能随服务端变化。
 
+- [维护状态](#维护状态)
 - [快速开始](#快速开始)
 - [常用接口](#常用接口)
 - [自定义请求](#自定义请求)
@@ -12,6 +13,13 @@
 - [开发与贡献](#开发与贡献)
 - [声明](#声明)
 
+## 维护状态
+
+- 本仓库是 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 的 fork。上游**已归档**：README 标注 Deprecated、默认分支改名为 `deprecated`、issues/discussions/wiki 全部关闭，不再接受改动与合并。其停止维护的原因是所依据的接口文档仓库 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect) 也已归档。
+- 本 fork **继续维护**：跟进新增接口，已实现接口在发现问题时修复。以自用为主，不承诺固定的支持范围与响应时间。
+- 本仓库保留 fork 关联；`master` 已开启分支保护（改动须经 PR 合入，禁止强制推送与删除）。
+- 版本处于 **v0 阶段**，允许在次版本号内引入破坏性变更。升级前请阅读[迁移指南](docs/migration.md)。
+
 ## 快速开始
 
 ### 安装
@@ -19,10 +27,10 @@
 在已有 Go 项目的目录中执行：
 
 ```bash
-go get github.com/rongyuio/bilibili@v0.1.0
+go get github.com/rongyuio/bilibili@v0.2.0
 ```
 
-`v0.1.0` 是当前 fork 的首个版本，v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
+`v0.2.0` 相对 `v0.1.0` 包含第三、四轮重构：模型去重与文件细分、初始缩写规范化（`Id`→`ID`、`Url`→`URL` 等）、字段命名缺陷修正，以及参数名推导的兼容修复。v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
 
 ### 创建客户端并调用接口
 
@@ -266,7 +274,7 @@ replace github.com/rongyuio/bilibili => ../bilibili
 
 ## 声明
 
-1. 本项目遵守 AGPL 开源协议。
+1. 本项目遵守 **AGPL-3.0** 开源协议，fork 自 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili)。衍生作品需继续以 AGPL 授权并保留原作者署名；以网络服务方式对外提供时，需按要求向使用者提供源代码。
 2. 本项目基于 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
    中描述的接口编写。请尊重该项目作者的努力，遵循该项目的开源要求，禁止一切商业使用。
 3. **请勿滥用，本项目仅用于学习和测试！利用本项目提供的接口、文档等造成不良影响及后果与本人无关。**
