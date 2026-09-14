@@ -9,9 +9,9 @@ import (
 // 表情相关接口。响应模型见 emote_model.go。
 
 type EmoteActionParam struct {
-	PackageId int    `json:"package_id"` // 表情包ID
+	PackageID int    `json:"package_id"` // 表情包ID
 	Business  string `json:"business"`   // 表情包使用场景
-	Ids       []int  `json:"ids"`        // 表情包ID集合
+	IDs       []int  `json:"ids"`        // 表情包ID集合
 }
 
 // AddEmote 添加表情包

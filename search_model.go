@@ -91,6 +91,3 @@ type SearchRespResult struct {
 	ResultType string           `json:"result_type"` // 结果类型 与result数组对应的项相同
 	Data       []map[string]any `json:"data"`        // 具体结果数据 结果为该项所对应的对象条目格式
 }
-
-type ResultData struct {
-}

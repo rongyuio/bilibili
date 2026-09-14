@@ -35,7 +35,7 @@ type CommentContent struct {
 	Device   string    `json:"device"`   // 评论发送平台设备
 	Members  []Member  `json:"members"`  // at 到的用户信息
 	Emote    any       `json:"emote"`    // 需要渲染的表情转义。评论内容无表情则无此项
-	JumpUrl  any       `json:"jump_url"` // 需要高亮的超链转义
+	JumpURL  any       `json:"jump_url"` // 需要高亮的超链转义
 	MaxLine  int       `json:"max_line"` // 6。收起最大行数
 	Pictures []Picture `json:"pictures"` // 评论图片数组
 }
@@ -63,7 +63,7 @@ type CardLabel struct {
 	Background       string `json:"background"`        // 背景图片 url
 	BackgroundWidth  int    `json:"background_width"`  // 背景图片宽度
 	BackgroundHeight int    `json:"background_height"` // 背景图片高度
-	JumpUrl          string `json:"jump_url"`          // 跳转链接
+	JumpURL          string `json:"jump_url"`          // 跳转链接
 	Effect           int    `json:"effect"`            // 0。作用不明，可能用于控制动画，下同
 	EffectStartTime  int    `json:"effect_start_time"` // 0
 }
@@ -114,9 +114,9 @@ type CommentsControl struct {
 	BgText                string `json:"bg_text"`                  // 空评论区文字
 	WebSelection          bool   `json:"web_selection"`            // 评论是否筛选后可见。false：无需筛选。true：需要筛选
 	AnswerGuideText       string `json:"answer_guide_text"`        // 答题页面链接文字
-	AnswerGuideIconUrl    string `json:"answer_guide_icon_url"`    // 答题页面图标 url
-	AnswerGuideIosUrl     string `json:"answer_guide_ios_url"`     // 答题页面 ios url
-	AnswerGuideAndroidUrl string `json:"answer_guide_android_url"` // 答题页面安卓 url
+	AnswerGuideIconURL    string `json:"answer_guide_icon_url"`    // 答题页面图标 url
+	AnswerGuideIosURL     string `json:"answer_guide_ios_url"`     // 答题页面 ios url
+	AnswerGuideAndroidURL string `json:"answer_guide_android_url"` // 答题页面安卓 url
 }
 
 type CommentsDetail struct {

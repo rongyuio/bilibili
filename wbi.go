@@ -308,8 +308,8 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		Message string `json:"message"`
 		Data    struct {
 			WbiImg struct {
-				ImgUrl string `json:"img_url"`
-				SubUrl string `json:"sub_url"`
+				ImgURL string `json:"img_url"`
+				SubURL string `json:"sub_url"`
 			} `json:"wbi_img"`
 		}
 	}{}
@@ -343,7 +343,7 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		return err
 	}
 	if result.Code != 0 {
-		if result.Data.WbiImg.ImgUrl == "" || result.Data.WbiImg.SubUrl == "" {
+		if result.Data.WbiImg.ImgURL == "" || result.Data.WbiImg.SubURL == "" {
 			return fmt.Errorf("%s %s: %w", resty.MethodGet, safeEndpoint("https://api.bilibili.com/x/web-interface/nav"), Error{Code: result.Code, Message: result.Message})
 		}
 	}
@@ -353,9 +353,9 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		wbi.WithCookies(resp.Cookies())
 	}
 
-	imgKeys := strings.Split(result.Data.WbiImg.ImgUrl, "/")
+	imgKeys := strings.Split(result.Data.WbiImg.ImgURL, "/")
 	imgKey, _, _ := strings.Cut(imgKeys[len(imgKeys)-1], ".")
-	subKeys := strings.Split(result.Data.WbiImg.SubUrl, "/")
+	subKeys := strings.Split(result.Data.WbiImg.SubURL, "/")
 	subKey, _, _ := strings.Cut(subKeys[len(subKeys)-1], ".")
 
 	if len(imgKey) != 32 || len(subKey) != 32 {

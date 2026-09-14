@@ -1,13 +1,15 @@
 package bilibili
 
-import "context"
+import (
+	"context"
 
-import "github.com/go-resty/resty/v2"
+	"github.com/go-resty/resty/v2"
+)
 
 // 专栏相关接口。响应模型见 article_model.go。
 
 type GetArticlesInfoParam struct {
-	Id int `json:"id"` // 文集rlid
+	ID int `json:"id"` // 文集rlid
 }
 
 // GetArticlesInfo 获取文集基本信息
@@ -20,7 +22,7 @@ func (c *Client) GetArticlesInfo(ctx context.Context, param GetArticlesInfoParam
 }
 
 type GetArticleInfoParam struct {
-	Id int `json:"id"` // 专栏cvid
+	ID int `json:"id"` // 专栏cvid
 }
 
 // GetArticleInfo 获取专栏文章基本信息
@@ -33,7 +35,7 @@ func (c *Client) GetArticleInfo(ctx context.Context, param GetArticleInfoParam) 
 }
 
 type LikeArticleParam struct {
-	Id   int `json:"id"`   // 文章cvid
+	ID   int `json:"id"`   // 文章cvid
 	Type int `json:"type"` // 操作方式。1：点赞。2：取消赞
 }
 
@@ -64,7 +66,7 @@ func (c *Client) CoinArticle(ctx context.Context, param CoinArticleParam) (*Coin
 }
 
 type FavoritesArticleParam struct {
-	Id int `json:"id"` // 文章cvid
+	ID int `json:"id"` // 文章cvid
 }
 
 // FavoritesArticle 收藏文章

@@ -48,7 +48,7 @@ type RankVideoInfo struct {
 	Pic          string `json:"pic"`            // 封面图
 	Tag          string `json:"tag"`            // 标签。用 , 分隔
 	Duration     int    `json:"duration"`       // 时长。单位为秒
-	Id           int    `json:"id"`             // aid
+	ID           int    `json:"id"`             // aid
 	RankScore    int    `json:"rank_score"`     // 排序分数?
 	Badgepay     bool   `json:"badgepay"`       // 是否有角标?
 	Senddate     int    `json:"senddate"`       // 发送时间?。UNIX 秒级时间戳

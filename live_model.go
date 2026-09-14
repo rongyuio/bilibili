@@ -11,7 +11,7 @@ type GetLiveMedalWallResult struct {
 	OnlyShowWearing int                 `json:"only_show_wearing"`
 	Name            string              `json:"name"`
 	Icon            string              `json:"icon"`
-	Uid             int                 `json:"uid"`
+	UID             int                 `json:"uid"`
 	Level           int                 `json:"level"`
 }
 
@@ -28,7 +28,7 @@ type LiveMedalWallItem struct {
 
 // LiveMedalWallItemMedalInfo contains the corresponding live medal response fields.
 type LiveMedalWallItemMedalInfo struct {
-	TargetId         int64  `json:"target_id"`
+	TargetID         int64  `json:"target_id"`
 	Level            int    `json:"level"`
 	MedalName        string `json:"medal_name"`
 	MedalColorStart  int    `json:"medal_color_start"`
@@ -36,7 +36,7 @@ type LiveMedalWallItemMedalInfo struct {
 	MedalColorBorder int    `json:"medal_color_border"`
 	GuardLevel       int    `json:"guard_level"`
 	WearingStatus    int    `json:"wearing_status"`
-	MedalId          int    `json:"medal_id"`
+	MedalID          int    `json:"medal_id"`
 	Intimacy         int    `json:"intimacy"`
 	NextIntimacy     int    `json:"next_intimacy"`
 	TodayFeed        int    `json:"today_feed"`
@@ -56,7 +56,7 @@ type LiveUinfoMedal struct {
 	ColorEnd           int    `json:"color_end"`
 	ColorBorder        int    `json:"color_border"`
 	Color              int    `json:"color"`
-	Id                 int    `json:"id"`
+	ID                 int    `json:"id"`
 	Typ                int    `json:"typ"`
 	IsLight            int    `json:"is_light"`
 	Ruid               int64  `json:"ruid"`
@@ -113,20 +113,20 @@ type LiveActivatedMedalTask struct {
 
 // LiveActivatedMedalGift contains the corresponding live medal response fields.
 type LiveActivatedMedalGift struct {
-	GiftId           int         `json:"gift_id"`
-	Price            int         `json:"price"`
-	GiftDiscountInfo interface{} `json:"gift_discount_info"`
+	GiftID           int `json:"gift_id"`
+	Price            int `json:"price"`
+	GiftDiscountInfo any `json:"gift_discount_info"`
 }
 
 // GetLiveFansMedalPanelResult contains the corresponding live medal response fields.
 type GetLiveFansMedalPanelResult struct {
 	List        []LiveFansMedalPanelItem   `json:"list"`
 	SpecialList []LiveFansMedalPanelItem   `json:"special_list"`
-	BottomBar   interface{}                `json:"bottom_bar"`
+	BottomBar   any                        `json:"bottom_bar"`
 	PageInfo    LiveFansMedalPanelPageInfo `json:"page_info"`
 	TotalNumber int                        `json:"total_number"`
 	HasMedal    int                        `json:"has_medal"`
-	GroupMedal  interface{}                `json:"group_medal"`
+	GroupMedal  any                        `json:"group_medal"`
 }
 
 // LiveFansMedalPanelPageInfo 直播勋章面板分页信息。
@@ -145,41 +145,41 @@ type LiveFansMedalPanelPageInfo struct {
 type LiveFansMedalPanelItem struct {
 	Medal       LiveFansMedalPanelItemMedal      `json:"medal"`
 	AnchorInfo  LiveFansMedalPanelItemAnchorInfo `json:"anchor_info"`
-	Superscript interface{}                      `json:"superscript"`
+	Superscript any                              `json:"superscript"`
 	RoomInfo    LiveFansMedalPanelItemRoomInfo   `json:"room_info"`
 	UinfoMedal  LiveFansMedalPanelItemUinfoMedal `json:"uinfo_medal"`
 }
 
 // LiveFansMedalPanelItemMedal contains the corresponding live medal response fields.
 type LiveFansMedalPanelItemMedal struct {
-	Uid                int         `json:"uid"`
-	TargetId           int         `json:"target_id"`
-	TargetName         string      `json:"target_name"`
-	MedalId            int         `json:"medal_id"`
-	Level              int         `json:"level"`
-	MedalName          string      `json:"medal_name"`
-	MedalColor         int         `json:"medal_color"`
-	Intimacy           int         `json:"intimacy"`
-	NextIntimacy       int         `json:"next_intimacy"`
-	DayLimit           int         `json:"day_limit"`
-	TodayFeed          int         `json:"today_feed"`
-	MedalColorStart    int         `json:"medal_color_start"`
-	MedalColorEnd      int         `json:"medal_color_end"`
-	MedalColorBorder   int         `json:"medal_color_border"`
-	IsLighted          int         `json:"is_lighted"`
-	GuardLevel         int         `json:"guard_level"`
-	WearingStatus      int         `json:"wearing_status"`
-	MedalIconId        int         `json:"medal_icon_id"`
-	MedalIconUrl       string      `json:"medal_icon_url"`
-	GuardIcon          string      `json:"guard_icon"`
-	HonorIcon          string      `json:"honor_icon"`
-	CanDelete          bool        `json:"can_delete"`
-	V2MedalColorStart  string      `json:"v2_medal_color_start"`
-	V2MedalColorEnd    string      `json:"v2_medal_color_end"`
-	V2MedalColorBorder string      `json:"v2_medal_color_border"`
-	V2MedalColorText   string      `json:"v2_medal_color_text"`
-	V2MedalColorLevel  string      `json:"v2_medal_color_level"`
-	DayLimitExtra      interface{} `json:"day_limit_extra"`
+	UID                int    `json:"uid"`
+	TargetID           int    `json:"target_id"`
+	TargetName         string `json:"target_name"`
+	MedalID            int    `json:"medal_id"`
+	Level              int    `json:"level"`
+	MedalName          string `json:"medal_name"`
+	MedalColor         int    `json:"medal_color"`
+	Intimacy           int    `json:"intimacy"`
+	NextIntimacy       int    `json:"next_intimacy"`
+	DayLimit           int    `json:"day_limit"`
+	TodayFeed          int    `json:"today_feed"`
+	MedalColorStart    int    `json:"medal_color_start"`
+	MedalColorEnd      int    `json:"medal_color_end"`
+	MedalColorBorder   int    `json:"medal_color_border"`
+	IsLighted          int    `json:"is_lighted"`
+	GuardLevel         int    `json:"guard_level"`
+	WearingStatus      int    `json:"wearing_status"`
+	MedalIconID        int    `json:"medal_icon_id"`
+	MedalIconURL       string `json:"medal_icon_url"`
+	GuardIcon          string `json:"guard_icon"`
+	HonorIcon          string `json:"honor_icon"`
+	CanDelete          bool   `json:"can_delete"`
+	V2MedalColorStart  string `json:"v2_medal_color_start"`
+	V2MedalColorEnd    string `json:"v2_medal_color_end"`
+	V2MedalColorBorder string `json:"v2_medal_color_border"`
+	V2MedalColorText   string `json:"v2_medal_color_text"`
+	V2MedalColorLevel  string `json:"v2_medal_color_level"`
+	DayLimitExtra      any    `json:"day_limit_extra"`
 }
 
 // LiveFansMedalPanelItemAnchorInfo contains the corresponding live medal response fields.
@@ -191,9 +191,9 @@ type LiveFansMedalPanelItemAnchorInfo struct {
 
 // LiveFansMedalPanelItemRoomInfo contains the corresponding live medal response fields.
 type LiveFansMedalPanelItemRoomInfo struct {
-	RoomId       int    `json:"room_id"`
+	RoomID       int    `json:"room_id"`
 	LivingStatus int    `json:"living_status"`
-	Url          string `json:"url"`
+	URL          string `json:"url"`
 }
 
 // LiveFansMedalPanelItemUinfoMedal 是 LiveUinfoMedal 的别名。
@@ -231,18 +231,18 @@ type StudioInfo struct {
 }
 
 type LiveRoomInfo struct {
-	Uid                  int         `json:"uid"`                // 主播mid
-	RoomId               int         `json:"room_id"`            // 直播间长号
-	ShortId              int         `json:"short_id"`           // 直播间短号。为0是无短号
+	UID                  int         `json:"uid"`                // 主播mid
+	RoomID               int         `json:"room_id"`            // 直播间长号
+	ShortID              int         `json:"short_id"`           // 直播间短号。为0是无短号
 	Attention            int         `json:"attention"`          // 关注数量
 	Online               int         `json:"online"`             // 观看人数
 	IsPortrait           bool        `json:"is_portrait"`        // 是否竖屏
 	Description          string      `json:"description"`        // 描述
 	LiveStatus           int         `json:"live_status"`        // 直播状态。0：未开播。1：直播中。2：轮播中
-	AreaId               int         `json:"area_id"`            // 分区id
-	ParentAreaId         int         `json:"parent_area_id"`     // 父分区id
+	AreaID               int         `json:"area_id"`            // 分区id
+	ParentAreaID         int         `json:"parent_area_id"`     // 父分区id
 	ParentAreaName       string      `json:"parent_area_name"`   // 父分区名称
-	OldAreaId            int         `json:"old_area_id"`        // 旧版分区id
+	OldAreaID            int         `json:"old_area_id"`        // 旧版分区id
 	Background           string      `json:"background"`         // 背景图片链接
 	Title                string      `json:"title"`              // 标题
 	UserCover            string      `json:"user_cover"`         // 封面
@@ -263,8 +263,8 @@ type LiveRoomInfo struct {
 	NewPendants          NewPendants `json:"new_pendants"`       // 头像框\大v
 	UpSession            string      `json:"up_session"`         // 未知
 	PkStatus             int         `json:"pk_status"`          // pk状态
-	PkId                 int         `json:"pk_id"`              // pk id
-	BattleId             int         `json:"battle_id"`          // 未知
+	PkID                 int         `json:"pk_id"`              // pk id
+	BattleID             int         `json:"battle_id"`          // 未知
 	AllowChangeAreaTime  int         `json:"allow_change_area_time"`
 	AllowUploadCoverTime int         `json:"allow_upload_cover_time"`
 	StudioInfo           StudioInfo  `json:"studio_info"`
@@ -307,11 +307,11 @@ type StopLiveResult struct {
 }
 
 type SubLiveArea struct {
-	Id         string `json:"id"`          // 子分区id
-	ParentId   string `json:"parent_id"`   // 父分区id
-	OldAreaId  string `json:"old_area_id"` // 旧分区id
+	ID         string `json:"id"`          // 子分区id
+	ParentID   string `json:"parent_id"`   // 父分区id
+	OldAreaID  string `json:"old_area_id"` // 旧分区id
 	Name       string `json:"name"`        // 子分区名
-	ActId      string `json:"act_id"`      // 0。**作用尚不明确**
+	ActID      string `json:"act_id"`      // 0。**作用尚不明确**
 	PkStatus   string `json:"pk_status"`   // ？？？。**作用尚不明确**
 	HotStatus  int    `json:"hot_status"`  // 是否为热门分区。0：否。1：是
 	LockStatus string `json:"lock_status"` // 0。**作用尚不明确**
@@ -321,7 +321,7 @@ type SubLiveArea struct {
 }
 
 type LiveAreaList struct {
-	Id   int           `json:"id"`   // 父分区id
+	ID   int           `json:"id"`   // 父分区id
 	Name string        `json:"name"` // 父分区名
 	List []SubLiveArea `json:"list"` // 子分区列表
 }
@@ -333,6 +333,6 @@ type HomePageLiveVersion struct {
 	FileSize         string `json:"file_size,omitempty" request:"query,omitempty"`         // 文件大小（字节）
 	FileMd5          string `json:"file_md5,omitempty" request:"query,omitempty"`          // 安装包文件MD5
 	Content          string `json:"content,omitempty" request:"query,omitempty"`           // HTML格式的更新内容
-	DownloadUrl      string `json:"download_url,omitempty" request:"query,omitempty"`      // 安装包下载链接
+	DownloadURL      string `json:"download_url,omitempty" request:"query,omitempty"`      // 安装包下载链接
 	HdiffpatchSwitch int    `json:"hdiffpatch_switch,omitempty" request:"query,omitempty"` // 增量更新开关?
 }

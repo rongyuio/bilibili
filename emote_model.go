@@ -47,11 +47,11 @@ type EmoteList struct {
 
 type Mall struct {
 	Title string `json:"title"` // 商城名称
-	Url   string `json:"url"`   // 商城页面url
+	URL   string `json:"url"`   // 商城页面url
 }
 
 type AllEmoteList struct {
-	User_panel_packages []EmotePackage `json:"user_panel_packages"`
-	All_packages        []EmotePackage `json:"all_packages"`
-	Mall                Mall           `json:"mall"`
+	UserPanelPackages []EmotePackage `json:"user_panel_packages"`
+	AllPackages       []EmotePackage `json:"all_packages"`
+	Mall              Mall           `json:"mall"`
 }

@@ -21,13 +21,13 @@ type LoginWithPasswordResult struct {
 	RefreshToken string `json:"refresh_token"` // 刷新refresh_token
 	Status       int    `json:"status"`        // 成功为0
 	Timestamp    int    `json:"timestamp"`     // 登录时间。未登录为0。时间戳 单位为毫秒
-	Url          string `json:"url"`           // 游戏分站跨域登录 url
+	URL          string `json:"url"`           // 游戏分站跨域登录 url
 }
 
 type CountryCrown struct {
-	Id        int    `json:"id"`         // 国际代码值
+	ID        int    `json:"id"`         // 国际代码值
 	Cname     string `json:"cname"`      // 国家或地区名
-	CountryId string `json:"country_id"` // 国家或地区区号
+	CountryID string `json:"country_id"` // 国家或地区区号
 }
 
 type GetCountryCrownResult struct {
@@ -42,11 +42,11 @@ type SendSMSResult struct {
 type LoginWithSMSResult struct {
 	IsNew  bool   `json:"is_new"` // 是否为新注册用户。false：非新注册用户。true：新注册用户
 	Status int    `json:"status"` // 0。未知，可能0就是成功吧
-	Url    string `json:"url"`    // 跳转 url。默认为 https://www.bilibili.com
+	URL    string `json:"url"`    // 跳转 url。默认为 https://www.bilibili.com
 }
 
 type LoginWithQRCodeResult struct {
-	Url          string `json:"url"`           // 游戏分站跨域登录 url。未登录为空
+	URL          string `json:"url"`           // 游戏分站跨域登录 url。未登录为空
 	RefreshToken string `json:"refresh_token"` // 刷新refresh_token。未登录为空
 	Timestamp    int    `json:"timestamp"`     // 登录时间。未登录为0。时间戳 单位为毫秒
 	Code         int    `json:"code"`          // 0：扫码登录成功。86038：二维码已失效。86090：二维码已扫码未确认。86101：未扫码

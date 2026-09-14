@@ -12,7 +12,7 @@ import (
 type DoActivityLotteryParam struct {
 	GaiaVtoken string `json:"gaia_vtoken"` // 风控验证 token；空字符串仍发送
 	Num        int    `json:"num"`         // 本次抽奖次数
-	PageId     string `json:"page_id"`     // 活动页面 ID
+	PageID     string `json:"page_id"`     // 活动页面 ID
 	Sid        string `json:"sid"`         // 活动抽奖配置 ID
 }
 
@@ -56,7 +56,7 @@ func (c *Client) GetActivityLotteryTimes(ctx context.Context, param GetActivityL
 
 // GetDynamicLotteryInfoParam 指定用户抽奖动态及请求来源。
 type GetDynamicLotteryInfoParam struct {
-	BusinessId    string `json:"business_id"`            // 抽奖动态 ID
+	BusinessID    string `json:"business_id"`            // 抽奖动态 ID
 	BusinessType  int    `json:"business_type"`          // 业务类型，动态使用 1
 	WebLocation   string `json:"web_location"`           // 页面位置，例如 333.1330
 	DeviceReqJSON string `json:"x-bili-device-req-json"` // 设备请求信息 JSON 字符串，进入 query

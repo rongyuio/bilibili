@@ -10,7 +10,7 @@ import (
 // 动态相关接口。响应模型见 dynamic_model.go。
 
 type SearchDynamicAtParam struct {
-	Uid     int    `json:"uid"`     // 自己的uid
+	UID     int    `json:"uid"`     // 自己的uid
 	Keyword string `json:"keyword"` // 搜索关键字
 }
 
@@ -24,7 +24,7 @@ func (c *Client) SearchDynamicAt(ctx context.Context, param SearchDynamicAtParam
 }
 
 type GetDynamicRepostDetailParam struct {
-	DynamicId int `json:"dynamic_id"`                                 // 动态id
+	DynamicID int `json:"dynamic_id"`                                 // 动态id
 	Offset    int `json:"offset,omitempty" request:"query,omitempty"` // 偏移量
 }
 
@@ -40,7 +40,7 @@ func (c *Client) GetDynamicRepostDetail(ctx context.Context, param GetDynamicRep
 }
 
 type GetDynamicLikeListParam struct {
-	DynamicId int64 `json:"dynamic_id"`                             // 动态id
+	DynamicID int64 `json:"dynamic_id"`                             // 动态id
 	Pn        int64 `json:"pn,omitempty" request:"query,omitempty"` // 页码
 	Ps        int64 `json:"ps,omitempty" request:"query,omitempty"` // 每页数量。该值不得大于20
 }
@@ -81,7 +81,7 @@ func (c *Client) GetDynamicUpList(ctx context.Context, param GetDynamicUpListPar
 }
 
 type RemoveDynamicParam struct {
-	DynamicId int `json:"dynamic_id"` // 动态id
+	DynamicID int `json:"dynamic_id"` // 动态id
 }
 
 // RemoveDynamic 删除动态
@@ -95,7 +95,7 @@ func (c *Client) RemoveDynamic(ctx context.Context, param RemoveDynamicParam) er
 }
 
 type GetDynamicDetailParam struct {
-	DynamicId int `json:"dynamic_id"` // 动态id
+	DynamicID int `json:"dynamic_id"` // 动态id
 }
 
 // GetDynamicDetail 获取特定动态卡片信息
@@ -137,18 +137,18 @@ func (c *Client) UploadDynamicBfs(ctx context.Context, param UploadDynamicBfsPar
 	if err != nil {
 		return "", Size{}, err
 	}
-	return data.ImageUrl, Size{Width: data.ImageWidth, Height: data.ImageHeight}, nil
+	return data.ImageURL, Size{Width: data.ImageWidth, Height: data.ImageHeight}, nil
 }
 
 type CreateDynamicParam struct {
-	DynamicId       int          `json:"dynamic_id"`                                            // 0
+	DynamicID       int          `json:"dynamic_id"`                                            // 0
 	Type            int          `json:"type"`                                                  // 4
 	Rid             int          `json:"rid"`                                                   // 0
 	Content         string       `json:"content"`                                               // 动态内容
 	UpChooseComment int          `json:"up_choose_comment,omitempty" request:"query,omitempty"` // 0
 	UpCloseComment  int          `json:"up_close_comment,omitempty" request:"query,omitempty"`  // 0
 	Extension       string       `json:"extension,omitempty" request:"query,omitempty"`         // 位置信息，参考 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/dynamic/publish.md
-	AtUids          string       `json:"at_uids,omitempty" request:"query,omitempty"`           // 动态中 at 到的用户的 uid。使用逗号,分隔
+	AtUIDs          string       `json:"at_uids,omitempty" request:"query,omitempty"`           // 动态中 at 到的用户的 uid。使用逗号,分隔
 	Ctrl            []FormatCtrl `json:"ctrl,omitempty" request:"query,omitempty"`              // 特殊格式控制 (如 at 别人时的蓝字体和链接)
 }
 

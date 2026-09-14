@@ -24,7 +24,7 @@ func (c *Client) AddFavourFolder(ctx context.Context, param AddFavourFolderParam
 }
 
 type EditFavourFolderParam struct {
-	MediaId int    `json:"media_id"`                                    // 目标收藏夹mdid
+	MediaID int    `json:"media_id"`                                    // 目标收藏夹mdid
 	Title   string `json:"title"`                                       // 修改收藏夹标题
 	Intro   string `json:"intro,omitempty" request:"query,omitempty"`   // 修改收藏夹简介
 	Privacy int    `json:"privacy,omitempty" request:"query,omitempty"` // 是否公开。默认为公开。。0：公开。1：私密
@@ -41,7 +41,7 @@ func (c *Client) EditFavourFolder(ctx context.Context, param EditFavourFolderPar
 }
 
 type DeleteFavourFolderParam struct {
-	MediaIds []int `json:"media_ids"` // 目标收藏夹mdid列表
+	MediaIDs []int `json:"media_ids"` // 目标收藏夹mdid列表
 }
 
 // DeleteFavourFolder 删除收藏夹
@@ -55,8 +55,8 @@ func (c *Client) DeleteFavourFolder(ctx context.Context, param DeleteFavourFolde
 }
 
 type MoveFavourResourcesParam struct {
-	SrcMediaId int      `json:"src_media_id"`                                 // 源收藏夹id
-	TarMediaId int      `json:"tar_media_id"`                                 // 目标收藏夹id
+	SrcMediaID int      `json:"src_media_id"`                                 // 源收藏夹id
+	TarMediaID int      `json:"tar_media_id"`                                 // 目标收藏夹id
 	Mid        int      `json:"mid"`                                          // 当前用户mid
 	Resources  []string `json:"resources"`                                    // 目标内容id列表。格式：{内容id}:{内容类型}。类型：2：视频稿件。12：音频。21：视频合集。内容id：。视频稿件：视频稿件avid。音频：音频auid。视频合集：视频合集id
 	Platform   string   `json:"platform,omitempty" request:"query,omitempty"` // 平台标识。可为web
@@ -84,7 +84,7 @@ func (c *Client) MoveFavourResources(ctx context.Context, param MoveFavourResour
 
 type DeleteFavourResourcesParam struct {
 	Resources []int  `json:"resources"`                                    // 目标内容id列表。格式：{内容id}:{内容类型}。类型：2：视频稿件。12：音频。21：视频合集。内容id：。视频稿件：视频稿件avid。音频：音频auid。视频合集：视频合集id
-	MediaId   int    `json:"media_id"`                                     // 目标收藏夹id
+	MediaID   int    `json:"media_id"`                                     // 目标收藏夹id
 	Platform  string `json:"platform,omitempty" request:"query,omitempty"` // 平台标识。可为web
 }
 
@@ -98,12 +98,12 @@ func (c *Client) DeleteFavourResources(ctx context.Context, param DeleteFavourRe
 	return err
 }
 
-type MediaIdParam struct {
-	MediaId int `json:"media_id"` // 目标收藏夹id
+type MediaIDParam struct {
+	MediaID int `json:"media_id"` // 目标收藏夹id
 }
 
 // CleanFavourResources 清空所有失效收藏内容
-func (c *Client) CleanFavourResources(ctx context.Context, param MediaIdParam) error {
+func (c *Client) CleanFavourResources(ctx context.Context, param MediaIDParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v3/fav/resource/clean"
@@ -113,7 +113,7 @@ func (c *Client) CleanFavourResources(ctx context.Context, param MediaIdParam) e
 }
 
 // GetFavourFolderInfo 获取收藏夹元数据
-func (c *Client) GetFavourFolderInfo(ctx context.Context, param MediaIdParam) (*FavourFolderInfo, error) {
+func (c *Client) GetFavourFolderInfo(ctx context.Context, param MediaIDParam) (*FavourFolderInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v3/fav/folder/info"
@@ -151,7 +151,7 @@ func (c *Client) GetFavourInfo(ctx context.Context, param GetFavourInfoParam) ([
 }
 
 type GetFavourListParam struct {
-	MediaId  int    `json:"media_id"`                                     // 目标收藏夹mlid（完整id）
+	MediaID  int    `json:"media_id"`                                     // 目标收藏夹mlid（完整id）
 	Tid      int    `json:"tid,omitempty" request:"query,omitempty"`      // 分区tid。默认为全部分区。0：全部分区
 	Keyword  string `json:"keyword,omitempty" request:"query,omitempty"`  // 搜索关键字
 	Order    string `json:"order,omitempty" request:"query,omitempty"`    // 排序方式。按收藏时间:mtime。按播放量: view。按投稿时间：pubtime
@@ -170,18 +170,18 @@ func (c *Client) GetFavourList(ctx context.Context, param GetFavourListParam) (*
 	return execute[*FavourList](ctx, c, method, url, param)
 }
 
-type GetFavourIdsParam struct {
-	MediaId  int    `json:"media_id"`                                     // 目标收藏夹mlid（完整id）
+type GetFavourIDsParam struct {
+	MediaID  int    `json:"media_id"`                                     // 目标收藏夹mlid（完整id）
 	Platform string `json:"platform,omitempty" request:"query,omitempty"` // 平台标识。可为web（影响内容列表类型）
 }
 
-// GetFavourIds 获取收藏夹全部内容id
-func (c *Client) GetFavourIds(ctx context.Context, param GetFavourIdsParam) ([]FavourId, error) {
+// GetFavourIDs 获取收藏夹全部内容id
+func (c *Client) GetFavourIDs(ctx context.Context, param GetFavourIDsParam) ([]FavourID, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v3/fav/resource/ids"
 	)
-	return execute[[]FavourId](ctx, c, method, url, param)
+	return execute[[]FavourID](ctx, c, method, url, param)
 }
 
 // GetSelfFavourList 获取自己的收藏夹列表

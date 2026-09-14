@@ -15,9 +15,9 @@ type GetUserSpaceDetailParam struct {
 type SpaceVip = CardVip
 
 type Medal struct {
-	Uid              int    `json:"uid"`                // 此用户mid
-	TargetId         int    `json:"target_id"`          // 粉丝勋章所属UP的mid
-	MedalId          int    `json:"medal_id"`           // 粉丝勋章id
+	UID              int    `json:"uid"`                // 此用户mid
+	TargetID         int    `json:"target_id"`          // 粉丝勋章所属UP的mid
+	MedalID          int    `json:"medal_id"`           // 粉丝勋章id
 	Level            int    `json:"level"`              // 粉丝勋章等级
 	MedalName        string `json:"medal_name"`         // 粉丝勋章名称
 	MedalColor       int    `json:"medal_color"`        // 颜色
@@ -41,9 +41,9 @@ type FansMedal struct {
 }
 
 type SysNotice struct {
-	Id         int    `json:"id"`          // id
+	ID         int    `json:"id"`          // id
 	Content    string `json:"content"`     // 显示文案
-	Url        string `json:"url"`         // 跳转地址
+	URL        string `json:"url"`         // 跳转地址
 	NoticeType int    `json:"notice_type"` // 提示类型。1,2
 	Icon       string `json:"icon"`        // 前缀图标
 	TextColor  string `json:"text_color"`  // 文字颜色
@@ -63,7 +63,7 @@ type WatchedShow struct {
 type LiveRoom struct {
 	Roomstatus    int         `json:"roomStatus"` // 直播间状态。0：无房间。1：有房间
 	Livestatus    int         `json:"liveStatus"` // 直播状态。0：未开播。1：直播中
-	Url           string      `json:"url"`        // 直播间网页 url
+	URL           string      `json:"url"`        // 直播间网页 url
 	Title         string      `json:"title"`      // 直播间标题
 	Cover         string      `json:"cover"`      // 直播间封面 url
 	WatchedShow   WatchedShow `json:"watched_show"`
@@ -89,7 +89,7 @@ type ElecShowInfo struct {
 	State   int    `json:"state"`    // 状态。-1：未开通。1：已开通
 	Title   string `json:"title"`    // 空串
 	Icon    string `json:"icon"`     // 空串
-	JumpUrl string `json:"jump_url"` // 空串
+	JumpURL string `json:"jump_url"` // 空串
 }
 
 type Elec struct {
@@ -202,7 +202,7 @@ type UserVideoPage struct {
 
 type EpisodicButton struct {
 	Text string `json:"text"` // 按钮文字
-	Uri  string `json:"uri"`  // 全部播放页url
+	URI  string `json:"uri"`  // 全部播放页url
 }
 
 type UserVideos struct {
@@ -270,7 +270,7 @@ type MyVip struct {
 }
 
 type MyProfession struct {
-	Id       int    `json:"id"`
+	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	ShowName string `json:"show_name"`
 }

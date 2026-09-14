@@ -55,7 +55,7 @@ type LoginWithPasswordParam struct {
 	Challenge string `json:"challenge"`                                  // 极验 challenge。使用 Captcha() 方法获取
 	Validate  string `json:"validate"`                                   // 极验 result。极验验证后得到
 	Seccode   string `json:"seccode"`                                    // 极验 result +jordan。极验验证后得到
-	GoUrl     string `json:"go_url,omitempty" request:"query,omitempty"` // 跳转 url。默认为 https://www.bilibili.com
+	GoURL     string `json:"go_url,omitempty" request:"query,omitempty"` // 跳转 url。默认为 https://www.bilibili.com
 	Source    string `json:"source,omitempty" request:"query,omitempty"` // 登录来源。main_web：独立登录页。main_mini：小窗登录
 }
 
@@ -125,7 +125,7 @@ type LoginWithSMSParam struct {
 	Code       int    `json:"code"`                                       // 短信验证码。timeout 为 5min
 	Source     string `json:"source"`                                     // 登录来源。main_web：独立登录页。main_mini：小窗登录
 	CaptchaKey string `json:"captcha_key"`                                // 短信登录 token。从 SendSMS() 请求成功后返回
-	GoUrl      string `json:"go_url,omitempty" request:"query,omitempty"` // 跳转url。默认为 https://www.bilibili.com
+	GoURL      string `json:"go_url,omitempty" request:"query,omitempty"` // 跳转url。默认为 https://www.bilibili.com
 	Keep       bool   `json:"keep,omitempty" request:"query,omitempty"`   // 是否记住登录。true：记住登录。false：不记住登录
 }
 
@@ -139,20 +139,20 @@ func (c *Client) LoginWithSMS(ctx context.Context, param LoginWithSMSParam) (*Lo
 }
 
 type QRCode struct {
-	Url       string `json:"url"`        // 二维码内容 (登录页面 url)
+	URL       string `json:"url"`        // 二维码内容 (登录页面 url)
 	QrcodeKey string `json:"qrcode_key"` // 扫码登录秘钥。恒为32字符
 }
 
 // Encode a QRCode and return a raw PNG image.
 func (result *QRCode) Encode() ([]byte, error) {
-	buf, err := qrcode.Encode(result.Url, qrcode.Medium, 256)
+	buf, err := qrcode.Encode(result.URL, qrcode.Medium, 256)
 	return buf, errors.WithStack(err)
 }
 
 // Print the QRCode in the console
 func (result *QRCode) Print() {
 	front, back := qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.ConsoleColors.BrightWhite
-	qrcodeTerminal.New2(front, back, qrcodeTerminal.QRCodeRecoveryLevels.Low).Get(result.Url).Print()
+	qrcodeTerminal.New2(front, back, qrcodeTerminal.QRCodeRecoveryLevels.Low).Get(result.URL).Print()
 }
 
 // GetQRCode 申请二维码

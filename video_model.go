@@ -8,7 +8,7 @@ package bilibili
 type DescV2 struct {
 	RawText string `json:"raw_text"` // 简介内容。type=1时显示原文。type=2时显示'@'+raw_text+' '并链接至biz_id的主页
 	Type    int    `json:"type"`     // 类型。1：普通，2：@他人
-	BizId   int    `json:"biz_id"`   // 被@用户的mid。=0，当type=1
+	BizID   int    `json:"biz_id"`   // 被@用户的mid。=0，当type=1
 }
 
 type VideoRights struct {
@@ -70,18 +70,13 @@ type VideoSubtitleAuthor struct {
 }
 
 type VideoSubtitle struct {
-	Id          int                 `json:"id"`           // 字幕id
+	ID          int                 `json:"id"`           // 字幕id
 	Lan         string              `json:"lan"`          // 字幕语言
 	LanDoc      string              `json:"lan_doc"`      // 字幕语言名称
 	IsLock      bool                `json:"is_lock"`      // 是否锁定
 	AuthorMid   int                 `json:"author_mid"`   // 字幕上传者mid
-	SubtitleUrl string              `json:"subtitle_url"` // json格式字幕文件url
+	SubtitleURL string              `json:"subtitle_url"` // json格式字幕文件url
 	Author      VideoSubtitleAuthor `json:"author"`       // 字幕上传者信息
-}
-
-type VideoSubtitles struct {
-	AllowSubmit bool            `json:"allow_submit"` // 是否允许提交字幕
-	List        []VideoSubtitle `json:"list"`         // 字幕列表
 }
 
 type StaffVip struct {
@@ -102,7 +97,7 @@ type Staff struct {
 }
 
 type UserGarb struct {
-	UrlImageAniCut string `json:"url_image_ani_cut"` // 某url？
+	URLImageAniCut string `json:"url_image_ani_cut"` // 某url？
 }
 
 type Honor struct {
@@ -148,7 +143,7 @@ type TopRecommendVideoItem struct {
 	Duration        int        `json:"duration"`          // 视频时长
 	EnableVt        int        `json:"enable_vt"`         // 未知作用
 	Goto            string     `json:"goto"`              // 目标类型 (av, ogv, live)
-	Id              int        `json:"id"`                // 视频 avid / 直播间 id
+	ID              int        `json:"id"`                // 视频 avid / 直播间 id
 	IsFollowed      int        `json:"is_followed"`       // 是否已关注
 	IsStock         int        `json:"is_stock"`          // 未知作用
 	OgvInfo         any        `json:"ogv_info"`          // 通常为 null
@@ -162,8 +157,8 @@ type TopRecommendVideoItem struct {
 	ShowInfo        int        `json:"show_info"`         // 展示信息（1: 普通视频, 0: 直播）
 	Stat            any        `json:"stat"`              // 视频状态信息
 	Title           string     `json:"title"`             // 视频标题
-	TrackId         string     `json:"track_id"`          // 跟踪标识
-	Uri             string     `json:"uri"`               // 目标页 URI
+	TrackID         string     `json:"track_id"`          // 跟踪标识
+	URI             string     `json:"uri"`               // 目标页 URI
 	VtDisplay       string     `json:"vt_display"`        // 未知作用
 }
 type VideoInfo struct {
@@ -182,15 +177,15 @@ type VideoInfo struct {
 	State              int           `json:"state"`        // 视频状态。详情见[属性数据文档](attribute_data.md#state字段值(稿件状态))
 	Duration           int           `json:"duration"`     // 稿件总时长(所有分P)。单位为秒
 	Forward            int           `json:"forward"`      // 撞车视频跳转avid。仅撞车视频存在此字段
-	MissionId          int           `json:"mission_id"`   // 稿件参与的活动id
-	RedirectUrl        string        `json:"redirect_url"` // 重定向url。仅番剧或影视视频存在此字段。用于番剧&影视的av/bv->ep
+	MissionID          int           `json:"mission_id"`   // 稿件参与的活动id
+	RedirectURL        string        `json:"redirect_url"` // 重定向url。仅番剧或影视视频存在此字段。用于番剧&影视的av/bv->ep
 	Rights             VideoRights   `json:"rights"`       // 视频属性标志
 	Owner              Owner         `json:"owner"`        // 视频UP主信息
 	Stat               VideoStat     `json:"stat"`         // 视频状态数
 	Dynamic            string        `json:"dynamic"`      // 视频同步发布的的动态的文字内容
 	Cid                int           `json:"cid"`          // 视频1P cid
 	Dimension          Dimension     `json:"dimension"`    // 视频1P分辨率
-	SeasonId           int           `json:"season_id"`    // 合集id
+	SeasonID           int           `json:"season_id"`    // 合集id
 	Premiere           any           `json:"premiere"`     // null
 	TeenageMode        int           `json:"teenage_mode"`
 	IsChargeableSeason bool          `json:"is_chargeable_season"`
@@ -220,7 +215,7 @@ type CardVip struct {
 	AvatarSubscript    int    `json:"avatar_subscript"`     // 是否显示会员图标。0：不显示。1：显示
 	NicknameColor      string `json:"nickname_color"`       // 会员昵称颜色。颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
 	Role               int    `json:"role"`                 // 大角色类型。1：月度大会员。3：年度大会员。7：十年大会员。15：百年大会员
-	AvatarSubscriptUrl string `json:"avatar_subscript_url"` // 大会员角标地址
+	AvatarSubscriptURL string `json:"avatar_subscript_url"` // 大会员角标地址
 	TvVipStatus        int    `json:"tv_vip_status"`        // 电视大会员状态。0：未开通
 	TvVipPayType       int    `json:"tv_vip_pay_type"`      // 电视大会员支付类型
 }
@@ -302,7 +297,7 @@ type StatusCount struct {
 }
 
 type VideoTag struct {
-	TagId        int         `json:"tag_id"`        // tag_id
+	TagID        int         `json:"tag_id"`        // tag_id
 	TagName      string      `json:"tag_name"`      // TAG名称
 	Cover        string      `json:"cover"`         // TAG图片url
 	HeadCover    string      `json:"head_cover"`    // TAG页面头图url
@@ -395,7 +390,7 @@ type CollectionMeta struct {
 	Mid         int    `json:"mid"`         // UP 主 ID
 	Name        string `json:"name"`        // 合集标题
 	Ptime       int    `json:"ptime"`       // 发布时间。Unix 时间戳
-	SeasonId    int    `json:"season_id"`   // 合集 ID
+	SeasonID    int    `json:"season_id"`   // 合集 ID
 	Total       int    `json:"total"`       // 合集内视频数量
 }
 
@@ -436,8 +431,8 @@ type Durl struct {
 	Size      int      `json:"size"`       // 视频大小。单位为 Byte
 	Ahead     string   `json:"ahead"`      // （？）
 	Vhead     string   `json:"vhead"`      // （？）
-	Url       string   `json:"url"`        // 默认流 URL。注意 unicode 转义符。有效时间为120min
-	BackupUrl []string `json:"backup_url"` // 备用视频流 注意 unicode 转义符。有效时间为120min
+	URL       string   `json:"url"`        // 默认流 URL。注意 unicode 转义符。有效时间为120min
+	BackupURL []string `json:"backup_url"` // 备用视频流 注意 unicode 转义符。有效时间为120min
 }
 
 type Dash struct {
@@ -466,7 +461,7 @@ type Flac struct {
 // 与 base_url），因此每种键各保留一个字段：规范化命名对应 camelCase 键，
 // 以 Snake 结尾的字段对应 snake_case 键。
 type AudioOrVideo struct {
-	Id                int         `json:"id"`             // 音视频清晰度代码。参考上表。[qn视频清晰度标识](#qn视频清晰度标识)。[视频伴音音质代码](#视 频伴音音质代码)
+	ID                int         `json:"id"`             // 音视频清晰度代码。参考上表。[qn视频清晰度标识](#qn视频清晰度标识)。[视频伴音音质代码](#视 频伴音音质代码)
 	BaseURL           string      `json:"baseUrl"`        // 默认流 URL。注意 unicode 转义符。有效时间为 120min
 	BaseURLSnake      string      `json:"base_url"`       // 同上（snake_case 键）
 	BackupURL         []string    `json:"backupUrl"`      // 备用流 URL

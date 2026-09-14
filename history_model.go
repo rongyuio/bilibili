@@ -30,7 +30,7 @@ type HistoryList struct {
 	LongTitle  string        `json:"long_title"`  // 条目副标题
 	Cover      string        `json:"cover"`       // 条目封面图 url。用于专栏以外的条目
 	Covers     []string      `json:"covers"`      // 条目封面图组。仅用于专栏
-	Uri        string        `json:"uri"`         // 重定向 url。仅用于剧集和直播
+	URI        string        `json:"uri"`         // 重定向 url。仅用于剧集和直播
 	History    HistoryDetail `json:"history"`     // 条目详细信息
 	Videos     int           `json:"videos"`      // 视频分 P 数目。仅用于稿件视频
 	AuthorName string        `json:"author_name"` // UP 主昵称

@@ -109,7 +109,7 @@ func (c *Client) FansSendMessage(ctx context.Context, param FansSendMessageParam
 }
 
 type BatchGetUserCardsParam struct {
-	Uids []int `json:"uids"` // 目标用户的UID列表
+	UIDs []int `json:"uids"` // 目标用户的UID列表
 }
 
 // BatchGetUserCards 获取多用户详细信息

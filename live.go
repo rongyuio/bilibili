@@ -13,9 +13,9 @@ import (
 // ReportLiveLikeParam 指定直播点赞上报参数，所有字段进入 URL 编码的表单。
 type ReportLiveLikeParam struct {
 	ClickTime int   `json:"click_time"` // 上报数量，由调用方指定
-	RoomId    int   `json:"room_id"`    // 直播间号
-	AnchorId  int64 `json:"anchor_id"`  // 主播 UID
-	Uid       int   `json:"uid"`        // 当前账号 UID
+	RoomID    int   `json:"room_id"`    // 直播间号
+	AnchorID  int64 `json:"anchor_id"`  // 主播 UID
+	UID       int   `json:"uid"`        // 当前账号 UID
 }
 
 // ReportLiveLike 上报直播点赞，CSRF 自动从请求 Cookie 快照填入表单，不自动重试。
@@ -41,7 +41,7 @@ func (c *Client) ReportLiveLike(ctx context.Context, param ReportLiveLikeParam) 
 
 // GetLiveMedalWallParam 指定需要查询勋章墙的用户。
 type GetLiveMedalWallParam struct {
-	TargetId int `json:"target_id"` // 用户 UID
+	TargetID int `json:"target_id"` // 用户 UID
 }
 
 // GetLiveMedalWall 获取用户的直播勋章墙。
@@ -65,8 +65,8 @@ func (c *Client) GetLiveFansMedalPanel(ctx context.Context, param GetLiveFansMed
 // GetLiveActivatedMedalInfoParam 指定直播间及主播。
 type GetLiveActivatedMedalInfoParam struct {
 	Platform    string `json:"platform"`     // 平台，例如 pc
-	RoomId      int    `json:"room_id"`      // 直播间号
-	TargetId    int64  `json:"target_id"`    // 主播 UID
+	RoomID      int    `json:"room_id"`      // 直播间号
+	TargetID    int64  `json:"target_id"`    // 主播 UID
 	WebLocation string `json:"web_location"` // 页面位置，例如 0.0
 }
 
@@ -85,7 +85,7 @@ func (c *Client) GetLiveActivatedMedalInfo(ctx context.Context, param GetLiveAct
 }
 
 type GetLiveRoomInfoParam struct {
-	RoomId int `json:"room_id"` // 直播间号。可以为短号
+	RoomID int `json:"room_id"` // 直播间号。可以为短号
 }
 
 // GetLiveRoomInfo 获取直播间信息
@@ -99,10 +99,10 @@ func (c *Client) GetLiveRoomInfo(ctx context.Context, param GetLiveRoomInfoParam
 
 type UpdateLiveRoomTitleParam struct {
 	Platform string `json:"platform,omitempty" request:"query,omitempty"` // 平台标识
-	VisitId  string `json:"visit_id,omitempty" request:"query,omitempty"` // (?)。某种标识？
-	RoomId   int    `json:"room_id"`                                      // 直播间id。必须为自己的直播间id
+	VisitID  string `json:"visit_id,omitempty" request:"query,omitempty"` // (?)。某种标识？
+	RoomID   int    `json:"room_id"`                                      // 直播间id。必须为自己的直播间id
 	Title    string `json:"title,omitempty" request:"query,omitempty"`    // 直播间标题。上限40个字符
-	AreaId   int    `json:"area_id,omitempty" request:"query,omitempty"`  // 直播分区id（子分区id）。详见[直播分区](live_area.md)
+	AreaID   int    `json:"area_id,omitempty" request:"query,omitempty"`  // 直播分区id（子分区id）。详见[直播分区](live_area.md)
 	AddTag   string `json:"add_tag,omitempty" request:"query,omitempty"`  // 要添加的标签。开播设置界面上限10个字符
 	DelTag   string `json:"del_tag,omitempty" request:"query,omitempty"`  // 要删除的标签。若存在add_tag时不起作用
 }
@@ -117,7 +117,7 @@ func (c *Client) UpdateLiveRoomTitle(ctx context.Context, param UpdateLiveRoomTi
 }
 
 type StartLiveParam struct {
-	RoomId   int    `json:"room_id"`  // 直播间id。必须为自己的直播间id
+	RoomID   int    `json:"room_id"`  // 直播间id。必须为自己的直播间id
 	AreaV2   int    `json:"area_v2"`  // 直播分区id（子分区id）。详见[直播分区]
 	Platform string `json:"platform"` // 直播平台。直播姬（pc）：pc_link。web在线直播：web_link（已下线）。bililink：android_link。
 
@@ -169,7 +169,7 @@ func signStartLiveParam(param StartLiveParam, csrf string) StartLiveParam {
 		"appkey":     param.Appkey,
 		"build":      strconv.Itoa(param.Build),
 		"platform":   param.Platform,
-		"room_id":    strconv.Itoa(param.RoomId),
+		"room_id":    strconv.Itoa(param.RoomID),
 		"area_v2":    strconv.Itoa(param.AreaV2),
 		"ts":         strconv.Itoa(param.Ts),
 		"version":    param.Version,
@@ -181,7 +181,7 @@ func signStartLiveParam(param StartLiveParam, csrf string) StartLiveParam {
 
 type StopLiveParam struct {
 	Platform string `json:"platform"` // 直播平台。直播姬（pc）：pc_link。web在线直播：web_link（已下线）。bililink：android_link。
-	RoomId   int    `json:"room_id"`  // 直播间id。必须为自己的直播间id
+	RoomID   int    `json:"room_id"`  // 直播间id。必须为自己的直播间id
 }
 
 // StopLive 关闭直播

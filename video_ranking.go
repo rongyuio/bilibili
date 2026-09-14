@@ -41,7 +41,7 @@ type GetZoneVideoListWithTagParam struct {
 	Ps    int `json:"ps,omitempty" request:"query,omitempty"` // 视频数。默认为14, 留空为5
 	Pn    int `json:"pn,omitempty" request:"query,omitempty"` // 列数。留空为1
 	Rid   int `json:"rid"`                                    // 目标分区id。参见[视频分区一览](../video/video_zone.md)
-	TagId int `json:"tag_id"`                                 // 目标标签id
+	TagID int `json:"tag_id"`                                 // 目标标签id
 }
 
 // GetZoneVideoListWithTag 获取分区标签近期互动列表
@@ -76,7 +76,7 @@ type GetZoneVideoListByOrderParam struct {
 	CopyRight  int    `json:"copy_right,omitempty" request:"query,omitempty"`  // 版权?。默认为 -1
 	NewWebTag  int    `json:"new_web_tag,omitempty" request:"query,omitempty"` // 标签?。默认为 1
 	Order      string `json:"order,omitempty" request:"query,omitempty"`       // 排序方式。click: 按播放排序(默认)。scores: 按评论数排序。stow: 按收藏排序。coin: 按硬币数排序。dm: 按弹幕数排序
-	CateId     int    `json:"cate_id"`                                         // 分区id。留空会导致响应中data中result为null, 参见[视频分区一览](../video/video_zone.md)
+	CateID     int    `json:"cate_id"`                                         // 分区id。留空会导致响应中data中result为null, 参见[视频分区一览](../video/video_zone.md)
 	Page       int    `json:"page,omitempty" request:"query,omitempty"`        // 页码。默认以 1 开始
 	Pagesize   int    `json:"pagesize"`                                        // 视频数。默认为 30, 留空会导致 -500
 	TimeFrom   int    `json:"time_from"`                                       // 起始时间。yyyyMMdd, 默认为 time_to - 7

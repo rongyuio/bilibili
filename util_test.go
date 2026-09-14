@@ -112,7 +112,7 @@ func TestQueryPtr(t *testing.T) {
 	}
 }
 
-func TestJson(t *testing.T) {
+func TestJSON(t *testing.T) {
 	type Test struct {
 		TestA string `request:"json"`
 		TestB string `request:"json,field=tb,default=1"`
@@ -222,13 +222,13 @@ func TestFormData(t *testing.T) {
 
 func TestWithParamsSlice(t *testing.T) {
 	type Test struct {
-		Ids  []int
-		IdsA []string `request:"query"`
+		IDs  []int
+		IDsA []string `request:"query"`
 	}
 
 	params := Test{
-		Ids:  []int{1, 2, 3},
-		IdsA: []string{"1", "2", "3"},
+		IDs:  []int{1, 2, 3},
+		IDsA: []string{"1", "2", "3"},
 	}
 
 	r := resty.New().R()

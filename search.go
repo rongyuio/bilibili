@@ -10,7 +10,7 @@ import (
 // https://socialsisteryi.github.io/bilibili-API-collect/docs/search/*
 
 type SearchParam struct {
-	Keyword string `json:"keyword" request:"query"` //	需要搜索的关键词
+	Keyword string `json:"keyword" request:"query"` // 需要搜索的关键词
 	// Page     int    `json:"page" request:"query"`      // 从1开始
 	// PageSize int    `json:"page_size" request:"query"` // 默认42
 }
