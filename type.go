@@ -58,6 +58,10 @@ type OfficialVerify struct {
 	Desc string `json:"desc"` // 认证信息，无为空
 }
 
+// VipLabel 是评论用户会员信息的铭牌（7 字段）。
+//
+// Label（12 字段）额外包含 use_img_label 与 img_label_uri_* 图片铭牌字段，
+// 两者字段集不同，保留为独立类型。
 type VipLabel struct {
 	Path        string `json:"path"`         // (?)
 	Text        string `json:"text"`         // 会员类型文案
@@ -68,6 +72,12 @@ type VipLabel struct {
 	BorderColor string `json:"border_color"` // 描边颜色?
 }
 
+// Vip 是评论用户（Member/RelationUser）的会员信息。
+//
+// 各业务的大会员字段命名与字段集并不一致（视频/空间用 snake_case 并含
+// tv_vip_*，空间卡用 camelCase 的 vipType，大会员中心用 vip_type），
+// 因此 Vip 与其变体（CardVip、SpaceVip、UserCardVip、MyVip、VipUserVip）
+// 各自保留独立类型，不做跨接口合并。
 type Vip struct {
 	Viptype            int      `json:"vipType"`              // 大会员类型。0：无。1：月会员。2：年以上会员
 	Vipduedate         int      `json:"vipDueDate"`           // 大会员到期时间。毫秒 时间戳
@@ -173,6 +183,9 @@ type Label struct {
 	ImgLabelUriHantStatic string `json:"img_label_uri_hant_static"` // 大会员牌子图片。繁体版
 }
 
+// Official 是评论用户等场景的认证信息（role/title/desc/type）。
+//
+// 与 OfficialVerify（type/desc 两项）语义相近但字段集不同，两者保留独立类型。
 type Official struct {
 	Role  int    `json:"role"`  // 成员认证级别
 	Title string `json:"title"` // 成员认证名。无为空

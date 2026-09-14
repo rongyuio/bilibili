@@ -32,6 +32,11 @@ type ZoneVideoListInfo struct {
 	Archives []VideoInfo   `json:"archives"` // 视频列表
 	Page     ZoneVideoPage `json:"page"`     // 页面信息
 }
+
+// ZoneVideoPage 分区视频分页信息。
+//
+// 字段名为 num/size，与空间投稿的 pn/ps、合集的 page_num/page_size 不同，
+// 因此保留独立类型，不做跨接口合并。
 type ZoneVideoPage struct {
 	Count int `json:"count"` // 总计视频数
 	Num   int `json:"num"`   // 当前页码
