@@ -121,29 +121,16 @@ type TopicAuthorAvatar struct {
 	FallbackLayers struct {
 		IsCriticalGroup bool `json:"is_critical_group"`
 		Layers          []struct {
-			GeneralSpec struct {
-				PosSpec struct {
-					AxisX         float64 `json:"axis_x"`
-					AxisY         float64 `json:"axis_y"`
-					CoordinatePos int     `json:"coordinate_pos"`
-				} `json:"pos_spec"`
-				RenderSpec struct {
-					Opacity int `json:"opacity"`
-				} `json:"render_spec"`
-				SizeSpec struct {
-					Height float64 `json:"height"`
-					Width  float64 `json:"width"`
-				} `json:"size_spec"`
-			} `json:"general_spec"`
+			GeneralSpec AvatarLayerGeneralSpec `json:"general_spec"`
 			LayerConfig struct {
 				IsCritical bool `json:"is_critical"`
 				Tags       struct {
-					AVATARLAYER struct {
+					AvatarLayer struct {
 					} `json:"AVATAR_LAYER"`
-					GENERALCFG struct {
+					GeneralCfg struct {
 						ConfigType    int `json:"config_type"`
 						GeneralConfig struct {
-							WebCSSStyle struct {
+							WebCssStyle struct {
 								BorderRadius string `json:"borderRadius"`
 							} `json:"web_css_style"`
 						} `json:"general_config"`
@@ -199,18 +186,12 @@ type TopicArchive struct {
 }
 
 // TopicArchiveBadge 是话题稿件角标信息。
-type TopicArchiveBadge struct {
-	BgColor string `json:"bg_color"`
-	Color   string `json:"color"`
-	IconURL any    `json:"icon_url"`
-	Text    string `json:"text"`
-}
+// TopicArchiveBadge 是 DynamicArchiveBadge 的别名（话题与动态的视频卡片徽标字段完全一致）。
+type TopicArchiveBadge = DynamicArchiveBadge
 
 // TopicArchiveStat 是话题稿件的播放与弹幕数。
-type TopicArchiveStat struct {
-	Danmaku string `json:"danmaku"`
-	Play    string `json:"play"`
-}
+// TopicArchiveStat 是 DynamicArchiveStat 的别名（话题与动态的视频播放统计字段完全一致）。
+type TopicArchiveStat = DynamicArchiveStat
 
 // TopicModuleStat contains topic comment, forward and like counts.
 type TopicModuleStat struct {

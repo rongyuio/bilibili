@@ -94,9 +94,8 @@ func (c *Client) RemoveDynamic(ctx context.Context, param RemoveDynamicParam) er
 	return err
 }
 
-type GetDynamicDetailParam struct {
-	DynamicID int `json:"dynamic_id"` // 动态id
-}
+// GetDynamicDetailParam 是 RemoveDynamicParam 的别名。
+type GetDynamicDetailParam = RemoveDynamicParam
 
 // GetDynamicDetail 获取特定动态卡片信息
 func (c *Client) GetDynamicDetail(ctx context.Context, param GetDynamicDetailParam) (*DynamicDetail, error) {

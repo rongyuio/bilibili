@@ -90,39 +90,21 @@ type DynamicOriginalAuthorAvatar struct {
 	FallbackLayers struct {
 		IsCriticalGroup bool `json:"is_critical_group"`
 		Layers          []struct {
-			GeneralSpec struct {
-				PosSpec struct {
-					AxisX         float64 `json:"axis_x"`
-					AxisY         float64 `json:"axis_y"`
-					CoordinatePos int     `json:"coordinate_pos"`
-				} `json:"pos_spec"`
-				RenderSpec struct {
-					Opacity int `json:"opacity"`
-				} `json:"render_spec"`
-				SizeSpec struct {
-					Height float64 `json:"height"`
-					Width  float64 `json:"width"`
-				} `json:"size_spec"`
-			} `json:"general_spec"`
+			GeneralSpec AvatarLayerGeneralSpec `json:"general_spec"`
 			LayerConfig struct {
 				IsCritical bool `json:"is_critical,omitempty"`
 				Tags       struct {
-					AVATARLAYER struct {
+					AvatarLayer struct {
 					} `json:"AVATAR_LAYER,omitempty"`
-					GENERALCFG struct {
+					GeneralCfg struct {
 						ConfigType    int `json:"config_type"`
 						GeneralConfig struct {
-							WebCssStyle struct {
-								BorderRadius    string `json:"borderRadius"`
-								BackgroundColor string `json:"background-color,omitempty"`
-								Border          string `json:"border,omitempty"`
-								BoxSizing       string `json:"boxSizing,omitempty"`
-							} `json:"web_css_style"`
+							WebCssStyle AvatarLayerWebCssStyle `json:"web_css_style"`
 						} `json:"general_config"`
 					} `json:"GENERAL_CFG,omitempty"`
-					PENDENTLAYER struct {
+					PendantLayer struct {
 					} `json:"PENDENT_LAYER,omitempty"`
-					ICONLAYER struct {
+					IconLayer struct {
 					} `json:"ICON_LAYER,omitempty"`
 				} `json:"tags"`
 			} `json:"layer_config"`
@@ -170,8 +152,5 @@ type DynamicOriginalRichTextNode struct {
 }
 
 // DynamicOriginalMajor contains the original media body, retaining its field order.
-type DynamicOriginalMajor struct {
-	Archive DynamicArchive `json:"archive,omitempty"`
-	Type    string         `json:"type"`
-	Draw    DynamicDraw    `json:"draw,omitempty"`
-}
+// DynamicOriginalMajor 是 DynamicMajor 的别名（原动态的 major 与整体动态字段完全一致）。
+type DynamicOriginalMajor = DynamicMajor

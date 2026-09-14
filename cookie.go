@@ -15,11 +15,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GetWebCookieRefreshInfoResult struct {
-	Refresh   bool  `json:"refresh"`   // 是否应该刷新 Cookie。true-需要刷新，false-不需要刷新
-	Timestamp int64 `json:"timestamp"` // 用于获取 refresh_csrf 的毫秒时间戳
-}
-
 // GetWebCookieRefreshInfo 获取web端cookie刷新信息
 func (c *Client) GetWebCookieRefreshInfo(ctx context.Context) (*GetWebCookieRefreshInfoResult, error) {
 	const (
@@ -32,10 +27,6 @@ func (c *Client) GetWebCookieRefreshInfo(ctx context.Context) (*GetWebCookieRefr
 
 type GetWebCookieRefreshCsrfParam struct {
 	Timestamp int64 `json:"timestamp"` // 毫秒时间戳
-}
-
-type GetWebCookieRefreshCsrfResult struct {
-	RefreshCsrf string `json:"refresh_csrf"` // 实时刷新口令
 }
 
 // 正则匹配 <div id="1-name">RefreshCsrf</div> 中的刷新口令
@@ -76,12 +67,6 @@ type RefreshCookieParam struct {
 	RefreshCsrf  string `json:"refresh_csrf" request:"query"`                                // 实时刷新口令
 	Source       string `json:"source,omitempty" request:"query,omitempty,default=main_web"` // 访问来源，一般为：main_web
 	RefreshToken string `json:"refresh_token" request:"query"`                               // 在登录成功时返回的持久化刷新口令，localStorage 中的ac_time_value字段
-}
-
-type RefreshCookieResult struct {
-	Status       int    `json:"status"`        // 未知
-	Message      string `json:"message"`       // 未知
-	RefreshToken string `json:"refresh_token"` // 新的持久化刷新口令
 }
 
 // RefreshCookie 刷新Cookie

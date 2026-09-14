@@ -81,26 +81,8 @@ type FavourInfo struct {
 	Ugc      FavourUgc             `json:"ugc"`
 }
 
-// FavourFolderDetail 是收藏夹元数据（GetFavourList 的 info 字段）。
-type FavourFolderDetail struct {
-	ID         int     `json:"id"`          // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
-	Fid        int     `json:"fid"`         // 收藏夹原始id
-	Mid        int     `json:"mid"`         // 创建者mid
-	Attr       int     `json:"attr"`        // 属性，0：正常，1：失效
-	Title      string  `json:"title"`       // 收藏夹标题
-	Cover      string  `json:"cover"`       // 收藏夹封面图片url
-	Upper      Upper   `json:"upper"`       // 创建者信息
-	CoverType  int     `json:"cover_type"`  // 封面图类别（？）
-	CntInfo    CntInfo `json:"cnt_info"`    // 收藏夹状态数
-	Type       int     `json:"type"`        // 类型（？），一般是11
-	Intro      string  `json:"intro"`       // 备注
-	Ctime      int     `json:"ctime"`       // 创建时间戳
-	Mtime      int     `json:"mtime"`       // 收藏时间戳
-	State      int     `json:"state"`       // 状态（？），一般为0
-	FavState   int     `json:"fav_state"`   // 收藏夹收藏状态，已收藏收藏夹：1，未收藏收藏夹：0
-	LikeState  int     `json:"like_state"`  // 点赞状态，已点赞：1，未点赞：0
-	MediaCount int     `json:"media_count"` // 收藏夹内容数量
-}
+// FavourFolderDetail 是 FavourFolderInfo 的别名（GetFavourList 的 info 字段，字段完全一致）。
+type FavourFolderDetail = FavourFolderInfo
 
 // FavourMedia 是收藏夹内的一条内容。
 type FavourMedia struct {

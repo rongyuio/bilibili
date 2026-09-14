@@ -138,11 +138,6 @@ func (c *Client) LoginWithSMS(ctx context.Context, param LoginWithSMSParam) (*Lo
 	return execute[*LoginWithSMSResult](ctx, c, method, url, param)
 }
 
-type QRCode struct {
-	URL       string `json:"url"`        // 二维码内容 (登录页面 url)
-	QrcodeKey string `json:"qrcode_key"` // 扫码登录秘钥。恒为32字符
-}
-
 // Encode a QRCode and return a raw PNG image.
 func (result *QRCode) Encode() ([]byte, error) {
 	buf, err := qrcode.Encode(result.URL, qrcode.Medium, 256)

@@ -63,3 +63,7 @@ type AccountInformation struct {
 	NickFree bool        `json:"nick_free"` // 是否未设置昵称。false：设置过昵称。true：未设置昵称
 	Rank     string      `json:"rank"`      // 我的会员等级
 }
+type QRCode struct {
+	URL       string `json:"url"`        // 二维码内容 (登录页面 url)
+	QrcodeKey string `json:"qrcode_key"` // 扫码登录秘钥。恒为32字符
+}

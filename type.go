@@ -53,6 +53,7 @@ type Nameplate struct {
 	Condition  string `json:"condition"`   // 获取条件
 }
 
+// OfficialVerify 是认证标识（仅 type/desc，用于动态、话题、视频等处的 official_verify 字段）。
 type OfficialVerify struct {
 	Type int    `json:"type"` // 是否认证，-1：无。0：个人认证。1：机构认证
 	Desc string `json:"desc"` // 认证信息，无为空
@@ -72,11 +73,18 @@ type VipLabel struct {
 	BorderColor string `json:"border_color"` // 描边颜色?
 }
 
-// Vip 是评论用户（Member/RelationUser）的会员信息。
+// Vip 是评论用户（Member/RelationUser）的大会员信息，使用 camelCase 键。
 //
-// 各业务的大会员字段命名与字段集并不一致：视频卡片与用户空间共用 CardVip
-// （SpaceVip 为其别名），空间卡用 camelCase 的 UserCardVip，大会员中心用
-// VipUserVip。字段集不同的变体各自保留独立类型，不做跨接口合并。
+// 各业务的大会员响应字段命名与字段集并不一致，逐字段比对后均不合并：
+//   - CardVip（视频卡片 / 用户空间，snake_case 键，含 vip_pay_type、role、
+//     tv_vip_status、tv_vip_pay_type 等）字段集最大，SpaceVip 为其别名；
+//   - UserCardVip（空间卡，camelCase 键）是 Vip 的真子集，少了 VipDueDate、
+//     Label、AvatarSubscript、AvatarSubscriptURL、NicknameColor；
+//   - VipUserVip（大会员中心，snake_case 键带 vip_ 前缀，另有 Mid、IsNewUser、
+//     TipMaterial）；
+//   - MyVip、DynamicAuthorVip（DueDate 为 json.Number）、StaffVip 等为各自精简子集。
+//
+// 因此各变体保留为独立类型。
 type Vip struct {
 	VipType            int      `json:"vipType"`              // 大会员类型。0：无。1：月会员。2：年以上会员
 	VipDueDate         int      `json:"vipDueDate"`           // 大会员到期时间。毫秒 时间戳
@@ -185,6 +193,10 @@ type Label struct {
 // Official 是评论用户等场景的认证信息（role/title/desc/type）。
 //
 // 与 OfficialVerify（type/desc 两项）语义相近但字段集不同，两者保留独立类型。
+// Official 是成员认证信息（role/title/desc/type 四字段）。
+//
+// 与 OfficialVerify（仅 type/desc，用于动态、话题、视频等处的 official_verify）
+// 字段集与语义不同，二者不合并。
 type Official struct {
 	Role  int    `json:"role"`  // 成员认证级别
 	Title string `json:"title"` // 成员认证名。无为空
