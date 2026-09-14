@@ -7,6 +7,34 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// DoActivityLotteryParam 指定活动抽奖操作，所有字段进入 URL 编码表单。
+type DoActivityLotteryParam struct {
+	GaiaVtoken string `json:"gaia_vtoken"` // 风控验证 token；空字符串仍发送
+	Num        int    `json:"num"`         // 本次抽奖次数
+	PageId     string `json:"page_id"`     // 活动页面 ID
+	Sid        string `json:"sid"`         // 活动抽奖配置 ID
+}
+
+// DoActivityLottery 执行活动抽奖，自动填入 CSRF，不自动重试或解析中奖明细。
+func (c *Client) DoActivityLottery(ctx context.Context, param DoActivityLotteryParam) error {
+	_, err := execute[any](ctx, c, resty.MethodPost,
+		"https://api.bilibili.com/x/lottery/x/do", param, func(r *resty.Request) error {
+			csrf := cookieValue(r.Cookies, "bili_jct")
+			if csrf == "" {
+				return errors.New("B站登录过期")
+			}
+			// 复用统一参数编码，再将本接口字段移入表单。
+			for _, key := range []string{"gaia_vtoken", "num", "page_id", "sid"} {
+				r.FormData[key] = append([]string(nil), r.QueryParam[key]...)
+				r.QueryParam.Del(key)
+			}
+			r.SetFormData(map[string]string{"csrf": csrf})
+			r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
+			return nil
+		})
+	return err
+}
+
 // GetActivityLotteryTimesParam 指定活动抽奖配置。
 type GetActivityLotteryTimesParam struct {
 	Sid string `json:"sid"` // 活动抽奖配置 ID
@@ -56,7 +84,7 @@ type GetDynamicLotteryInfoResult struct {
 	SenderUID         int                          `json:"sender_uid"`
 	BusinessType      int                          `json:"business_type"`
 	BusinessID        int64                        `json:"business_id"`
-	Status            int                          `json:"status"`
+	Status            int                          `json:"status"` // 2=已开奖
 	LotteryTime       int                          `json:"lottery_time"`
 	LotteryAtNum      int                          `json:"lottery_at_num"`
 	LotteryFeedLimit  int                          `json:"lottery_feed_limit"`
