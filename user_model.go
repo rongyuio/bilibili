@@ -61,14 +61,14 @@ type WatchedShow struct {
 }
 
 type LiveRoom struct {
-	Roomstatus    int         `json:"roomStatus"` // 直播间状态。0：无房间。1：有房间
-	Livestatus    int         `json:"liveStatus"` // 直播状态。0：未开播。1：直播中
+	RoomStatus    int         `json:"roomStatus"` // 直播间状态。0：无房间。1：有房间
+	LiveStatus    int         `json:"liveStatus"` // 直播状态。0：未开播。1：直播中
 	URL           string      `json:"url"`        // 直播间网页 url
 	Title         string      `json:"title"`      // 直播间标题
 	Cover         string      `json:"cover"`      // 直播间封面 url
 	WatchedShow   WatchedShow `json:"watched_show"`
-	Roomid        int         `json:"roomid"`         // 直播间 id(短号)
-	Roundstatus   int         `json:"roundStatus"`    // 轮播状态。0：未轮播。1：轮播
+	RoomID        int         `json:"roomid"`         // 直播间 id(短号)
+	RoundStatus   int         `json:"roundStatus"`    // 轮播状态。0：未轮播。1：轮播
 	BroadcastType int         `json:"broadcast_type"` // 0
 }
 
@@ -215,11 +215,11 @@ type UserVideos struct {
 }
 
 type UserCardVip struct {
-	Viptype       int    `json:"vipType"`       // 大会员类型。0：无。1：月度大会员。2：年度及以上大会员
-	Dueremark     string `json:"dueRemark"`     // 空。**作用尚不明确**
-	Accessstatus  int    `json:"accessStatus"`  // 0。**作用尚不明确**
-	Vipstatus     int    `json:"vipStatus"`     // 大会员状态。0：无。1：有
-	Vipstatuswarn string `json:"vipStatusWarn"` // 空。**作用尚不明确**
+	VipType       int    `json:"vipType"`       // 大会员类型。0：无。1：月度大会员。2：年度及以上大会员
+	DueRemark     string `json:"dueRemark"`     // 空。**作用尚不明确**
+	AccessStatus  int    `json:"accessStatus"`  // 0。**作用尚不明确**
+	VipStatus     int    `json:"vipStatus"`     // 大会员状态。0：无。1：有
+	VipStatusWarn string `json:"vipStatusWarn"` // 空。**作用尚不明确**
 	ThemeType     int    `json:"theme_type"`    // 0。**作用尚不明确**
 }
 
@@ -229,7 +229,7 @@ type UserCardInfo struct {
 	Name           string         `json:"name"`            // 用户昵称
 	Sex            string         `json:"sex"`             // 用户性别。男 女 保密
 	Face           string         `json:"face"`            // 用户头像链接
-	Displayrank    string         `json:"DisplayRank"`     // 0。**作用尚不明确**
+	DisplayRank    string         `json:"DisplayRank"`     // 0。**作用尚不明确**
 	Regtime        int            `json:"regtime"`         // 0。**作用尚不明确**
 	Spacesta       int            `json:"spacesta"`        // 用户状态。0：正常。-2：被封禁
 	Birthday       string         `json:"birthday"`        // 空。**作用尚不明确**

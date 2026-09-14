@@ -28,10 +28,10 @@ type ZoneVideoRankInfo struct {
 	Result         []RankVideoInfo `json:"result"`           // 结果本体。失败时为null
 	ShowColumn     int             `json:"show_column"`      // 0。作用尚不明确
 	RqtType        string          `json:"rqt_type"`         // search。作用尚不明确
-	Numpages       int             `json:"numPages"`         // 页码。失败时为0
-	Numresults     int             `json:"numResults"`       // 视频数。失败时为0
+	NumPages       int             `json:"numPages"`         // 页码。失败时为0
+	NumResults     int             `json:"numResults"`       // 视频数。失败时为0
 	CrrQuery       *string         `json:"crr_query"`        // 空。作用尚不明确
-	Pagesize       int             `json:"pagesize"`         // 视频数
+	PageSize       int             `json:"pagesize"`         // 视频数
 	SuggestKeyword *string         `json:"suggest_keyword"`  // 空。作用尚不明确
 	EggInfo        *string         `json:"egg_info"`         // 作用尚不明确
 	Cache          int             `json:"cache"`            // 0。作用尚不明确
@@ -44,21 +44,21 @@ type ZoneVideoRankInfo struct {
 }
 
 type RankVideoInfo struct {
-	Pubdate      string `json:"pubdate"`        // 发布时间。格式为 yyyy-MM-dd HH:mm:ss
+	PubDate      string `json:"pubdate"`        // 发布时间。格式为 yyyy-MM-dd HH:mm:ss
 	Pic          string `json:"pic"`            // 封面图
 	Tag          string `json:"tag"`            // 标签。用 , 分隔
 	Duration     int    `json:"duration"`       // 时长。单位为秒
 	ID           int    `json:"id"`             // aid
 	RankScore    int    `json:"rank_score"`     // 排序分数?
-	Badgepay     bool   `json:"badgepay"`       // 是否有角标?
-	Senddate     int    `json:"senddate"`       // 发送时间?。UNIX 秒级时间戳
+	BadgePay     bool   `json:"badgepay"`       // 是否有角标?
+	SendDate     int    `json:"senddate"`       // 发送时间?。UNIX 秒级时间戳
 	Author       string `json:"author"`         // UP主名
 	Review       int    `json:"review"`         // 评论数
 	Mid          int    `json:"mid"`            // UP主mid
 	IsUnionVideo int    `json:"is_union_video"` // 是否为联合投稿
 	RankIndex    int    `json:"rank_index"`     // 排序索引号
 	Type         string `json:"type"`           // 类型。video: 视频
-	Arcrank      string `json:"arcrank"`        // 0。作用尚不明确
+	ArcRank      string `json:"arcrank"`        // 0。作用尚不明确
 	Play         string `json:"play"`           // 播放数
 	RankOffset   int    `json:"rank_offset"`    // 排序偏移?。与 rank_index 相同
 	Description  string `json:"description"`    // 简介

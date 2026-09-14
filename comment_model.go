@@ -13,10 +13,10 @@ type CommentsPage struct {
 }
 
 type CommentsConfig struct {
-	Showadmin  int  `json:"showadmin"`    // 是否显示管理置顶
-	Showentry  int  `json:"showentry"`    // (?)
-	Showfloor  int  `json:"showfloor"`    // 是否显示楼层号
-	Showtopic  int  `json:"showtopic"`    // 是否显示话题
+	ShowAdmin  int  `json:"showadmin"`    // 是否显示管理置顶
+	ShowEntry  int  `json:"showentry"`    // (?)
+	ShowFloor  int  `json:"showfloor"`    // 是否显示楼层号
+	ShowTopic  int  `json:"showtopic"`    // 是否显示话题
 	ShowUpFlag bool `json:"show_up_flag"` // 是否显示“UP 觉得很赞”标志
 	ReadOnly   bool `json:"read_only"`    // 是否只读评论区
 	ShowDelLog bool `json:"show_del_log"` // 是否显示删除记录
@@ -87,7 +87,7 @@ type Comment struct {
 	Rcount       int            `json:"rcount"`        // 回复评论条数
 	Floor        int            `json:"floor"`         // 评论楼层号。**注：若不支持楼层则无此项**
 	State        int            `json:"state"`         // (?)
-	Fansgrade    int            `json:"fansgrade"`     // 是否具有粉丝标签。0：无。1：有
+	FansGrade    int            `json:"fansgrade"`     // 是否具有粉丝标签。0：无。1：有
 	Attr         int            `json:"attr"`          // 某属性位？
 	Ctime        int            `json:"ctime"`         // 评论发送时间。时间戳
 	RpidStr      string         `json:"rpid_str"`      // 评论rpid。字串格式

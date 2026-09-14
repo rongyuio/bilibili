@@ -78,7 +78,7 @@ type GetZoneVideoListByOrderParam struct {
 	Order      string `json:"order,omitempty" request:"query,omitempty"`       // 排序方式。click: 按播放排序(默认)。scores: 按评论数排序。stow: 按收藏排序。coin: 按硬币数排序。dm: 按弹幕数排序
 	CateID     int    `json:"cate_id"`                                         // 分区id。留空会导致响应中data中result为null, 参见[视频分区一览](../video/video_zone.md)
 	Page       int    `json:"page,omitempty" request:"query,omitempty"`        // 页码。默认以 1 开始
-	Pagesize   int    `json:"pagesize"`                                        // 视频数。默认为 30, 留空会导致 -500
+	PageSize   int    `json:"pagesize"`                                        // 视频数。默认为 30, 留空会导致 -500
 	TimeFrom   int    `json:"time_from"`                                       // 起始时间。yyyyMMdd, 默认为 time_to - 7
 	TimeTo     int    `json:"time_to"`                                         // 结束时间。yyyyMMdd, 默认为当前时间(大于起始时间)
 }

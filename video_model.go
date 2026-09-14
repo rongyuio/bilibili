@@ -151,7 +151,7 @@ type TopRecommendVideoItem struct {
 	Pic             string     `json:"pic"`               // 视频封面
 	Pic43           string     `json:"pic_4_3"`           // 4:3 比例封面
 	Pos             int        `json:"pos"`               // 位置
-	Pubdate         int        `json:"pubdate"`           // 发布时间（秒级时间戳）
+	PubDate         int        `json:"pubdate"`           // 发布时间（秒级时间戳）
 	RcmdReason      RcmdReason `json:"rcmd_reason"`       // 推荐理由
 	RoomInfo        any        `json:"room_info"`         // 通常为 null
 	ShowInfo        int        `json:"show_info"`         // 展示信息（1: 普通视频, 0: 直播）
@@ -170,7 +170,7 @@ type VideoInfo struct {
 	Copyright          int           `json:"copyright"`    // 视频类型。1：原创。2：转载
 	Pic                string        `json:"pic"`          // 稿件封面图片url
 	Title              string        `json:"title"`        // 稿件标题
-	Pubdate            int           `json:"pubdate"`      // 稿件发布时间。秒级时间戳
+	PubDate            int           `json:"pubdate"`      // 稿件发布时间。秒级时间戳
 	Ctime              int           `json:"ctime"`        // 用户投稿时间。秒级时间戳
 	Desc               string        `json:"desc"`         // 视频简介
 	DescV2             []DescV2      `json:"desc_v2"`      // 新版视频简介
@@ -228,7 +228,7 @@ type VideoCard struct {
 	Rank           string         `json:"rank"`             // 10000。作用尚不明确
 	Face           string         `json:"face"`             // 用户头像链接
 	FaceNft        int            `json:"face_nft"`         // 是否为 nft 头像。0不是nft头像。1是 nft 头像
-	Displayrank    string         `json:"DisplayRank"`      // 0。作用尚不明确
+	DisplayRank    string         `json:"DisplayRank"`      // 0。作用尚不明确
 	Regtime        int            `json:"regtime"`          // 0。作用尚不明确
 	Spacesta       int            `json:"spacesta"`         // 0。作用尚不明确
 	Birthday       string         `json:"birthday"`         // 空。作用尚不明确
@@ -375,7 +375,7 @@ type CollectionVideo struct {
 	InteractiveVideo bool                `json:"interactive_video"` // false
 	Pic              string              `json:"pic"`               // 封面 URL
 	PlaybackPosition int                 `json:"playback_position"` // 会随着播放时间增长，播放完成后为 -1 。单位未知
-	Pubdate          int                 `json:"pubdate"`           // 发布日期。Unix 时间戳
+	PubDate          int                 `json:"pubdate"`           // 发布日期。Unix 时间戳
 	Stat             CollectionVideoStat `json:"stat"`              // 稿件信息
 	State            int                 `json:"state"`             // 0
 	Title            string              `json:"title"`             // 稿件标题
@@ -436,13 +436,13 @@ type Durl struct {
 }
 
 type Dash struct {
-	Duration      int            `json:"duration"`        // 视频长度。秒值
-	Minbuffertime float64        `json:"minBufferTime"`   // 1.5？
-	MinBufferTime float64        `json:"min_buffer_time"` // 1.5？
-	Video         []AudioOrVideo `json:"video"`           // 视频流信息 同一清晰度可拥有 H.264 / H.265 / AV1 多种码流<br />HDR 仅支持 H.265 |
-	Audio         []AudioOrVideo `json:"audio"`           // 伴音流信息。当视频没有音轨时，此项为 null
-	Dolby         Dolby          `json:"dolby"`           // 杜比全景声伴音信息
-	Flac          Flac           `json:"flac"`            // 无损音轨伴音信息。当视频没有无损音轨时，此项为 null
+	Duration           int            `json:"duration"`        // 视频长度。秒值
+	MinBufferTime      float64        `json:"minBufferTime"`   // 1.5？
+	MinBufferTimeSnake float64        `json:"min_buffer_time"` // 1.5？
+	Video              []AudioOrVideo `json:"video"`           // 视频流信息 同一清晰度可拥有 H.264 / H.265 / AV1 多种码流<br />HDR 仅支持 H.265 |
+	Audio              []AudioOrVideo `json:"audio"`           // 伴音流信息。当视频没有音轨时，此项为 null
+	Dolby              Dolby          `json:"dolby"`           // 杜比全景声伴音信息
+	Flac               Flac           `json:"flac"`            // 无损音轨伴音信息。当视频没有无损音轨时，此项为 null
 }
 
 type Dolby struct {
@@ -479,7 +479,7 @@ type AudioOrVideo struct {
 	StartWithSapSnake int         `json:"start_with_sap"` // 同上（snake_case 键）
 	SegmentBase       SegmentBase `json:"SegmentBase"`    // 见下表。url 对应 m4s 文件中，头部的位置。音频流该值恒为空
 	SegmentBaseSnake  SegmentBase `json:"segment_base"`   // 同上（snake_case 键）
-	Codecid           int         `json:"codecid"`        // 码流编码标识代码。含义见 [上表](#视频编码代码)。音频流该值恒为0
+	CodecID           int         `json:"codecid"`        // 码流编码标识代码。含义见 [上表](#视频编码代码)。音频流该值恒为0
 }
 
 type SegmentBase struct {
@@ -493,11 +493,11 @@ type GetVideoStreamResult struct {
 	Message           string          `json:"message"`            // 空？
 	Quality           int             `json:"quality"`            // 清晰度标识。含义见 [上表](#qn视频清晰度标识)
 	Format            string          `json:"format"`             // 视频格式。mp4/flv
-	Timelength        int             `json:"timelength"`         // 视频长度。单位为毫秒。不同分辨率 / 格式可能有略微差异
+	TimeLength        int             `json:"timelength"`         // 视频长度。单位为毫秒。不同分辨率 / 格式可能有略微差异
 	AcceptFormat      string          `json:"accept_format"`      // 支持的全部格式。每项用,分隔
 	AcceptDescription []string        `json:"accept_description"` // 支持的清晰度列表（文字说明）
 	AcceptQuality     []int           `json:"accept_quality"`     // 支持的清晰度列表（代码）。含义见 [上表](#qn视频清晰度标识)
-	VideoCodecid      int             `json:"video_codecid"`      // 默认选择视频流的编码id。含义见 [上表](#视频编码代码)
+	VideoCodecID      int             `json:"video_codecid"`      // 默认选择视频流的编码id。含义见 [上表](#视频编码代码)
 	SeekParam         string          `json:"seek_param"`         // start？
 	SeekType          string          `json:"seek_type"`          // offset（DASH / FLV）？。 second（MP4）？
 	Durl              []Durl          `json:"durl"`               // 视频分段流信息。注：仅 FLV / MP4 格式存在此字段

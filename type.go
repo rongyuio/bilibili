@@ -78,12 +78,12 @@ type VipLabel struct {
 // （SpaceVip 为其别名），空间卡用 camelCase 的 UserCardVip，大会员中心用
 // VipUserVip。字段集不同的变体各自保留独立类型，不做跨接口合并。
 type Vip struct {
-	Viptype            int      `json:"vipType"`              // 大会员类型。0：无。1：月会员。2：年以上会员
-	Vipduedate         int      `json:"vipDueDate"`           // 大会员到期时间。毫秒 时间戳
-	Dueremark          string   `json:"dueRemark"`            // (?)
-	Accessstatus       int      `json:"accessStatus"`         // (?)
-	Vipstatus          int      `json:"vipStatus"`            // 大会员状态。0：无。1：有
-	Vipstatuswarn      string   `json:"vipStatusWarn"`        // (?)
+	VipType            int      `json:"vipType"`              // 大会员类型。0：无。1：月会员。2：年以上会员
+	VipDueDate         int      `json:"vipDueDate"`           // 大会员到期时间。毫秒 时间戳
+	DueRemark          string   `json:"dueRemark"`            // (?)
+	AccessStatus       int      `json:"accessStatus"`         // (?)
+	VipStatus          int      `json:"vipStatus"`            // 大会员状态。0：无。1：有
+	VipStatusWarn      string   `json:"vipStatusWarn"`        // (?)
 	ThemeType          int      `json:"theme_type"`           // 会员样式 id
 	Label              VipLabel `json:"label"`                // 会员铭牌样式
 	AvatarSubscript    int      `json:"avatar_subscript"`     // (?)
@@ -132,7 +132,7 @@ type Member struct {
 	Sign           string         `json:"sign"`            // 发送者签名
 	Avatar         string         `json:"avatar"`          // 发送者头像 url
 	Rank           string         `json:"rank"`            // (?)
-	Displayrank    string         `json:"DisplayRank"`     // (?)
+	DisplayRank    string         `json:"DisplayRank"`     // (?)
 	LevelInfo      LevelInfo      `json:"level_info"`      // 发送者等级
 	Pendant        Pendant        `json:"pendant"`         // 发送者头像框信息
 	Nameplate      Nameplate      `json:"nameplate"`       // 发送者勋章信息
