@@ -27,10 +27,10 @@
 在已有 Go 项目的目录中执行：
 
 ```bash
-go get github.com/rongyuio/bilibili@v0.2.0
+go get github.com/rongyuio/bilibili@v0.3.0
 ```
 
-`v0.2.0` 相对 `v0.1.0` 包含第三、四轮重构：模型去重与文件细分、初始缩写规范化（`Id`→`ID`、`Url`→`URL` 等）、字段命名缺陷修正，以及参数名推导的兼容修复。v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
+`v0.3.0` 相对 `v0.2.0` 包含第五轮重构：字段命名修正（45 处，JSON 标签不变）、重复模型合并为别名、头像渲染树具名化与文件进一步细分，并把 golangci-lint 告警清零、CI 门禁转为阻断。更早的 `v0.2.0` 已含第三、四轮重构（初始缩写规范化 `Id`→`ID`、`Url`→`URL` 等、字段命名缺陷修正、参数名推导兼容修复）。v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
 
 ### 创建客户端并调用接口
 
@@ -112,7 +112,7 @@ if err != nil {
     return
 }
 for _, item := range page.Items {
-    log.Println(item.IdStr.String(), item.Modules.ModuleAuthor.Name)
+    log.Println(item.IDStr.String(), item.Modules.ModuleAuthor.Name)
 }
 ```
 
