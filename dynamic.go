@@ -2,11 +2,9 @@ package bilibili
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/pkg/errors"
 )
 
 type SearchDynamicAtParam struct {
@@ -73,29 +71,18 @@ type DynamicRepostDetail struct {
 					FaceNft int    `json:"face_nft"`
 				} `json:"info"`
 				Card struct {
-					OfficialVerify struct {
-						Type int    `json:"type"`
-						Desc string `json:"desc"`
-					} `json:"official_verify"`
+					OfficialVerify OfficialVerify `json:"official_verify"`
 				} `json:"card"`
 				Vip struct {
-					VipType    int   `json:"vipType"`
-					VipDueDate int64 `json:"vipDueDate"`
-					VipStatus  int   `json:"vipStatus"`
-					ThemeType  int   `json:"themeType"`
-					Label      struct {
-						Path        string `json:"path"`
-						Text        string `json:"text"`
-						LabelTheme  string `json:"label_theme"`
-						TextColor   string `json:"text_color"`
-						BgStyle     int    `json:"bg_style"`
-						BgColor     string `json:"bg_color"`
-						BorderColor string `json:"border_color"`
-					} `json:"label"`
-					AvatarSubscript    int    `json:"avatar_subscript"`
-					NicknameColor      string `json:"nickname_color"`
-					Role               int    `json:"role"`
-					AvatarSubscriptUrl string `json:"avatar_subscript_url"`
+					VipType            int      `json:"vipType"`
+					VipDueDate         int64    `json:"vipDueDate"`
+					VipStatus          int      `json:"vipStatus"`
+					ThemeType          int      `json:"themeType"`
+					Label              VipLabel `json:"label"`
+					AvatarSubscript    int      `json:"avatar_subscript"`
+					NicknameColor      string   `json:"nickname_color"`
+					Role               int      `json:"role"`
+					AvatarSubscriptUrl string   `json:"avatar_subscript_url"`
 				} `json:"vip"`
 				Pendant struct {
 					Pid               int    `json:"pid"`
@@ -225,32 +212,21 @@ type DynamicLikeList struct {
 		FaceUrl  string `json:"face_url"`
 		Uname    string `json:"uname"`
 		UserInfo struct {
-			Uid            int    `json:"uid"`
-			Uname          string `json:"uname"`
-			Face           string `json:"face"`
-			Rank           string `json:"rank"`
-			OfficialVerify struct {
-				Type int    `json:"type"`
-				Desc string `json:"desc"`
-			} `json:"official_verify"`
-			Vip struct {
-				VipType    int   `json:"vipType"`
-				VipDueDate int64 `json:"vipDueDate"`
-				VipStatus  int   `json:"vipStatus"`
-				ThemeType  int   `json:"themeType"`
-				Label      struct {
-					Path        string `json:"path"`
-					Text        string `json:"text"`
-					LabelTheme  string `json:"label_theme"`
-					TextColor   string `json:"text_color"`
-					BgStyle     int    `json:"bg_style"`
-					BgColor     string `json:"bg_color"`
-					BorderColor string `json:"border_color"`
-				} `json:"label"`
-				AvatarSubscript    int    `json:"avatar_subscript"`
-				NicknameColor      string `json:"nickname_color"`
-				Role               int    `json:"role"`
-				AvatarSubscriptUrl string `json:"avatar_subscript_url"`
+			Uid            int            `json:"uid"`
+			Uname          string         `json:"uname"`
+			Face           string         `json:"face"`
+			Rank           string         `json:"rank"`
+			OfficialVerify OfficialVerify `json:"official_verify"`
+			Vip            struct {
+				VipType            int      `json:"vipType"`
+				VipDueDate         int64    `json:"vipDueDate"`
+				VipStatus          int      `json:"vipStatus"`
+				ThemeType          int      `json:"themeType"`
+				Label              VipLabel `json:"label"`
+				AvatarSubscript    int      `json:"avatar_subscript"`
+				NicknameColor      string   `json:"nickname_color"`
+				Role               int      `json:"role"`
+				AvatarSubscriptUrl string   `json:"avatar_subscript_url"`
 			} `json:"vip"`
 			Pendant struct {
 				Pid               int    `json:"pid"`
@@ -317,10 +293,7 @@ type DynamicUpList struct {
 				Face  string `json:"face"`
 			} `json:"info"`
 			Card struct {
-				OfficialVerify struct {
-					Type int    `json:"type"`
-					Desc string `json:"desc"`
-				} `json:"official_verify"`
+				OfficialVerify OfficialVerify `json:"official_verify"`
 			} `json:"card"`
 			Vip struct {
 				VipType       int    `json:"vipType"`
@@ -424,41 +397,23 @@ type DynamicPortal struct {
 			LevelUp      int64 `json:"level_up"`
 			NextExp      int   `json:"next_exp"`
 		} `json:"level_info"`
-		Mid      int      `json:"mid"`  // 账户mid
-		Name     string   `json:"name"` // 账户名称
-		Official struct { // 认证信息
-			Desc  string `json:"desc"`  // 认证备注
-			Role  int    `json:"role"`  // 认证类型，0：无，1 2 7：个人认证，3 4 5 6：机构认证
-			Title string `json:"title"` // 认证信息
-			Type  int    `json:"type"`  // 是否认证，-1：无，0：认证
-		} `json:"official"`
-		SpaceBg string   `json:"space_bg"` // 账户个人中心的背景横幅url
-		Vip     struct { // vip信息
-			AvatarSubscript    int      `json:"avatar_subscript"`     // 是否显示会员图标，0：不显示，1：显示
-			AvatarSubscriptUrl string   `json:"avatar_subscript_url"` // 大会员角标地址
-			DueDate            int64    `json:"due_date"`             // 会员过期时间，Unix时间戳（毫秒）
-			Label              struct { // 会员标签
-				BgColor               string `json:"bg_color"`                  // 会员标签背景颜色，颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
-				BgStyle               int    `json:"bg_style"`                  // 固定值1，作用尚不明确
-				BorderColor           string `json:"border_color"`              // 会员标签边框颜色，未使用
-				ImgLabelUriHans       string `json:"img_label_uri_hans"`        // 固定值空
-				ImgLabelUriHansStatic string `json:"img_label_uri_hans_static"` // 大会员牌子图片，简体版
-				ImgLabelUriHant       string `json:"img_label_uri_hant"`        // 固定值空
-				ImgLabelUriHantStatic string `json:"img_label_uri_hant_static"` // 大会员牌子图片，繁体版
-				LabelTheme            string `json:"label_theme"`               // 会员标签，vip，annual_vip，ten_annual_vip，hundred_annual_vip，fools_day_hundred_annual_vip
-				Path                  string `json:"path"`                      // 固定值空，作用尚不明确
-				Text                  string `json:"text"`                      // 会员类型文案，大会员，年度大会员，十年大会员，百年大会员，最强绿鲤鱼
-				TextColor             string `json:"text_color"`                // 会员标签文字颜色
-				UseImgLabel           bool   `json:"use_img_label"`             // 固定值true
-			} `json:"label"`
-			NicknameColor string `json:"nickname_color"`  // 会员昵称颜色，颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
-			Role          int    `json:"role"`            // 大会员类型，1：月度大会员，3：年度大会员，7：十年大会员，15：百年大会员
-			Status        int    `json:"status"`          // 会员状态，0：无，1：有
-			ThemeType     int    `json:"theme_type"`      // 固定值0，作用尚不明确
-			TvVipPayType  int    `json:"tv_vip_pay_type"` // 电视大会员支付类型
-			TvVipStatus   int    `json:"tv_vip_status"`   // 电视大会员状态，0：未开通
-			Type          int    `json:"type"`            // 会员类型，0：无，1：月大会员，2：年度及以上大会员
-			VipPayType    int    `json:"vip_pay_type"`    // 支付类型，0：未支付，1：已支付
+		Mid      int      `json:"mid"`      // 账户mid
+		Name     string   `json:"name"`     // 账户名称
+		Official Official `json:"official"` // 认证信息
+		SpaceBg  string   `json:"space_bg"` // 账户个人中心的背景横幅url
+		Vip      struct { // vip信息
+			AvatarSubscript    int    `json:"avatar_subscript"`     // 是否显示会员图标，0：不显示，1：显示
+			AvatarSubscriptUrl string `json:"avatar_subscript_url"` // 大会员角标地址
+			DueDate            int64  `json:"due_date"`             // 会员过期时间，Unix时间戳（毫秒）
+			Label              Label  `json:"label"`                // 会员标签
+			NicknameColor      string `json:"nickname_color"`       // 会员昵称颜色，颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
+			Role               int    `json:"role"`                 // 大会员类型，1：月度大会员，3：年度大会员，7：十年大会员，15：百年大会员
+			Status             int    `json:"status"`               // 会员状态，0：无，1：有
+			ThemeType          int    `json:"theme_type"`           // 固定值0，作用尚不明确
+			TvVipPayType       int    `json:"tv_vip_pay_type"`      // 电视大会员支付类型
+			TvVipStatus        int    `json:"tv_vip_status"`        // 电视大会员状态，0：未开通
+			Type               int    `json:"type"`                 // 会员类型，0：无，1：月大会员，2：年度及以上大会员
+			VipPayType         int    `json:"vip_pay_type"`         // 支付类型，0：未支付，1：已支付
 		} `json:"vip"`
 	} `json:"my_info"`
 	UpList []struct { // 最近更新的up主列表
@@ -479,27 +434,32 @@ func (c *Client) GetDynamicPortal(ctx context.Context) (*DynamicPortal, error) {
 	return execute[*DynamicPortal](ctx, c, method, url, nil)
 }
 
-// UploadDynamicBfs 为图片动态上传图片
-func (c *Client) UploadDynamicBfs(ctx context.Context, fileName string, file io.Reader, category string) (url string, size Size, err error) {
-	if err := checkContext(ctx); err != nil {
-		return "", Size{}, err
-	}
-	r := c.newRequest(ctx)
-	biliJct := cookieValue(r.Cookies, "bili_jct")
-	if len(biliJct) == 0 {
-		return "", Size{}, errors.New("B站登录过期")
-	}
-	r.
-		SetFileReader("file_up", fileName, file).SetQueryParams(map[string]string{
-		"category": category,
-		"csrf":     biliJct,
-	})
-	var data struct {
-		ImageUrl    string `json:"image_url"`
-		ImageWidth  int    `json:"image_width"`
-		ImageHeight int    `json:"image_height"`
-	}
-	if err := c.send(r, resty.MethodPost, "https://api.bilibili.com/x/dynamic/feed/draw/upload_bfs", &data); err != nil {
+// UploadDynamicBfsParam 指定图片动态上传参数。文件本身通过 UploadDynamicBfs 的 file 参数传入。
+type UploadDynamicBfsParam struct {
+	Category string `json:"category" request:"query"` // 图片分类
+}
+
+// UploadDynamicBfsResult contains the uploaded image url and its pixel size.
+type UploadDynamicBfsResult struct {
+	ImageUrl    string `json:"image_url"`    // 图片 url
+	ImageWidth  int    `json:"image_width"`  // 图片宽度
+	ImageHeight int    `json:"image_height"` // 图片高度
+}
+
+// UploadDynamicBfs 为图片动态上传图片。
+//
+// 文件字段交由 Resty 生成 multipart boundary；CSRF 从请求 Cookie 快照填入 query。
+func (c *Client) UploadDynamicBfs(ctx context.Context, param UploadDynamicBfsParam, fileName string, file io.Reader) (url string, size Size, err error) {
+	const (
+		method   = resty.MethodPost
+		endpoint = "https://api.bilibili.com/x/dynamic/feed/draw/upload_bfs"
+	)
+	data, err := executeRequest[*UploadDynamicBfsResult](c, c.newRequest(ctx), method, endpoint, param,
+		fillCsrf(c), func(r *resty.Request) error {
+			r.SetFileReader("file_up", fileName, file)
+			return nil
+		})
+	if err != nil {
 		return "", Size{}, err
 	}
 	return data.ImageUrl, Size{Width: data.ImageWidth, Height: data.ImageHeight}, nil
@@ -565,446 +525,4 @@ func (c *Client) GetUserSpaceDynamic(ctx context.Context, param GetUserSpaceDyna
 	return execute[*DynamicInfo](ctx, c, method, url, param)
 }
 
-// DynamicItem is a space feed item, including its original item when reposted.
-type DynamicItem struct {
-	Basic   DynamicItemBasic    `json:"basic"`
-	IdStr   json.Number         `json:"id_str"` // 这个字段，B站返回的数据有时是number，有时是string
-	Modules DynamicItemModules  `json:"modules"`
-	Orig    DynamicOriginalItem `json:"orig,omitempty"`
-	Type    string              `json:"type"`
-	Visible bool                `json:"visible"`
-}
-
-// DynamicInfo is a page of space feed items and its pagination metadata.
-type DynamicInfo struct {
-	HasMore        bool          `json:"has_more"`        // 是否有更多数据
-	Items          []DynamicItem `json:"items"`           // 数据数组
-	Offset         string        `json:"offset"`          // 偏移量，等于items中最后一条记录的id，获取下一页时使用
-	UpdateBaseline string        `json:"update_baseline"` // 更新基线，等于items中第一条记录的id
-	UpdateNum      json.Number   `json:"update_num"`      // 本次获取获取到了多少条新动态，在更新基线以上的动态条数
-}
-
-// DynamicItemBasic contains comment identifiers and actions for a feed item.
-type DynamicItemBasic struct { // 见 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/all.md#data%E5%AF%B9%E8%B1%A1---items%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E5%AF%B9%E8%B1%A1---basic%E5%AF%B9%E8%B1%A1
-	CommentIdStr string `json:"comment_id_str"`
-	CommentType  int    `json:"comment_type"`
-	LikeIcon     struct {
-		ActionUrl string      `json:"action_url"`
-		EndUrl    string      `json:"end_url"`
-		Id        json.Number `json:"id"`
-		StartUrl  string      `json:"start_url"`
-	} `json:"like_icon"`
-	RidStr string `json:"rid_str"`
-}
-
-// DynamicItemModules groups the author, content, actions and counts of a feed item.
-type DynamicItemModules struct {
-	ModuleAuthor  DynamicModuleAuthor  `json:"module_author"`
-	ModuleDynamic DynamicModuleDynamic `json:"module_dynamic"`
-	ModuleMore    DynamicModuleMore    `json:"module_more"`
-	ModuleStat    DynamicModuleStat    `json:"module_stat"`
-}
-
-// DynamicModuleAuthor describes the author of the outer feed item.
-type DynamicModuleAuthor struct {
-	Avatar         DynamicAuthorAvatar `json:"avatar"`
-	Face           string              `json:"face"`
-	FaceNft        bool                `json:"face_nft"`
-	Following      json.Number         `json:"following"` // 关注状态；调试样本返回数字 2，不能按布尔值处理，完整状态含义待确认。
-	JumpUrl        string              `json:"jump_url"`
-	Label          string              `json:"label"`
-	Mid            json.Number         `json:"mid"`
-	Name           string              `json:"name"`
-	OfficialVerify struct {
-		Desc string `json:"desc"`
-		Type int    `json:"type"`
-	} `json:"official_verify"`
-	Pendant struct {
-		Expire            json.Number `json:"expire"`
-		Image             string      `json:"image"`
-		ImageEnhance      string      `json:"image_enhance"`
-		ImageEnhanceFrame string      `json:"image_enhance_frame"`
-		NPid              json.Number `json:"n_pid"`
-		Name              string      `json:"name"`
-		Pid               json.Number `json:"pid"`
-	} `json:"pendant"`
-	PubAction       string      `json:"pub_action"`
-	PubLocationText string      `json:"pub_location_text"`
-	PubTime         string      `json:"pub_time"`
-	PubTs           json.Number `json:"pub_ts"`
-	Type            string      `json:"type"`
-	Vip             struct {
-		AvatarSubscript    int         `json:"avatar_subscript"`
-		AvatarSubscriptUrl string      `json:"avatar_subscript_url"`
-		DueDate            json.Number `json:"due_date"`
-		Label              struct {
-			BgColor               string `json:"bg_color"`
-			BgStyle               int    `json:"bg_style"`
-			BorderColor           string `json:"border_color"`
-			ImgLabelUriHans       string `json:"img_label_uri_hans"`
-			ImgLabelUriHansStatic string `json:"img_label_uri_hans_static"`
-			ImgLabelUriHant       string `json:"img_label_uri_hant"`
-			ImgLabelUriHantStatic string `json:"img_label_uri_hant_static"`
-			LabelTheme            string `json:"label_theme"`
-			Path                  string `json:"path"`
-			Text                  string `json:"text"`
-			TextColor             string `json:"text_color"`
-			UseImgLabel           bool   `json:"use_img_label"`
-		} `json:"label"`
-		NicknameColor string `json:"nickname_color"`
-		Status        int    `json:"status"`
-		ThemeType     int    `json:"theme_type"`
-		Type          int    `json:"type"`
-	} `json:"vip"`
-}
-
-// DynamicAuthorAvatar contains the outer author avatar rendering layers.
-type DynamicAuthorAvatar struct {
-	ContainerSize struct {
-		Height float64 `json:"height"`
-		Width  float64 `json:"width"`
-	} `json:"container_size"`
-	FallbackLayers struct {
-		IsCriticalGroup bool `json:"is_critical_group"`
-		Layers          []struct {
-			GeneralSpec struct {
-				PosSpec struct {
-					AxisX         float64 `json:"axis_x"`
-					AxisY         float64 `json:"axis_y"`
-					CoordinatePos int     `json:"coordinate_pos"`
-				} `json:"pos_spec"`
-				RenderSpec struct {
-					Opacity int `json:"opacity"`
-				} `json:"render_spec"`
-				SizeSpec struct {
-					Height float64 `json:"height"`
-					Width  float64 `json:"width"`
-				} `json:"size_spec"`
-			} `json:"general_spec"`
-			LayerConfig struct {
-				IsCritical bool `json:"is_critical,omitempty"`
-				Tags       struct {
-					AvatarLayer struct {
-					} `json:"AVATAR_LAYER,omitempty"`
-					GeneralCfg struct {
-						ConfigType    int `json:"config_type"`
-						GeneralConfig struct {
-							WebCssStyle struct {
-								BorderRadius    string `json:"borderRadius"`
-								BackgroundColor string `json:"background-color,omitempty"`
-								Border          string `json:"border,omitempty"`
-								BoxSizing       string `json:"boxSizing,omitempty"`
-							} `json:"web_css_style"`
-						} `json:"general_config"`
-					} `json:"GENERAL_CFG"`
-					IconLayer struct{} `json:"ICON_LAYER,omitempty"`
-				} `json:"tags"`
-			} `json:"layer_config"`
-			Resource struct {
-				ResAnimation struct {
-					WebpSrc struct {
-						Placeholder int `json:"placeholder"`
-						Remote      struct {
-							BfsStyle string `json:"bfs_style"`
-							Url      string `json:"url"`
-						} `json:"remote"`
-						SrcType int `json:"src_type"`
-					} `json:"webp_src"`
-				} `json:"res_animation,omitempty"`
-				ResType  int `json:"res_type"`
-				ResImage struct {
-					ImageSrc struct {
-						Local   int `json:"local"`
-						SrcType int `json:"src_type"`
-					} `json:"image_src"`
-				} `json:"res_image,omitempty"`
-			} `json:"resource"`
-			Visible bool `json:"visible"`
-		} `json:"layers"`
-	} `json:"fallback_layers"`
-	Mid string `json:"mid"`
-}
-
-// DynamicModuleDynamic contains the outer item content and optional description and major body.
-type DynamicModuleDynamic struct {
-	Additional any                 `json:"additional"`
-	Desc       *DynamicDescription `json:"desc"`
-	Major      *DynamicMajor       `json:"major"`
-	Topic      any                 `json:"topic"`
-}
-
-// DynamicDescription contains text and rich text nodes for the outer item.
-type DynamicDescription struct {
-	RichTextNodes []struct {
-		OrigText string `json:"orig_text"`
-		Text     string `json:"text"`
-		Type     string `json:"type"`
-		JumpUrl  string `json:"jump_url,omitempty"`
-		Style    any    `json:"style"`
-		Emoji    struct {
-			IconUrl string `json:"icon_url"`
-			Size    int    `json:"size"`
-			Text    string `json:"text"`
-			Type    int    `json:"type"`
-		} `json:"emoji,omitempty"`
-		Rid string `json:"rid,omitempty"`
-	} `json:"rich_text_nodes"`
-	Text string `json:"text"`
-}
-
-// DynamicMajor contains the outer item media body.
-type DynamicMajor struct {
-	Draw    DynamicDraw    `json:"draw,omitempty"`
-	Type    string         `json:"type"`
-	Archive DynamicArchive `json:"archive,omitempty"`
-}
-
-// DynamicModuleMore contains the additional actions offered for a feed item.
-type DynamicModuleMore struct {
-	ThreePointItems []struct {
-		Label string `json:"label"`
-		Type  string `json:"type"`
-	} `json:"three_point_items"`
-}
-
-// DynamicModuleStat contains comment, forward and like counts for a feed item.
-type DynamicModuleStat struct {
-	Comment struct {
-		Count     json.Number `json:"count"`
-		Forbidden bool        `json:"forbidden"`
-	} `json:"comment"`
-	Forward struct {
-		Count     json.Number `json:"count"`
-		Forbidden bool        `json:"forbidden"`
-	} `json:"forward"`
-	Like struct {
-		Count     json.Number `json:"count"`
-		Forbidden bool        `json:"forbidden"`
-		Status    bool        `json:"status"`
-	} `json:"like"`
-}
-
-// DynamicOriginalItem is the original item embedded in a repost; it is not recursive.
-type DynamicOriginalItem struct {
-	Basic   DynamicOriginalBasic   `json:"basic"`
-	IdStr   json.Number            `json:"id_str"`
-	Modules DynamicOriginalModules `json:"modules"`
-	Type    string                 `json:"type"`
-	Visible bool                   `json:"visible"`
-}
-
-// DynamicOriginalBasic contains the original item identifiers, whose types differ from the outer item.
-type DynamicOriginalBasic struct {
-	CommentIdStr string `json:"comment_id_str"`
-	CommentType  int    `json:"comment_type"`
-	LikeIcon     struct {
-		ActionUrl string `json:"action_url"`
-		EndUrl    string `json:"end_url"`
-		Id        int    `json:"id"`
-		StartUrl  string `json:"start_url"`
-	} `json:"like_icon"`
-	RidStr string `json:"rid_str"`
-}
-
-// DynamicOriginalModules groups the author and content of an original item.
-type DynamicOriginalModules struct {
-	ModuleAuthor  DynamicOriginalModuleAuthor  `json:"module_author"`
-	ModuleDynamic DynamicOriginalModuleDynamic `json:"module_dynamic"`
-}
-
-// DynamicOriginalModuleAuthor describes the original author using the original response schema.
-type DynamicOriginalModuleAuthor struct {
-	Avatar   DynamicOriginalAuthorAvatar `json:"avatar"`
-	Decorate struct {
-		CardUrl string `json:"card_url"`
-		Fan     struct {
-			Color  string      `json:"color"`
-			IsFan  bool        `json:"is_fan"`
-			NumStr string      `json:"num_str"`
-			Number json.Number `json:"number"`
-		} `json:"fan"`
-		Id      json.Number `json:"id"`
-		JumpUrl string      `json:"jump_url"`
-		Name    string      `json:"name"`
-		Type    int         `json:"type"`
-	} `json:"decorate,omitempty"`
-	Face           string      `json:"face"`
-	FaceNft        bool        `json:"face_nft"`
-	Following      json.Number `json:"following"` // 关注状态；调试样本返回数字 1，不能按布尔值处理，完整状态含义待确认。
-	JumpUrl        string      `json:"jump_url"`
-	Label          string      `json:"label"`
-	Mid            json.Number `json:"mid"`
-	Name           string      `json:"name"`
-	OfficialVerify struct {
-		Desc string `json:"desc"`
-		Type int    `json:"type"`
-	} `json:"official_verify"`
-	Pendant struct {
-		Expire            json.Number `json:"expire"`
-		Image             string      `json:"image"`
-		ImageEnhance      string      `json:"image_enhance"`
-		ImageEnhanceFrame string      `json:"image_enhance_frame"`
-		NPid              json.Number `json:"n_pid"`
-		Name              string      `json:"name"`
-		Pid               int         `json:"pid"`
-	} `json:"pendant"`
-	PubAction string      `json:"pub_action"`
-	PubTime   string      `json:"pub_time"`
-	PubTs     json.Number `json:"pub_ts"`
-	Type      string      `json:"type"`
-	Vip       struct {
-		AvatarSubscript    int         `json:"avatar_subscript"`
-		AvatarSubscriptUrl string      `json:"avatar_subscript_url"`
-		DueDate            json.Number `json:"due_date"`
-		Label              struct {
-			BgColor               string `json:"bg_color"`
-			BgStyle               int    `json:"bg_style"`
-			BorderColor           string `json:"border_color"`
-			ImgLabelUriHans       string `json:"img_label_uri_hans"`
-			ImgLabelUriHansStatic string `json:"img_label_uri_hans_static"`
-			ImgLabelUriHant       string `json:"img_label_uri_hant"`
-			ImgLabelUriHantStatic string `json:"img_label_uri_hant_static"`
-			LabelTheme            string `json:"label_theme"`
-			Path                  string `json:"path"`
-			Text                  string `json:"text"`
-			TextColor             string `json:"text_color"`
-			UseImgLabel           bool   `json:"use_img_label"`
-		} `json:"label"`
-		NicknameColor string `json:"nickname_color"`
-		Status        int    `json:"status"`
-		ThemeType     int    `json:"theme_type"`
-		Type          int    `json:"type"`
-	} `json:"vip"`
-}
-
-// DynamicOriginalAuthorAvatar contains avatar rendering layers from the original item schema.
-type DynamicOriginalAuthorAvatar struct {
-	ContainerSize struct {
-		Height float64 `json:"height"`
-		Width  float64 `json:"width"`
-	} `json:"container_size"`
-	FallbackLayers struct {
-		IsCriticalGroup bool `json:"is_critical_group"`
-		Layers          []struct {
-			GeneralSpec struct {
-				PosSpec struct {
-					AxisX         float64 `json:"axis_x"`
-					AxisY         float64 `json:"axis_y"`
-					CoordinatePos int     `json:"coordinate_pos"`
-				} `json:"pos_spec"`
-				RenderSpec struct {
-					Opacity int `json:"opacity"`
-				} `json:"render_spec"`
-				SizeSpec struct {
-					Height float64 `json:"height"`
-					Width  float64 `json:"width"`
-				} `json:"size_spec"`
-			} `json:"general_spec"`
-			LayerConfig struct {
-				IsCritical bool `json:"is_critical,omitempty"`
-				Tags       struct {
-					AVATARLAYER struct {
-					} `json:"AVATAR_LAYER,omitempty"`
-					GENERALCFG struct {
-						ConfigType    int `json:"config_type"`
-						GeneralConfig struct {
-							WebCssStyle struct {
-								BorderRadius    string `json:"borderRadius"`
-								BackgroundColor string `json:"background-color,omitempty"`
-								Border          string `json:"border,omitempty"`
-								BoxSizing       string `json:"boxSizing,omitempty"`
-							} `json:"web_css_style"`
-						} `json:"general_config"`
-					} `json:"GENERAL_CFG,omitempty"`
-					PENDENTLAYER struct {
-					} `json:"PENDENT_LAYER,omitempty"`
-					ICONLAYER struct {
-					} `json:"ICON_LAYER,omitempty"`
-				} `json:"tags"`
-			} `json:"layer_config"`
-			Resource struct {
-				ResImage struct {
-					ImageSrc struct {
-						Placeholder int `json:"placeholder,omitempty"`
-						Remote      struct {
-							BfsStyle string `json:"bfs_style"`
-							Url      string `json:"url"`
-						} `json:"remote,omitempty"`
-						SrcType int `json:"src_type"`
-						Local   int `json:"local,omitempty"`
-					} `json:"image_src"`
-				} `json:"res_image"`
-				ResType int `json:"res_type"`
-			} `json:"resource"`
-			Visible bool `json:"visible"`
-		} `json:"layers"`
-	} `json:"fallback_layers"`
-	Mid string `json:"mid"`
-}
-
-// DynamicOriginalModuleDynamic contains the original content; Major retains its value semantics.
-type DynamicOriginalModuleDynamic struct {
-	Additional any                         `json:"additional"`
-	Desc       *DynamicOriginalDescription `json:"desc"`
-	Major      DynamicOriginalMajor        `json:"major"`
-	Topic      any                         `json:"topic"`
-}
-
-// DynamicOriginalDescription contains original rich text nodes, which differ from outer item nodes.
-type DynamicOriginalDescription struct {
-	RichTextNodes []struct {
-		JumpUrl  string `json:"jump_url,omitempty"`
-		OrigText string `json:"orig_text"`
-		Text     string `json:"text"`
-		Type     string `json:"type"`
-		Emoji    struct {
-			IconUrl string `json:"icon_url"`
-			Size    int    `json:"size"`
-			Text    string `json:"text"`
-			Type    int    `json:"type"`
-		} `json:"emoji,omitempty"`
-	} `json:"rich_text_nodes"`
-	Text string `json:"text"`
-}
-
-// DynamicOriginalMajor contains the original media body, retaining its field order.
-type DynamicOriginalMajor struct {
-	Archive DynamicArchive `json:"archive,omitempty"`
-	Type    string         `json:"type"`
-	Draw    DynamicDraw    `json:"draw,omitempty"`
-}
-
-// DynamicArchive describes a video archive in either an outer or original media body.
-type DynamicArchive struct {
-	Aid   string `json:"aid"`
-	Badge struct {
-		BgColor string `json:"bg_color"`
-		Color   string `json:"color"`
-		IconUrl any    `json:"icon_url"`
-		Text    string `json:"text"`
-	} `json:"badge"`
-	Bvid           string `json:"bvid"`
-	Cover          string `json:"cover"`
-	Desc           string `json:"desc"`
-	DisablePreview int    `json:"disable_preview"`
-	DurationText   string `json:"duration_text"`
-	JumpUrl        string `json:"jump_url"`
-	Stat           struct {
-		Danmaku string `json:"danmaku"`
-		Play    string `json:"play"`
-	} `json:"stat"`
-	Title string `json:"title"`
-	Type  int    `json:"type"`
-}
-
-// DynamicDraw describes images in either an outer or original media body.
-type DynamicDraw struct {
-	Id    json.Number `json:"id"`
-	Items []struct {
-		Height json.Number `json:"height"`
-		Size   json.Number `json:"size"`
-		Src    string      `json:"src"`
-		Tags   []any       `json:"tags"`
-		Width  json.Number `json:"width"`
-	} `json:"items"`
-}
+// 空间动态（space feed）响应模型见 dynamic_model.go。

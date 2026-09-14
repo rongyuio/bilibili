@@ -148,14 +148,25 @@ type paramHandler func(*resty.Request) error
 
 func fillCsrf(_ *Client) paramHandler {
 	return func(r *resty.Request) error {
-		csrf := cookieValue(r.Cookies, "bili_jct")
-		if len(csrf) == 0 {
-			return errors.New("B站登录过期")
+		csrf, err := csrfValue(r)
+		if err != nil {
+			return err
 		}
 		r.SetQueryParam("csrf", csrf)
 		r.SetQueryParam("csrf_token", csrf)
 		return nil
 	}
+}
+
+// csrfValue reads bili_jct from the request cookie snapshot and reports a
+// stable error when the session is missing. All interfaces that need CSRF
+// must obtain it through this helper so the failure mode stays consistent.
+func csrfValue(r *resty.Request) (string, error) {
+	csrf := cookieValue(r.Cookies, "bili_jct")
+	if len(csrf) == 0 {
+		return "", errors.New("B站登录过期")
+	}
+	return csrf, nil
 }
 
 func fillParam(key, value string) paramHandler {

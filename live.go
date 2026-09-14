@@ -2,7 +2,6 @@ package bilibili
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"time"
 
@@ -22,9 +21,9 @@ func (c *Client) ReportLiveLike(ctx context.Context, param ReportLiveLikeParam) 
 	_, err := execute[any](ctx, c, resty.MethodPost,
 		"https://api.live.bilibili.com/xlive/app-ucenter/v1/like_info_v3/like/likeReportV3", param,
 		func(r *resty.Request) error {
-			csrf := cookieValue(r.Cookies, "bili_jct")
-			if csrf == "" {
-				return errors.New("B站登录过期")
+			csrf, err := csrfValue(r)
+			if err != nil {
+				return err
 			}
 			// encodeParams 已完成字段编码；仅将本接口字段移入表单，保留客户端默认 query。
 			for _, key := range []string{"click_time", "room_id", "anchor_id", "uid"} {
@@ -74,224 +73,13 @@ func (c *Client) GetLiveActivatedMedalInfo(ctx context.Context, param GetLiveAct
 	return execute[*GetLiveActivatedMedalInfoResult](ctx, c, resty.MethodGet,
 		"https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/GetActivatedMedalInfo", param,
 		func(r *resty.Request) error {
-			csrf := cookieValue(r.Cookies, "bili_jct")
-			if csrf == "" {
-				return errors.New("B站登录过期")
+			csrf, err := csrfValue(r)
+			if err != nil {
+				return err
 			}
 			r.SetQueryParam("csrf", csrf)
 			return nil
 		})
-}
-
-// Models preserve the fields declared by local tools; upstream types have not been verified live.
-
-// GetLiveMedalWallResult contains the corresponding live medal response fields.
-type GetLiveMedalWallResult struct {
-	List            []LiveMedalWallItem `json:"list"`
-	Count           int                 `json:"count"`
-	CloseSpaceMedal int                 `json:"close_space_medal"`
-	OnlyShowWearing int                 `json:"only_show_wearing"`
-	Name            string              `json:"name"`
-	Icon            string              `json:"icon"`
-	Uid             int                 `json:"uid"`
-	Level           int                 `json:"level"`
-}
-
-// LiveMedalWallItem contains the corresponding live medal response fields.
-type LiveMedalWallItem struct {
-	MedalInfo  LiveMedalWallItemMedalInfo  `json:"medal_info"`
-	TargetName string                      `json:"target_name"`
-	TargetIcon string                      `json:"target_icon"`
-	Link       string                      `json:"link"`
-	LiveStatus int                         `json:"live_status"`
-	Official   int                         `json:"official"`
-	UinfoMedal LiveMedalWallItemUinfoMedal `json:"uinfo_medal"`
-}
-
-// LiveMedalWallItemMedalInfo contains the corresponding live medal response fields.
-type LiveMedalWallItemMedalInfo struct {
-	TargetId         int64  `json:"target_id"`
-	Level            int    `json:"level"`
-	MedalName        string `json:"medal_name"`
-	MedalColorStart  int    `json:"medal_color_start"`
-	MedalColorEnd    int    `json:"medal_color_end"`
-	MedalColorBorder int    `json:"medal_color_border"`
-	GuardLevel       int    `json:"guard_level"`
-	WearingStatus    int    `json:"wearing_status"`
-	MedalId          int    `json:"medal_id"`
-	Intimacy         int    `json:"intimacy"`
-	NextIntimacy     int    `json:"next_intimacy"`
-	TodayFeed        int    `json:"today_feed"`
-	DayLimit         int    `json:"day_limit"`
-	GuardIcon        string `json:"guard_icon"`
-	HonorIcon        string `json:"honor_icon"`
-}
-
-// LiveMedalWallItemUinfoMedal contains the corresponding live medal response fields.
-type LiveMedalWallItemUinfoMedal struct {
-	Name               string `json:"name"`
-	Level              int    `json:"level"`
-	ColorStart         int    `json:"color_start"`
-	ColorEnd           int    `json:"color_end"`
-	ColorBorder        int    `json:"color_border"`
-	Color              int    `json:"color"`
-	Id                 int    `json:"id"`
-	Typ                int    `json:"typ"`
-	IsLight            int    `json:"is_light"`
-	Ruid               int64  `json:"ruid"`
-	GuardLevel         int    `json:"guard_level"`
-	Score              int    `json:"score"`
-	GuardIcon          string `json:"guard_icon"`
-	HonorIcon          string `json:"honor_icon"`
-	V2MedalColorStart  string `json:"v2_medal_color_start"`
-	V2MedalColorEnd    string `json:"v2_medal_color_end"`
-	V2MedalColorBorder string `json:"v2_medal_color_border"`
-	V2MedalColorText   string `json:"v2_medal_color_text"`
-	V2MedalColorLevel  string `json:"v2_medal_color_level"`
-	UserReceiveCount   int    `json:"user_receive_count"`
-}
-
-// GetLiveActivatedMedalInfoResult contains the corresponding live medal response fields.
-type GetLiveActivatedMedalInfoResult struct {
-	Face                   string                   `json:"face"`
-	Name                   string                   `json:"name"`
-	MedalName              string                   `json:"medal_name"`
-	FansMedalCount         int                      `json:"fans_medal_count"`
-	Level                  int                      `json:"level"`
-	IsLighted              bool                     `json:"is_lighted"`
-	Intimacy               int                      `json:"intimacy"`
-	NextIntimacy           int                      `json:"next_intimacy"`
-	TaskLightDays          int                      `json:"task_light_days"`
-	TaskInfo               []LiveActivatedMedalTask `json:"task_info"`
-	FansClubGiftInfo       LiveActivatedMedalGift   `json:"fans_club_gift_info"`
-	MedalColorBorder       string                   `json:"medal_color_border"`
-	MedalColor             string                   `json:"medal_color"`
-	MedalColorText         string                   `json:"medal_color_text"`
-	MedalColorLevel        string                   `json:"medal_color_level"`
-	GuardLevel             int                      `json:"guard_level"`
-	LightSource            int                      `json:"light_source"`
-	FreeIntimacy           int                      `json:"free_intimacy"`
-	ReachFreeIntimacyLimit bool                     `json:"reach_free_intimacy_limit"`
-}
-
-// LiveActivatedMedalTask contains the corresponding live medal response fields.
-type LiveActivatedMedalTask struct {
-	Icon        string `json:"icon"`
-	Title       string `json:"title"`
-	SubTitle    string `json:"sub_title"`
-	AddText     string `json:"add_text"`
-	JumpType    string `json:"jump_type"`
-	IsDone      bool   `json:"is_done"`
-	IconGuard   string `json:"icon_guard"`
-	IconAdmiral string `json:"icon_admiral"`
-	IconCaptain string `json:"icon_captain"`
-}
-
-// LiveActivatedMedalGift contains the corresponding live medal response fields.
-type LiveActivatedMedalGift struct {
-	GiftId           int         `json:"gift_id"`
-	Price            int         `json:"price"`
-	GiftDiscountInfo interface{} `json:"gift_discount_info"`
-}
-
-// GetLiveFansMedalPanelResult contains the corresponding live medal response fields.
-type GetLiveFansMedalPanelResult struct {
-	List        []LiveFansMedalPanelItem   `json:"list"`
-	SpecialList []LiveFansMedalPanelItem   `json:"special_list"`
-	BottomBar   interface{}                `json:"bottom_bar"`
-	PageInfo    LiveFansMedalPanelPageInfo `json:"page_info"`
-	TotalNumber int                        `json:"total_number"`
-	HasMedal    int                        `json:"has_medal"`
-	GroupMedal  interface{}                `json:"group_medal"`
-}
-
-// LiveFansMedalPanelPageInfo contains the corresponding live medal response fields.
-type LiveFansMedalPanelPageInfo struct {
-	Number          int  `json:"number"`
-	CurrentPage     int  `json:"current_page"` // 当前页码
-	HasMore         bool `json:"has_more"`     // 始终为true,不能依靠它判断
-	NextPage        int  `json:"next_page"`
-	NextLightStatus int  `json:"next_light_status"`
-	TotalPage       int  `json:"total_page"` // 总页数
-}
-
-// LiveFansMedalPanelItem contains the corresponding live medal response fields.
-type LiveFansMedalPanelItem struct {
-	Medal       LiveFansMedalPanelItemMedal      `json:"medal"`
-	AnchorInfo  LiveFansMedalPanelItemAnchorInfo `json:"anchor_info"`
-	Superscript interface{}                      `json:"superscript"`
-	RoomInfo    LiveFansMedalPanelItemRoomInfo   `json:"room_info"`
-	UinfoMedal  LiveFansMedalPanelItemUinfoMedal `json:"uinfo_medal"`
-}
-
-// LiveFansMedalPanelItemMedal contains the corresponding live medal response fields.
-type LiveFansMedalPanelItemMedal struct {
-	Uid                int         `json:"uid"`
-	TargetId           int         `json:"target_id"`
-	TargetName         string      `json:"target_name"`
-	MedalId            int         `json:"medal_id"`
-	Level              int         `json:"level"`
-	MedalName          string      `json:"medal_name"`
-	MedalColor         int         `json:"medal_color"`
-	Intimacy           int         `json:"intimacy"`
-	NextIntimacy       int         `json:"next_intimacy"`
-	DayLimit           int         `json:"day_limit"`
-	TodayFeed          int         `json:"today_feed"`
-	MedalColorStart    int         `json:"medal_color_start"`
-	MedalColorEnd      int         `json:"medal_color_end"`
-	MedalColorBorder   int         `json:"medal_color_border"`
-	IsLighted          int         `json:"is_lighted"`
-	GuardLevel         int         `json:"guard_level"`
-	WearingStatus      int         `json:"wearing_status"`
-	MedalIconId        int         `json:"medal_icon_id"`
-	MedalIconUrl       string      `json:"medal_icon_url"`
-	GuardIcon          string      `json:"guard_icon"`
-	HonorIcon          string      `json:"honor_icon"`
-	CanDelete          bool        `json:"can_delete"`
-	V2MedalColorStart  string      `json:"v2_medal_color_start"`
-	V2MedalColorEnd    string      `json:"v2_medal_color_end"`
-	V2MedalColorBorder string      `json:"v2_medal_color_border"`
-	V2MedalColorText   string      `json:"v2_medal_color_text"`
-	V2MedalColorLevel  string      `json:"v2_medal_color_level"`
-	DayLimitExtra      interface{} `json:"day_limit_extra"`
-}
-
-// LiveFansMedalPanelItemAnchorInfo contains the corresponding live medal response fields.
-type LiveFansMedalPanelItemAnchorInfo struct {
-	NickName string `json:"nick_name"`
-	Avatar   string `json:"avatar"`
-	Verify   int    `json:"verify"`
-}
-
-// LiveFansMedalPanelItemRoomInfo contains the corresponding live medal response fields.
-type LiveFansMedalPanelItemRoomInfo struct {
-	RoomId       int    `json:"room_id"`
-	LivingStatus int    `json:"living_status"`
-	Url          string `json:"url"`
-}
-
-// LiveFansMedalPanelItemUinfoMedal contains the corresponding live medal response fields.
-type LiveFansMedalPanelItemUinfoMedal struct {
-	Name               string `json:"name"`
-	Level              int    `json:"level"`
-	ColorStart         int    `json:"color_start"`
-	ColorEnd           int    `json:"color_end"`
-	ColorBorder        int    `json:"color_border"`
-	Color              int    `json:"color"`
-	Id                 int    `json:"id"`
-	Typ                int    `json:"typ"`
-	IsLight            int    `json:"is_light"`
-	Ruid               int    `json:"ruid"`
-	GuardLevel         int    `json:"guard_level"`
-	Score              int    `json:"score"`
-	GuardIcon          string `json:"guard_icon"`
-	HonorIcon          string `json:"honor_icon"`
-	V2MedalColorStart  string `json:"v2_medal_color_start"`
-	V2MedalColorEnd    string `json:"v2_medal_color_end"`
-	V2MedalColorBorder string `json:"v2_medal_color_border"`
-	V2MedalColorText   string `json:"v2_medal_color_text"`
-	V2MedalColorLevel  string `json:"v2_medal_color_level"`
-	UserReceiveCount   int    `json:"user_receive_count"`
 }
 
 type GetLiveRoomInfoParam struct {
@@ -465,34 +253,39 @@ func (c *Client) StartLive(ctx context.Context, param StartLiveParam) (*StartLiv
 		url    = "https://api.live.bilibili.com/room/v1/Room/startLive"
 	)
 
-	// 如果没有提供签名，自动计算
+	// 未提供签名时按直播姬协议自动计算，签名依赖 Cookie 快照中的 CSRF。
 	if param.Sign == "" && param.Appkey == "" {
-		// 已知的 Bilibili 直播姬的密钥和对应的秘钥
-		// 这些是公开的常量，用于计算 API 签名
-		const (
-			appKey    = "aae92bc66f3edfab"
-			appSecret = "af125a0d5279fd576c1b4418a3e8276d" //nolint:gosec
-		)
-		if param.Ts == 0 {
-			param.Ts = int(time.Now().Unix())
-		}
-		param.Appkey = appKey
-		csrf := cookieValue(r.Cookies, "bili_jct")
-		signParams := map[string]string{
-			"appkey":     param.Appkey,
-			"build":      strconv.Itoa(param.Build),
-			"platform":   param.Platform,
-			"room_id":    strconv.Itoa(param.RoomId),
-			"area_v2":    strconv.Itoa(param.AreaV2),
-			"ts":         strconv.Itoa(param.Ts),
-			"version":    param.Version,
-			"csrf":       csrf,
-			"csrf_token": csrf,
-		}
-		param.Sign = calculateAppSign(signParams, appSecret)
+		param = signStartLiveParam(param, cookieValue(r.Cookies, "bili_jct"))
 	}
 
 	return executeRequest[*StartLiveResult](c, r, method, url, param, fillCsrf(c))
+}
+
+// signStartLiveParam fills the appkey/sign pair required by the startLive
+// signature protocol, using public live-client credentials.
+func signStartLiveParam(param StartLiveParam, csrf string) StartLiveParam {
+	// 已知的 Bilibili 直播姬的密钥和对应的秘钥。
+	// 这些是公开的常量，用于计算 API 签名。
+	const (
+		appKey    = "aae92bc66f3edfab"
+		appSecret = "af125a0d5279fd576c1b4418a3e8276d" //nolint:gosec
+	)
+	if param.Ts == 0 {
+		param.Ts = int(time.Now().Unix())
+	}
+	param.Appkey = appKey
+	param.Sign = calculateAppSign(map[string]string{
+		"appkey":     param.Appkey,
+		"build":      strconv.Itoa(param.Build),
+		"platform":   param.Platform,
+		"room_id":    strconv.Itoa(param.RoomId),
+		"area_v2":    strconv.Itoa(param.AreaV2),
+		"ts":         strconv.Itoa(param.Ts),
+		"version":    param.Version,
+		"csrf":       csrf,
+		"csrf_token": csrf,
+	}, appSecret)
+	return param
 }
 
 type StopLiveParam struct {

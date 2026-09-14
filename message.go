@@ -71,6 +71,7 @@ type SendPrivateMessageParam struct {
 	Timestamp      int         `json:"msg[timestamp]"`                                            // 时间戳（秒）
 	NewFaceVersion int         `json:"msg[new_face_version],omitempty" request:"query,omitempty"` // 表情包版本
 	Content        json.Number `json:"msg[content]"`                                              // 消息内容。发送文字时：str<br />撤回消息时：num
+	DeviceId       string      `json:"-" request:"query,field=msg[dev_id]"`                       // 设备 id，留空时由 SendPrivateMessage 填入进程内随机生成的设备标识
 }
 
 type SendPrivateMessageResult struct {
@@ -85,10 +86,10 @@ func (c *Client) SendPrivateMessage(ctx context.Context, param SendPrivateMessag
 		method = resty.MethodPost
 		url    = "https://api.vc.bilibili.com/web_im/v1/web_im/send_msg"
 	)
-	return execute[*SendPrivateMessageResult](ctx, c, method, url, param, fillCsrf(c), func(request *resty.Request) error {
-		request.SetQueryParam("msg[dev_id]", deviceId)
-		return nil
-	})
+	if param.DeviceId == "" {
+		param.DeviceId = deviceId
+	}
+	return execute[*SendPrivateMessageResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type GetPrivateMessageRecordsParam struct {

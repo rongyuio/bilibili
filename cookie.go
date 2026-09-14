@@ -42,14 +42,17 @@ type (
 // 正则匹配 <div id="1-name">RefreshCsrf</div> 中的刷新口令
 var refreshCsrfRegex = regexp.MustCompile(`<div\s+id="1-name"\s*>(.*?)</div>`)
 
-// GetWebCookieRefreshCsrf 获取web端cookie刷新口令
+// GetWebCookieRefreshCsrf 获取web端cookie刷新口令。
+//
+// 该接口返回 HTML 页面而非 code/message/data 结构，无法复用 execute；
+// 仍通过 newRequest/sendRaw 保持 Cookie 快照与响应 Cookie 合并语义。
 func (c *Client) GetWebCookieRefreshCsrf(ctx context.Context, param GetWebCookieRefreshCsrfParam) (*GetWebCookieRefreshCsrfResult, error) {
 	if err := checkContext(ctx); err != nil {
 		return nil, err
 	}
 	correspondPath, err := getCorrespondPath(param.Timestamp)
 	if err != nil {
-		return nil, fmt.Errorf("getCorrespondPath failed: %w", err)
+		return nil, fmt.Errorf("getCorrespondPath: %w", err)
 	}
 
 	url := "https://www.bilibili.com/correspond/1/" + correspondPath
@@ -63,7 +66,7 @@ func (c *Client) GetWebCookieRefreshCsrf(ctx context.Context, param GetWebCookie
 
 	matches := refreshCsrfRegex.FindStringSubmatch(response.String())
 	if len(matches) < 2 {
-		return nil, errors.Errorf("Failed to match RefreshCsrf")
+		return nil, errors.New("refresh CSRF not found in correspond page")
 	}
 
 	return &GetWebCookieRefreshCsrfResult{RefreshCsrf: matches[1]}, nil
@@ -71,10 +74,10 @@ func (c *Client) GetWebCookieRefreshCsrf(ctx context.Context, param GetWebCookie
 
 type (
 	RefreshCookieParam struct {
-		Csrf         string `json:"csrf,omitempty"`   // 位于 Cookie 中的bili_jct字段，不传将当前 client 中获取
-		RefreshCsrf  string `json:"refresh_csrf"`     // 实时刷新口令
-		Source       string `json:"source,omitempty"` // 访问来源，一般为：main_web
-		RefreshToken string `json:"refresh_token"`    // 在登录成功时返回的持久化刷新口令，localStorage 中的ac_time_value字段
+		Csrf         string `json:"csrf,omitempty" request:"query,omitempty"`                    // 位于 Cookie 中的bili_jct字段，不传将当前 client 中获取
+		RefreshCsrf  string `json:"refresh_csrf" request:"query"`                                // 实时刷新口令
+		Source       string `json:"source,omitempty" request:"query,omitempty,default=main_web"` // 访问来源，一般为：main_web
+		RefreshToken string `json:"refresh_token" request:"query"`                               // 在登录成功时返回的持久化刷新口令，localStorage 中的ac_time_value字段
 	}
 	RefreshCookieResult struct {
 		Status       int    `json:"status"`        // 未知
@@ -85,22 +88,18 @@ type (
 
 // RefreshCookie 刷新Cookie
 func (c *Client) RefreshCookie(ctx context.Context, param RefreshCookieParam) (*RefreshCookieResult, error) {
-	if err := checkContext(ctx); err != nil {
-		return nil, err
-	}
-	r := c.newRequest(ctx)
+	// Csrf falls back to the cookie snapshot when the caller omits it; unlike
+	// fillCsrf this interface tolerates an empty value and lets the server decide.
 	if param.Csrf == "" {
+		r := c.newRequest(ctx)
 		param.Csrf = cookieValue(r.Cookies, "bili_jct")
-	}
-	if param.Source == "" {
-		param.Source = "main_web"
 	}
 	const (
 		method = resty.MethodPost
 		url    = "https://passport.bilibili.com/x/passport-login/web/cookie/refresh"
 	)
 
-	return executeRequest[*RefreshCookieResult](c, r, method, url, param)
+	return execute[*RefreshCookieResult](ctx, c, method, url, param)
 }
 
 func init() {

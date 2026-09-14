@@ -14,6 +14,9 @@ type GetCommentsDetailParam struct {
 	Pn        int    `json:"pn,omitempty" request:"query,omitempty"`         // 页码。默认为1
 }
 
+// CommentsPage 评论区页码信息。
+//
+// 额外包含根评论条数与总计条数，语义与其他业务分页不同，保留独立类型。
 type CommentsPage struct {
 	Num    int `json:"num"`    // 当前页码
 	Size   int `json:"size"`   // 每页项数
