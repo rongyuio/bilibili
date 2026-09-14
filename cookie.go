@@ -58,7 +58,7 @@ func (c *Client) GetWebCookieRefreshCsrf(ctx context.Context, param GetWebCookie
 		return nil, fmt.Errorf("request refresh CSRF: %w", err)
 	}
 	if !response.IsSuccess() {
-		return nil, fmt.Errorf("request refresh CSRF: HTTP status %d", response.StatusCode())
+		return nil, fmt.Errorf("request refresh CSRF: %w", newHTTPError(resty.MethodGet, url, response.StatusCode()))
 	}
 
 	matches := refreshCsrfRegex.FindStringSubmatch(response.String())

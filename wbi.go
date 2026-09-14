@@ -353,7 +353,7 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return errors.Errorf("status code: %d", resp.StatusCode())
+		return newHTTPError(resty.MethodGet, "https://api.bilibili.com/x/web-interface/nav", resp.StatusCode())
 	}
 
 	if err := decodeWBIResponse(resp.Body(), &result); err != nil {

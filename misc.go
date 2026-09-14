@@ -28,7 +28,7 @@ func (c *Client) UnwrapShortUrl(ctx context.Context, shortUrl string) (string, a
 		return "", nil, errors.WithStack(err)
 	}
 	if resp.StatusCode() != 302 {
-		return "", nil, errors.Errorf("解析短链接失败，status code: %d", resp.StatusCode())
+		return "", nil, errors.Wrap(newHTTPError(resty.MethodGet, shortUrl, resp.StatusCode()), "解析短链接失败")
 	}
 	url := resp.Header().Get("Location")
 	{

@@ -139,7 +139,7 @@ func (c *Client) send(r *resty.Request, method, endpoint string, out any) error 
 		return err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return fmt.Errorf("%s %s: HTTP status %d", method, safeEndpoint(endpoint), resp.StatusCode())
+		return newHTTPError(method, endpoint, resp.StatusCode())
 	}
 	return decodeResponse(method, endpoint, resp.Body(), out)
 }

@@ -61,7 +61,7 @@ func NewAnonymousClient(ctx context.Context) (*Client, error) {
 		return nil, fmt.Errorf("initialize anonymous client: %w", err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("initialize anonymous client: HTTP status %d", resp.StatusCode())
+		return nil, fmt.Errorf("initialize anonymous client: %w", newHTTPError(resty.MethodGet, endpoint, resp.StatusCode()))
 	}
 	if len(client.GetCookies()) == 0 {
 		return nil, fmt.Errorf("initialize anonymous client: response contains no valid cookies")

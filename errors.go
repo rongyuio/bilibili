@@ -5,6 +5,23 @@ import (
 	"net/url"
 )
 
+// HTTPError reports a response status rejected by an endpoint's success rules.
+// Endpoint omits query parameters, user information and fragments in library errors.
+// It does not contain response bodies, request headers or transport errors.
+type HTTPError struct {
+	Method     string
+	Endpoint   string
+	StatusCode int
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("%s %s: HTTP status %d", e.Method, e.Endpoint, e.StatusCode)
+}
+
+func newHTTPError(method, endpoint string, statusCode int) *HTTPError {
+	return &HTTPError{Method: method, Endpoint: safeEndpoint(endpoint), StatusCode: statusCode}
+}
+
 // ParamError identifies an invalid request parameter. GoField includes a slice
 // index when conversion of an element fails. Empty fields indicate a root error.
 // Error omits parameter values and the cause text; Err may contain sensitive data.
