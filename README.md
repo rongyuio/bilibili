@@ -410,6 +410,39 @@ for _, param := range params { // params 为调用方的视频参数列表
 
 本地批量工具已接入中断信号，取消后停止翻页、后续账号操作及等待；配置加载和独立 HTTP 工具不在本次迁移范围。取消不保证服务端撤销已经收到的写操作，不应据此自动重试。`test/` 被忽略，这些适配不随 Git 提交分发。此次仅通过编译和静态检查，未验证实机取消行为。
 
+## 参数编码与错误定位
+
+内置接口先完成参数编码，再向请求应用 query、请求体和头部；编码失败不写入部分参数，也不会继续签名或发送请求。公开网络方法签名及现有业务参数位置不变，`Client.Do` 的 `Query`、`Form`、`JSON` 仍按原有方式使用。以下标签规则用于内置接口的参数结构体，不用于 `Client.Do` 的 JSON 对象。
+
+| 规则 | 行为 |
+| --- | --- |
+| 未指定位置／`request:"query"` | 放入 URL 查询参数，POST 方法也不自动改为表单 |
+| `request:"json"` | 作为 JSON 请求体字段，保留标准库编码语义 |
+| `request:"form-data"` | 转换为 multipart 文本字段，由 Resty 构造请求体和 boundary |
+| `request:"-"` | 跳过字段；未导出字段同样跳过 |
+| `request:"field=name"` | 优先使用该名称，其次取 JSON 标签名，最后使用原有 snake_case 规则 |
+| `request:"omitempty,default=1"` | 零值优先省略；未指定省略时才使用字符串默认值 |
+
+保留历史零值语义：非 nil 指针即使指向零值也不算零值；空但非 nil 的切片不算零值。query 切片仍按元素转换后用逗号拼接，nil 切片为 `""`，其默认值继续不参与拼接；multipart 文本切片使用相同规则。JSON 中的 `default=1` 仍是字符串 `"1"`，不会按 Go 字段类型转换成数字。
+
+只有 `request` 标签控制请求省略；`json:"-"` 不等于 `request:"-"`，`json:",omitempty"` 也不新增请求省略行为。nil 参数或 nil 指针继续视为未传参；非 nil 参数仅接受结构体或一层结构体指针。没有实际参与编码的字段时，请求保持原状。
+
+query 可以与一种请求体并存，不再因字段排列覆盖 Content-Type。实际参与编码的字段若同时声明多个位置，或混用 JSON 与 multipart，返回错误；已被省略的字段不参与冲突判断。multipart 不再通过普通 map 加请求头模拟，因此依赖该内部表示的代码需要调整。当前业务参数没有使用 JSON/multipart 标签，图片上传的专用实现保持原样。
+
+```go
+var pe *bilibili.ParamError
+if errors.As(err, &pe) {
+    log.Printf("参数类型=%s Go字段=%s 参数名=%s 位置=%s",
+        pe.RootType, pe.GoField, pe.Parameter, pe.Location)
+}
+```
+
+`GoField` 可为 `Ids[2]`；整体参数类型错误的字段、参数名和位置为空。JSON 编码错误定位到顶层参数字段，底层 `*json.MarshalerError` 等错误可继续解包；不会重复执行自定义编码器来探测内部路径。内置请求的错误外层还包含 HTTP 方法及去除查询参数的接口地址。
+
+参数转换失败现在明确返回错误，不再静默变为空字符串。正常错误文本不包含参数值或原始错误文本；`ParamError.Err` 保留底层错误，可能含有原始值，不要直接写入日志。`Client.Do` 的手工 JSON 编码错误不转换为 `ParamError`。
+
+本阶段仅通过 `go build ./...` 和 `go vet ./...`，已有测试源码按新的 JSON/multipart 内部表示及错误类型适配，未新增或执行测试、未访问真实 API，multipart 的线上行为尚未验证。
+
 ## Star History
 
 <a href="https://star-history.com/#CuteReimu/bilibili&Date">
