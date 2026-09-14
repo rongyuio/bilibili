@@ -33,7 +33,7 @@ type GetDynamicLotteryInfoParam struct {
 	DeviceReqJSON string `json:"x-bili-device-req-json"` // 设备请求信息 JSON 字符串，进入 query
 }
 
-// GetDynamicLotteryInfo 查询用户抽奖动态的抽奖信息，不据此决定是否删除动态。
+// GetDynamicLotteryInfo 查询用户抽奖动态的抽奖信息
 func (c *Client) GetDynamicLotteryInfo(ctx context.Context, param GetDynamicLotteryInfoParam) (*GetDynamicLotteryInfoResult, error) {
 	return execute[*GetDynamicLotteryInfoResult](ctx, c, resty.MethodGet,
 		"https://api.vc.bilibili.com/lottery_svr/v1/lottery_svr/lottery_notice", param)
