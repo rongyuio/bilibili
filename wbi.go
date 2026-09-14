@@ -32,38 +32,6 @@ var (
 	}
 )
 
-type Storage interface {
-	Set(key string, value any)
-	Get(key string) (v any, isSet bool)
-}
-
-type MemoryStorage struct {
-	data map[string]any
-	mu   sync.RWMutex
-}
-
-// Set 设置值
-func (impl *MemoryStorage) Set(key string, value any) {
-	impl.mu.Lock()
-	defer impl.mu.Unlock()
-
-	if impl.data == nil {
-		impl.data = make(map[string]any)
-	}
-	impl.data[key] = value
-}
-
-// Get 获取值, isSet 表示值是否存在
-func (impl *MemoryStorage) Get(key string) (v any, isSet bool) {
-	impl.mu.RLock()
-	defer impl.mu.RUnlock()
-
-	if v, isSet = impl.data[key]; isSet {
-		return v, true
-	}
-	return nil, false
-}
-
 // WBI 签名实现
 // 如果希望以登录的方式获取则使用 WithCookies or WithRawCookies 设置cookie
 // 如果希望以未登录的方式获取 WithCookies(nil) 设置cookie为 nil 即可, 这是 Default 行为
