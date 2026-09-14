@@ -24,14 +24,14 @@ type SendPrivateMessageResult struct {
 }
 
 type Message struct {
-	SenderUid      int    `json:"sender_uid"`       // 发送者uid。注意名称是sender_uid
+	SenderUID      int    `json:"sender_uid"`       // 发送者uid。注意名称是sender_uid
 	ReceiverType   int    `json:"receiver_type"`    // 与session_type对应。1为用户，2为粉丝团
-	ReceiverId     int    `json:"receiver_id"`      // 接收者uid。注意名称是receiver_id
+	ReceiverID     int    `json:"receiver_id"`      // 接收者uid。注意名称是receiver_id
 	MsgType        int    `json:"msg_type"`         // 消息类型。1:文字消息。2:图片消息。5:撤回的消息。12、13:通知
 	Content        string `json:"content"`          // 消息内容。此处存在设计缺陷
 	MsgSeqno       int    `json:"msg_seqno"`        // 消息序列号，保证按照时间顺序从小到大
 	Timestamp      int    `json:"timestamp"`        // 消息发送时间戳
-	AtUids         []int  `json:"at_uids"`          // 未知
+	AtUIDs         []int  `json:"at_uids"`          // 未知
 	MsgKey         int    `json:"msg_key"`          // 未知
 	MsgStatus      int    `json:"msg_status"`       // 消息状态。0
 	NotifyCode     string `json:"notify_code"`      // 未知
@@ -40,7 +40,7 @@ type Message struct {
 
 type EInfo struct {
 	Text string `json:"text"` // 表情名称
-	Uri  string `json:"uri"`  // 表情链接
+	URI  string `json:"uri"`  // 表情链接
 	Size int    `json:"size"` // 表情尺寸。1
 }
 
@@ -54,9 +54,9 @@ type PrivateMessageRecords struct {
 
 // PrivateMessageLastMsg 是会话中最后一条消息。
 type PrivateMessageLastMsg struct {
-	SenderUid      int64  `json:"sender_uid"`
+	SenderUID      int64  `json:"sender_uid"`
 	ReceiverType   int    `json:"receiver_type"`
-	ReceiverId     int    `json:"receiver_id"`
+	ReceiverID     int    `json:"receiver_id"`
 	MsgType        int    `json:"msg_type"`
 	Content        string `json:"content"`
 	MsgSeqno       int64  `json:"msg_seqno"`
@@ -70,12 +70,12 @@ type PrivateMessageLastMsg struct {
 // PrivateMessageAccountInfo 是会话对方的账号信息。
 type PrivateMessageAccountInfo struct {
 	Name   string `json:"name"`
-	PicUrl string `json:"pic_url"`
+	PicURL string `json:"pic_url"`
 }
 
 // PrivateMessageSession 是一个私信会话。
 type PrivateMessageSession struct {
-	TalkerId          int64                     `json:"talker_id"`
+	TalkerID          int64                     `json:"talker_id"`
 	SessionType       int                       `json:"session_type"`
 	AtSeqno           int                       `json:"at_seqno"`
 	TopTs             int                       `json:"top_ts"`

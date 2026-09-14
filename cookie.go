@@ -30,14 +30,13 @@ func (c *Client) GetWebCookieRefreshInfo(ctx context.Context) (*GetWebCookieRefr
 	return execute[*GetWebCookieRefreshInfoResult](ctx, c, method, url, nil)
 }
 
-type (
-	GetWebCookieRefreshCsrfParam struct {
-		Timestamp int64 `json:"timestamp"` // 毫秒时间戳
-	}
-	GetWebCookieRefreshCsrfResult struct {
-		RefreshCsrf string `json:"refresh_csrf"` // 实时刷新口令
-	}
-)
+type GetWebCookieRefreshCsrfParam struct {
+	Timestamp int64 `json:"timestamp"` // 毫秒时间戳
+}
+
+type GetWebCookieRefreshCsrfResult struct {
+	RefreshCsrf string `json:"refresh_csrf"` // 实时刷新口令
+}
 
 // 正则匹配 <div id="1-name">RefreshCsrf</div> 中的刷新口令
 var refreshCsrfRegex = regexp.MustCompile(`<div\s+id="1-name"\s*>(.*?)</div>`)
@@ -72,19 +71,18 @@ func (c *Client) GetWebCookieRefreshCsrf(ctx context.Context, param GetWebCookie
 	return &GetWebCookieRefreshCsrfResult{RefreshCsrf: matches[1]}, nil
 }
 
-type (
-	RefreshCookieParam struct {
-		Csrf         string `json:"csrf,omitempty" request:"query,omitempty"`                    // 位于 Cookie 中的bili_jct字段，不传将当前 client 中获取
-		RefreshCsrf  string `json:"refresh_csrf" request:"query"`                                // 实时刷新口令
-		Source       string `json:"source,omitempty" request:"query,omitempty,default=main_web"` // 访问来源，一般为：main_web
-		RefreshToken string `json:"refresh_token" request:"query"`                               // 在登录成功时返回的持久化刷新口令，localStorage 中的ac_time_value字段
-	}
-	RefreshCookieResult struct {
-		Status       int    `json:"status"`        // 未知
-		Message      string `json:"message"`       // 未知
-		RefreshToken string `json:"refresh_token"` // 新的持久化刷新口令
-	}
-)
+type RefreshCookieParam struct {
+	Csrf         string `json:"csrf,omitempty" request:"query,omitempty"`                    // 位于 Cookie 中的bili_jct字段，不传将当前 client 中获取
+	RefreshCsrf  string `json:"refresh_csrf" request:"query"`                                // 实时刷新口令
+	Source       string `json:"source,omitempty" request:"query,omitempty,default=main_web"` // 访问来源，一般为：main_web
+	RefreshToken string `json:"refresh_token" request:"query"`                               // 在登录成功时返回的持久化刷新口令，localStorage 中的ac_time_value字段
+}
+
+type RefreshCookieResult struct {
+	Status       int    `json:"status"`        // 未知
+	Message      string `json:"message"`       // 未知
+	RefreshToken string `json:"refresh_token"` // 新的持久化刷新口令
+}
 
 // RefreshCookie 刷新Cookie
 func (c *Client) RefreshCookie(ctx context.Context, param RefreshCookieParam) (*RefreshCookieResult, error) {

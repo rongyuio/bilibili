@@ -2,12 +2,13 @@ package bilibili
 
 // 视频相关响应模型。
 //
-// Owner 等作者模型保留独立定义，不与其他业务的作者类型合并。
+// Owner 是视频与收藏夹共用的作者简要信息（mid/name/face），FavourUpper 为其别名；
+// Author、DynamicUpUserInfo 等其余作者类型字段集不同，保留独立定义。
 
 type DescV2 struct {
 	RawText string `json:"raw_text"` // 简介内容。type=1时显示原文。type=2时显示'@'+raw_text+' '并链接至biz_id的主页
 	Type    int    `json:"type"`     // 类型。1：普通，2：@他人
-	BizId   int    `json:"biz_id"`   // 被@用户的mid。=0，当type=1
+	BizID   int    `json:"biz_id"`   // 被@用户的mid。=0，当type=1
 }
 
 type VideoRights struct {
@@ -31,6 +32,9 @@ type VideoRights struct {
 	FreeWatch     int `json:"free_watch"`      // 0。作用尚不明确
 }
 
+// Owner 是视频稿件与收藏夹内容共用的作者简要信息。
+//
+// FavourUpper 为本类型的别名；其余业务的作者类型字段集不同，保留独立定义。
 type Owner struct {
 	Mid  int    `json:"mid"`  // UP主mid
 	Name string `json:"name"` // UP主昵称
@@ -66,18 +70,13 @@ type VideoSubtitleAuthor struct {
 }
 
 type VideoSubtitle struct {
-	Id          int                 `json:"id"`           // 字幕id
+	ID          int                 `json:"id"`           // 字幕id
 	Lan         string              `json:"lan"`          // 字幕语言
 	LanDoc      string              `json:"lan_doc"`      // 字幕语言名称
 	IsLock      bool                `json:"is_lock"`      // 是否锁定
 	AuthorMid   int                 `json:"author_mid"`   // 字幕上传者mid
-	SubtitleUrl string              `json:"subtitle_url"` // json格式字幕文件url
+	SubtitleURL string              `json:"subtitle_url"` // json格式字幕文件url
 	Author      VideoSubtitleAuthor `json:"author"`       // 字幕上传者信息
-}
-
-type VideoSubtitles struct {
-	AllowSubmit bool            `json:"allow_submit"` // 是否允许提交字幕
-	List        []VideoSubtitle `json:"list"`         // 字幕列表
 }
 
 type StaffVip struct {
@@ -98,7 +97,7 @@ type Staff struct {
 }
 
 type UserGarb struct {
-	UrlImageAniCut string `json:"url_image_ani_cut"` // 某url？
+	URLImageAniCut string `json:"url_image_ani_cut"` // 某url？
 }
 
 type Honor struct {
@@ -144,7 +143,7 @@ type TopRecommendVideoItem struct {
 	Duration        int        `json:"duration"`          // 视频时长
 	EnableVt        int        `json:"enable_vt"`         // 未知作用
 	Goto            string     `json:"goto"`              // 目标类型 (av, ogv, live)
-	Id              int        `json:"id"`                // 视频 avid / 直播间 id
+	ID              int        `json:"id"`                // 视频 avid / 直播间 id
 	IsFollowed      int        `json:"is_followed"`       // 是否已关注
 	IsStock         int        `json:"is_stock"`          // 未知作用
 	OgvInfo         any        `json:"ogv_info"`          // 通常为 null
@@ -152,14 +151,14 @@ type TopRecommendVideoItem struct {
 	Pic             string     `json:"pic"`               // 视频封面
 	Pic43           string     `json:"pic_4_3"`           // 4:3 比例封面
 	Pos             int        `json:"pos"`               // 位置
-	Pubdate         int        `json:"pubdate"`           // 发布时间（秒级时间戳）
+	PubDate         int        `json:"pubdate"`           // 发布时间（秒级时间戳）
 	RcmdReason      RcmdReason `json:"rcmd_reason"`       // 推荐理由
 	RoomInfo        any        `json:"room_info"`         // 通常为 null
 	ShowInfo        int        `json:"show_info"`         // 展示信息（1: 普通视频, 0: 直播）
 	Stat            any        `json:"stat"`              // 视频状态信息
 	Title           string     `json:"title"`             // 视频标题
-	TrackId         string     `json:"track_id"`          // 跟踪标识
-	Uri             string     `json:"uri"`               // 目标页 URI
+	TrackID         string     `json:"track_id"`          // 跟踪标识
+	URI             string     `json:"uri"`               // 目标页 URI
 	VtDisplay       string     `json:"vt_display"`        // 未知作用
 }
 type VideoInfo struct {
@@ -171,22 +170,22 @@ type VideoInfo struct {
 	Copyright          int           `json:"copyright"`    // 视频类型。1：原创。2：转载
 	Pic                string        `json:"pic"`          // 稿件封面图片url
 	Title              string        `json:"title"`        // 稿件标题
-	Pubdate            int           `json:"pubdate"`      // 稿件发布时间。秒级时间戳
+	PubDate            int           `json:"pubdate"`      // 稿件发布时间。秒级时间戳
 	Ctime              int           `json:"ctime"`        // 用户投稿时间。秒级时间戳
 	Desc               string        `json:"desc"`         // 视频简介
 	DescV2             []DescV2      `json:"desc_v2"`      // 新版视频简介
 	State              int           `json:"state"`        // 视频状态。详情见[属性数据文档](attribute_data.md#state字段值(稿件状态))
 	Duration           int           `json:"duration"`     // 稿件总时长(所有分P)。单位为秒
 	Forward            int           `json:"forward"`      // 撞车视频跳转avid。仅撞车视频存在此字段
-	MissionId          int           `json:"mission_id"`   // 稿件参与的活动id
-	RedirectUrl        string        `json:"redirect_url"` // 重定向url。仅番剧或影视视频存在此字段。用于番剧&影视的av/bv->ep
+	MissionID          int           `json:"mission_id"`   // 稿件参与的活动id
+	RedirectURL        string        `json:"redirect_url"` // 重定向url。仅番剧或影视视频存在此字段。用于番剧&影视的av/bv->ep
 	Rights             VideoRights   `json:"rights"`       // 视频属性标志
 	Owner              Owner         `json:"owner"`        // 视频UP主信息
 	Stat               VideoStat     `json:"stat"`         // 视频状态数
 	Dynamic            string        `json:"dynamic"`      // 视频同步发布的的动态的文字内容
 	Cid                int           `json:"cid"`          // 视频1P cid
 	Dimension          Dimension     `json:"dimension"`    // 视频1P分辨率
-	SeasonId           int           `json:"season_id"`    // 合集id
+	SeasonID           int           `json:"season_id"`    // 合集id
 	Premiere           any           `json:"premiere"`     // null
 	TeenageMode        int           `json:"teenage_mode"`
 	IsChargeableSeason bool          `json:"is_chargeable_season"`
@@ -216,7 +215,7 @@ type CardVip struct {
 	AvatarSubscript    int    `json:"avatar_subscript"`     // 是否显示会员图标。0：不显示。1：显示
 	NicknameColor      string `json:"nickname_color"`       // 会员昵称颜色。颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
 	Role               int    `json:"role"`                 // 大角色类型。1：月度大会员。3：年度大会员。7：十年大会员。15：百年大会员
-	AvatarSubscriptUrl string `json:"avatar_subscript_url"` // 大会员角标地址
+	AvatarSubscriptURL string `json:"avatar_subscript_url"` // 大会员角标地址
 	TvVipStatus        int    `json:"tv_vip_status"`        // 电视大会员状态。0：未开通
 	TvVipPayType       int    `json:"tv_vip_pay_type"`      // 电视大会员支付类型
 }
@@ -229,7 +228,7 @@ type VideoCard struct {
 	Rank           string         `json:"rank"`             // 10000。作用尚不明确
 	Face           string         `json:"face"`             // 用户头像链接
 	FaceNft        int            `json:"face_nft"`         // 是否为 nft 头像。0不是nft头像。1是 nft 头像
-	Displayrank    string         `json:"DisplayRank"`      // 0。作用尚不明确
+	DisplayRank    string         `json:"DisplayRank"`      // 0。作用尚不明确
 	Regtime        int            `json:"regtime"`          // 0。作用尚不明确
 	Spacesta       int            `json:"spacesta"`         // 0。作用尚不明确
 	Birthday       string         `json:"birthday"`         // 空。作用尚不明确
@@ -298,7 +297,7 @@ type StatusCount struct {
 }
 
 type VideoTag struct {
-	TagId        int         `json:"tag_id"`        // tag_id
+	TagID        int         `json:"tag_id"`        // tag_id
 	TagName      string      `json:"tag_name"`      // TAG名称
 	Cover        string      `json:"cover"`         // TAG图片url
 	HeadCover    string      `json:"head_cover"`    // TAG页面头图url
@@ -376,7 +375,7 @@ type CollectionVideo struct {
 	InteractiveVideo bool                `json:"interactive_video"` // false
 	Pic              string              `json:"pic"`               // 封面 URL
 	PlaybackPosition int                 `json:"playback_position"` // 会随着播放时间增长，播放完成后为 -1 。单位未知
-	Pubdate          int                 `json:"pubdate"`           // 发布日期。Unix 时间戳
+	PubDate          int                 `json:"pubdate"`           // 发布日期。Unix 时间戳
 	Stat             CollectionVideoStat `json:"stat"`              // 稿件信息
 	State            int                 `json:"state"`             // 0
 	Title            string              `json:"title"`             // 稿件标题
@@ -391,7 +390,7 @@ type CollectionMeta struct {
 	Mid         int    `json:"mid"`         // UP 主 ID
 	Name        string `json:"name"`        // 合集标题
 	Ptime       int    `json:"ptime"`       // 发布时间。Unix 时间戳
-	SeasonId    int    `json:"season_id"`   // 合集 ID
+	SeasonID    int    `json:"season_id"`   // 合集 ID
 	Total       int    `json:"total"`       // 合集内视频数量
 }
 
@@ -432,18 +431,18 @@ type Durl struct {
 	Size      int      `json:"size"`       // 视频大小。单位为 Byte
 	Ahead     string   `json:"ahead"`      // （？）
 	Vhead     string   `json:"vhead"`      // （？）
-	Url       string   `json:"url"`        // 默认流 URL。注意 unicode 转义符。有效时间为120min
-	BackupUrl []string `json:"backup_url"` // 备用视频流 注意 unicode 转义符。有效时间为120min
+	URL       string   `json:"url"`        // 默认流 URL。注意 unicode 转义符。有效时间为120min
+	BackupURL []string `json:"backup_url"` // 备用视频流 注意 unicode 转义符。有效时间为120min
 }
 
 type Dash struct {
-	Duration      int            `json:"duration"`        // 视频长度。秒值
-	Minbuffertime float64        `json:"minBufferTime"`   // 1.5？
-	MinBufferTime float64        `json:"min_buffer_time"` // 1.5？
-	Video         []AudioOrVideo `json:"video"`           // 视频流信息 同一清晰度可拥有 H.264 / H.265 / AV1 多种码流<br />HDR 仅支持 H.265 |
-	Audio         []AudioOrVideo `json:"audio"`           // 伴音流信息。当视频没有音轨时，此项为 null
-	Dolby         Dolby          `json:"dolby"`           // 杜比全景声伴音信息
-	Flac          Flac           `json:"flac"`            // 无损音轨伴音信息。当视频没有无损音轨时，此项为 null
+	Duration           int            `json:"duration"`        // 视频长度。秒值
+	MinBufferTime      float64        `json:"minBufferTime"`   // 1.5？
+	MinBufferTimeSnake float64        `json:"min_buffer_time"` // 1.5？
+	Video              []AudioOrVideo `json:"video"`           // 视频流信息 同一清晰度可拥有 H.264 / H.265 / AV1 多种码流<br />HDR 仅支持 H.265 |
+	Audio              []AudioOrVideo `json:"audio"`           // 伴音流信息。当视频没有音轨时，此项为 null
+	Dolby              Dolby          `json:"dolby"`           // 杜比全景声伴音信息
+	Flac               Flac           `json:"flac"`            // 无损音轨伴音信息。当视频没有无损音轨时，此项为 null
 }
 
 type Dolby struct {
@@ -456,26 +455,31 @@ type Flac struct {
 	Audio   AudioOrVideo `json:"audio"`   // 音频流信息。同上文 DASH 流中video及audio数组中的对象
 }
 
+// AudioOrVideo 描述一条 DASH 音视频流。
+//
+// 该接口对同一份数据会同时返回 camelCase 与 snake_case 两种键（例如 baseUrl
+// 与 base_url），因此每种键各保留一个字段：规范化命名对应 camelCase 键，
+// 以 Snake 结尾的字段对应 snake_case 键。
 type AudioOrVideo struct {
-	Id           int         `json:"id"`             // 音视频清晰度代码。参考上表。[qn视频清晰度标识](#qn视频清晰度标识)。[视频伴音音质代码](#视 频伴音音质代码)
-	Baseurl      string      `json:"baseUrl"`        // 默认流 URL。注意 unicode 转义符。有效时间为 120min
-	BaseUrl      string      `json:"base_url"`       // 同上
-	Backupurl    []string    `json:"backupUrl"`      // 备用流 URL
-	BackupUrl    []string    `json:"backup_url"`     // 同上
-	Bandwidth    int         `json:"bandwidth"`      // 所需最低带宽。单位为 Byte
-	Mimetype     string      `json:"mimeType"`       // 格式 mimetype 类型
-	MimeType     string      `json:"mime_type"`      // 同上
-	Codecs       string      `json:"codecs"`         // 编码/音频类型。eg：avc1.640032
-	Width        int         `json:"width"`          // 视频宽度。单位为像素。仅视频流存在该字段
-	Height       int         `json:"height"`         // 视频高度。单位为像素。仅视频流存在该字段
-	Framerate    string      `json:"frameRate"`      // 视频帧率。仅视频流存在该字段
-	FrameRate    string      `json:"frame_rate"`     // 同上
-	Sar          string      `json:"sar"`            // Sample Aspect Ratio（单个像素的宽高比）。音频流该值恒为空
-	Startwithsap int         `json:"startWithSap"`   // Stream Access Point（流媒体访问位点）。音频流该值恒为空
-	StartWithSap int         `json:"start_with_sap"` // 同上
-	Segmentbase  SegmentBase `json:"SegmentBase"`    // 见下表。url 对应 m4s 文件中，头部的位置。音频流该值恒为空
-	SegmentBase  SegmentBase `json:"segment_base"`   // 同上
-	Codecid      int         `json:"codecid"`        // 码流编码标识代码。含义见 [上表](#视频编码代码)。音频流该值恒为0
+	ID                int         `json:"id"`             // 音视频清晰度代码。参考上表。[qn视频清晰度标识](#qn视频清晰度标识)。[视频伴音音质代码](#视 频伴音音质代码)
+	BaseURL           string      `json:"baseUrl"`        // 默认流 URL。注意 unicode 转义符。有效时间为 120min
+	BaseURLSnake      string      `json:"base_url"`       // 同上（snake_case 键）
+	BackupURL         []string    `json:"backupUrl"`      // 备用流 URL
+	BackupURLSnake    []string    `json:"backup_url"`     // 同上（snake_case 键）
+	Bandwidth         int         `json:"bandwidth"`      // 所需最低带宽。单位为 Byte
+	MimeType          string      `json:"mimeType"`       // 格式 mimetype 类型
+	MimeTypeSnake     string      `json:"mime_type"`      // 同上（snake_case 键）
+	Codecs            string      `json:"codecs"`         // 编码/音频类型。eg：avc1.640032
+	Width             int         `json:"width"`          // 视频宽度。单位为像素。仅视频流存在该字段
+	Height            int         `json:"height"`         // 视频高度。单位为像素。仅视频流存在该字段
+	FrameRate         string      `json:"frameRate"`      // 视频帧率。仅视频流存在该字段
+	FrameRateSnake    string      `json:"frame_rate"`     // 同上（snake_case 键）
+	Sar               string      `json:"sar"`            // Sample Aspect Ratio（单个像素的宽高比）。音频流该值恒为空
+	StartWithSap      int         `json:"startWithSap"`   // Stream Access Point（流媒体访问位点）。音频流该值恒为空
+	StartWithSapSnake int         `json:"start_with_sap"` // 同上（snake_case 键）
+	SegmentBase       SegmentBase `json:"SegmentBase"`    // 见下表。url 对应 m4s 文件中，头部的位置。音频流该值恒为空
+	SegmentBaseSnake  SegmentBase `json:"segment_base"`   // 同上（snake_case 键）
+	CodecID           int         `json:"codecid"`        // 码流编码标识代码。含义见 [上表](#视频编码代码)。音频流该值恒为0
 }
 
 type SegmentBase struct {
@@ -489,11 +493,11 @@ type GetVideoStreamResult struct {
 	Message           string          `json:"message"`            // 空？
 	Quality           int             `json:"quality"`            // 清晰度标识。含义见 [上表](#qn视频清晰度标识)
 	Format            string          `json:"format"`             // 视频格式。mp4/flv
-	Timelength        int             `json:"timelength"`         // 视频长度。单位为毫秒。不同分辨率 / 格式可能有略微差异
+	TimeLength        int             `json:"timelength"`         // 视频长度。单位为毫秒。不同分辨率 / 格式可能有略微差异
 	AcceptFormat      string          `json:"accept_format"`      // 支持的全部格式。每项用,分隔
 	AcceptDescription []string        `json:"accept_description"` // 支持的清晰度列表（文字说明）
 	AcceptQuality     []int           `json:"accept_quality"`     // 支持的清晰度列表（代码）。含义见 [上表](#qn视频清晰度标识)
-	VideoCodecid      int             `json:"video_codecid"`      // 默认选择视频流的编码id。含义见 [上表](#视频编码代码)
+	VideoCodecID      int             `json:"video_codecid"`      // 默认选择视频流的编码id。含义见 [上表](#视频编码代码)
 	SeekParam         string          `json:"seek_param"`         // start？
 	SeekType          string          `json:"seek_type"`          // offset（DASH / FLV）？。 second（MP4）？
 	Durl              []Durl          `json:"durl"`               // 视频分段流信息。注：仅 FLV / MP4 格式存在此字段

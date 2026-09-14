@@ -16,23 +16,23 @@ var (
 	regLive = regexp.MustCompile(`^https://live.bilibili.com/(\d+)`)
 )
 
-// UnwrapShortUrl 解析短链接，传入一个完整的短链接。
+// UnwrapShortURL 解析短链接，传入一个完整的短链接。
 //
 // 第一个返回值如果是"bvid"，则第二个返回值是视频的bvid (string)。
 // 第一个返回值如果是"live"，则第二个返回值是直播间id (int)。
 //
 // 该接口的目标地址由调用方提供且只读取 302 Location 头，不返回
 // code/message/data 结构，因此保留 newRequest/sendRaw 而不复用 execute。
-func (c *Client) UnwrapShortUrl(ctx context.Context, shortUrl string) (string, any, error) {
+func (c *Client) UnwrapShortURL(ctx context.Context, shortURL string) (string, any, error) {
 	if err := checkContext(ctx); err != nil {
 		return "", nil, err
 	}
-	resp, err := c.sendRaw(c.newRequest(ctx), resty.MethodGet, shortUrl)
+	resp, err := c.sendRaw(c.newRequest(ctx), resty.MethodGet, shortURL)
 	if err != nil {
 		return "", nil, errors.WithStack(err)
 	}
 	if resp.StatusCode() != 302 {
-		return "", nil, errors.Wrap(newHTTPError(resty.MethodGet, shortUrl, resp.StatusCode()), "解析短链接失败")
+		return "", nil, errors.Wrap(newHTTPError(resty.MethodGet, shortURL, resp.StatusCode()), "解析短链接失败")
 	}
 	url := resp.Header().Get("Location")
 	{
@@ -112,7 +112,7 @@ type ZoneLocation struct {
 	Isp         string `json:"isp"`          // 运营商名
 	Latitude    int    `json:"latitude"`     // 纬度
 	Longitude   int    `json:"longitude"`    // 经度
-	ZoneId      int    `json:"zone_id"`      // ip数据库id
+	ZoneID      int    `json:"zone_id"`      // ip数据库id
 	CountryCode int    `json:"country_code"` // 国家/地区代码
 }
 

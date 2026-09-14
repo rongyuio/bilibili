@@ -9,7 +9,7 @@ import (
 
 // GetTopicFeedParam 指定话题动态列表的查询条件；可选零值不发送，不自动填入默认值。
 type GetTopicFeedParam struct {
-	TopicId     string `json:"topic_id" request:"query"`               // 话题 ID
+	TopicID     string `json:"topic_id" request:"query"`               // 话题 ID
 	SortBy      int    `json:"sort_by" request:"query,omitempty"`      // 排序；现有工具使用 3（最新），2 为最热
 	PageSize    int    `json:"page_size" request:"query,omitempty"`    // 每页数量
 	Offset      string `json:"offset" request:"query,omitempty"`       // 下一页使用上次返回的 offset

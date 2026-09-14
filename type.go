@@ -25,19 +25,19 @@ var (
 )
 
 type Resource struct {
-	Id   int
+	ID   int
 	Type ResourceType
 }
 
 func (r Resource) String() string {
-	return strconv.Itoa(r.Id) + ":" + strconv.Itoa(int(r.Type))
+	return strconv.Itoa(r.ID) + ":" + strconv.Itoa(int(r.Type))
 }
 
 type Pendant struct {
 	Pid               int    `json:"pid"`                 // 挂件id
 	Name              string `json:"name"`                // 挂件名称
 	Image             string `json:"image"`               // 挂件图片url
-	JumpUrl           string `json:"jump_url"`            // 挂件跳转url
+	JumpURL           string `json:"jump_url"`            // 挂件跳转url
 	Type              string `json:"type"`                // 装扮类型。suit：一般装扮。vip_suit：vip 装扮
 	Expire            int    `json:"expire"`              // 固定值0，作用尚不明确
 	ImageEnhance      string `json:"image_enhance"`       // 头像框图片url
@@ -78,22 +78,22 @@ type VipLabel struct {
 // （SpaceVip 为其别名），空间卡用 camelCase 的 UserCardVip，大会员中心用
 // VipUserVip。字段集不同的变体各自保留独立类型，不做跨接口合并。
 type Vip struct {
-	Viptype            int      `json:"vipType"`              // 大会员类型。0：无。1：月会员。2：年以上会员
-	Vipduedate         int      `json:"vipDueDate"`           // 大会员到期时间。毫秒 时间戳
-	Dueremark          string   `json:"dueRemark"`            // (?)
-	Accessstatus       int      `json:"accessStatus"`         // (?)
-	Vipstatus          int      `json:"vipStatus"`            // 大会员状态。0：无。1：有
-	Vipstatuswarn      string   `json:"vipStatusWarn"`        // (?)
+	VipType            int      `json:"vipType"`              // 大会员类型。0：无。1：月会员。2：年以上会员
+	VipDueDate         int      `json:"vipDueDate"`           // 大会员到期时间。毫秒 时间戳
+	DueRemark          string   `json:"dueRemark"`            // (?)
+	AccessStatus       int      `json:"accessStatus"`         // (?)
+	VipStatus          int      `json:"vipStatus"`            // 大会员状态。0：无。1：有
+	VipStatusWarn      string   `json:"vipStatusWarn"`        // (?)
 	ThemeType          int      `json:"theme_type"`           // 会员样式 id
 	Label              VipLabel `json:"label"`                // 会员铭牌样式
 	AvatarSubscript    int      `json:"avatar_subscript"`     // (?)
-	AvatarSubscriptUrl string   `json:"avatar_subscript_url"` // (?)
+	AvatarSubscriptURL string   `json:"avatar_subscript_url"` // (?)
 	NicknameColor      string   `json:"nickname_color"`       // 昵称颜色
 }
 
 type FansDetail struct {
-	Uid          int    `json:"uid"`           // 用户 mid
-	MedalId      int    `json:"medal_id"`      // 粉丝标签 id
+	UID          int    `json:"uid"`           // 用户 mid
+	MedalID      int    `json:"medal_id"`      // 粉丝标签 id
 	MedalName    string `json:"medal_name"`    // 粉丝标签名
 	Score        int    `json:"score"`         // (?)
 	Level        int    `json:"level"`         // 当前标签等级
@@ -111,10 +111,10 @@ type Fan struct {
 }
 
 type Cardbg struct {
-	Id      int    `json:"id"`       // 评论条目装扮 id
+	ID      int    `json:"id"`       // 评论条目装扮 id
 	Name    string `json:"name"`     // 评论条目装扮名称
 	Image   string `json:"image"`    // 评论条目装扮图片 url
-	JumpUrl string `json:"jump_url"` // 评论条目装扮商城页面 url
+	JumpURL string `json:"jump_url"` // 评论条目装扮商城页面 url
 	Fan     Fan    `json:"fan"`      // 粉丝专属信息
 	Type    string `json:"type"`     // 装扮类型。suit：一般装扮。vip_suit：vip 装扮
 }
@@ -132,7 +132,7 @@ type Member struct {
 	Sign           string         `json:"sign"`            // 发送者签名
 	Avatar         string         `json:"avatar"`          // 发送者头像 url
 	Rank           string         `json:"rank"`            // (?)
-	Displayrank    string         `json:"DisplayRank"`     // (?)
+	DisplayRank    string         `json:"DisplayRank"`     // (?)
 	LevelInfo      LevelInfo      `json:"level_info"`      // 发送者等级
 	Pendant        Pendant        `json:"pendant"`         // 发送者头像框信息
 	Nameplate      Nameplate      `json:"nameplate"`       // 发送者勋章信息
@@ -176,10 +176,10 @@ type Label struct {
 	BgColor               string `json:"bg_color"`                  // 会员标签背景颜色。颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
 	BorderColor           string `json:"border_color"`              // 会员标签边框颜色。未使用
 	UseImgLabel           bool   `json:"use_img_label"`             // true
-	ImgLabelUriHans       string `json:"img_label_uri_hans"`        // 空串
-	ImgLabelUriHant       string `json:"img_label_uri_hant"`        // 空串
-	ImgLabelUriHansStatic string `json:"img_label_uri_hans_static"` // 大会员牌子图片。简体版
-	ImgLabelUriHantStatic string `json:"img_label_uri_hant_static"` // 大会员牌子图片。繁体版
+	ImgLabelURIHans       string `json:"img_label_uri_hans"`        // 空串
+	ImgLabelURIHant       string `json:"img_label_uri_hant"`        // 空串
+	ImgLabelURIHansStatic string `json:"img_label_uri_hans_static"` // 大会员牌子图片。简体版
+	ImgLabelURIHantStatic string `json:"img_label_uri_hant_static"` // 大会员牌子图片。繁体版
 }
 
 // Official 是评论用户等场景的认证信息（role/title/desc/type）。
@@ -215,5 +215,16 @@ type RelationUser struct {
 	Vip            Vip            `json:"vip"`             // 会员信息
 	NftIcon        string         `json:"nft_icon"`        // （？）
 	RecReason      string         `json:"rec_reason"`      // （？）
-	TrackId        string         `json:"track_id"`        // （？）
+	TrackID        string         `json:"track_id"`        // （？）
+}
+
+// Notice 是通用公告/提示信息，被评论区的 CommentsDetail 与直播的
+// StartLiveResult 共同引用，因此放在共享模型中。
+type Notice struct {
+	Type       int    `json:"type"`        // 1。作用尚不明确
+	Status     int    `json:"status"`      // 0。作用尚不明确
+	Title      string `json:"title"`       // 空。作用尚不明确
+	Msg        string `json:"msg"`         // 空。作用尚不明确
+	ButtonText string `json:"button_text"` // 空。作用尚不明确
+	ButtonURL  string `json:"button_url"`  // 空。作用尚不明确
 }

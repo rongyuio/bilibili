@@ -4,10 +4,13 @@ package bilibili
 
 // GetTopicFeedResult contains the data payload of one topic feed page.
 type GetTopicFeedResult struct {
-	RelatedTopics struct {
-	} `json:"related_topics"`
-	TopicCardList TopicCardList `json:"topic_card_list"`
+	RelatedTopics TopicRelatedTopics `json:"related_topics"`
+	TopicCardList TopicCardList      `json:"topic_card_list"`
 }
+
+// TopicRelatedTopics 是话题 feed 的关联话题字段。当前接口返回的字段不稳定，
+// 保留为空结构体以维持“忽略未知字段”的既有解码行为。
+type TopicRelatedTopics struct{}
 
 // TopicCardList contains topic cards, a continuation offset and sorting metadata.
 type TopicCardList struct {
@@ -74,7 +77,7 @@ type TopicModuleAuthor struct {
 	Avatar          TopicAuthorAvatar `json:"avatar"`
 	Face            string            `json:"face"`
 	FaceNft         bool              `json:"face_nft"`
-	Following       interface{}       `json:"following"`
+	Following       any               `json:"following"`
 	JumpURL         string            `json:"jump_url"`
 	Label           string            `json:"label"`
 	Mid             int64             `json:"mid"`
@@ -168,10 +171,10 @@ type TopicAuthorAvatar struct {
 
 // TopicModuleDynamic contains topic card content and its major media body.
 type TopicModuleDynamic struct {
-	Additional interface{}       `json:"additional"`
-	Desc       interface{}       `json:"desc"`
+	Additional any               `json:"additional"`
+	Desc       any               `json:"desc"`
 	Major      TopicDynamicMajor `json:"major"`
-	Topic      interface{}       `json:"topic"`
+	Topic      any               `json:"topic"`
 }
 
 // TopicDynamicMajor contains the video body of a topic card.
@@ -197,10 +200,10 @@ type TopicArchive struct {
 
 // TopicArchiveBadge 是话题稿件角标信息。
 type TopicArchiveBadge struct {
-	BgColor string      `json:"bg_color"`
-	Color   string      `json:"color"`
-	IconURL interface{} `json:"icon_url"`
-	Text    string      `json:"text"`
+	BgColor string `json:"bg_color"`
+	Color   string `json:"color"`
+	IconURL any    `json:"icon_url"`
+	Text    string `json:"text"`
 }
 
 // TopicArchiveStat 是话题稿件的播放与弹幕数。

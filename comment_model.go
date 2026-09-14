@@ -13,10 +13,10 @@ type CommentsPage struct {
 }
 
 type CommentsConfig struct {
-	Showadmin  int  `json:"showadmin"`    // 是否显示管理置顶
-	Showentry  int  `json:"showentry"`    // (?)
-	Showfloor  int  `json:"showfloor"`    // 是否显示楼层号
-	Showtopic  int  `json:"showtopic"`    // 是否显示话题
+	ShowAdmin  int  `json:"showadmin"`    // 是否显示管理置顶
+	ShowEntry  int  `json:"showentry"`    // (?)
+	ShowFloor  int  `json:"showfloor"`    // 是否显示楼层号
+	ShowTopic  int  `json:"showtopic"`    // 是否显示话题
 	ShowUpFlag bool `json:"show_up_flag"` // 是否显示“UP 觉得很赞”标志
 	ReadOnly   bool `json:"read_only"`    // 是否只读评论区
 	ShowDelLog bool `json:"show_del_log"` // 是否显示删除记录
@@ -35,7 +35,7 @@ type CommentContent struct {
 	Device   string    `json:"device"`   // 评论发送平台设备
 	Members  []Member  `json:"members"`  // at 到的用户信息
 	Emote    any       `json:"emote"`    // 需要渲染的表情转义。评论内容无表情则无此项
-	JumpUrl  any       `json:"jump_url"` // 需要高亮的超链转义
+	JumpURL  any       `json:"jump_url"` // 需要高亮的超链转义
 	MaxLine  int       `json:"max_line"` // 6。收起最大行数
 	Pictures []Picture `json:"pictures"` // 评论图片数组
 }
@@ -63,7 +63,7 @@ type CardLabel struct {
 	Background       string `json:"background"`        // 背景图片 url
 	BackgroundWidth  int    `json:"background_width"`  // 背景图片宽度
 	BackgroundHeight int    `json:"background_height"` // 背景图片高度
-	JumpUrl          string `json:"jump_url"`          // 跳转链接
+	JumpURL          string `json:"jump_url"`          // 跳转链接
 	Effect           int    `json:"effect"`            // 0。作用不明，可能用于控制动画，下同
 	EffectStartTime  int    `json:"effect_start_time"` // 0
 }
@@ -87,7 +87,7 @@ type Comment struct {
 	Rcount       int            `json:"rcount"`        // 回复评论条数
 	Floor        int            `json:"floor"`         // 评论楼层号。**注：若不支持楼层则无此项**
 	State        int            `json:"state"`         // (?)
-	Fansgrade    int            `json:"fansgrade"`     // 是否具有粉丝标签。0：无。1：有
+	FansGrade    int            `json:"fansgrade"`     // 是否具有粉丝标签。0：无。1：有
 	Attr         int            `json:"attr"`          // 某属性位？
 	Ctime        int            `json:"ctime"`         // 评论发送时间。时间戳
 	RpidStr      string         `json:"rpid_str"`      // 评论rpid。字串格式
@@ -114,9 +114,9 @@ type CommentsControl struct {
 	BgText                string `json:"bg_text"`                  // 空评论区文字
 	WebSelection          bool   `json:"web_selection"`            // 评论是否筛选后可见。false：无需筛选。true：需要筛选
 	AnswerGuideText       string `json:"answer_guide_text"`        // 答题页面链接文字
-	AnswerGuideIconUrl    string `json:"answer_guide_icon_url"`    // 答题页面图标 url
-	AnswerGuideIosUrl     string `json:"answer_guide_ios_url"`     // 答题页面 ios url
-	AnswerGuideAndroidUrl string `json:"answer_guide_android_url"` // 答题页面安卓 url
+	AnswerGuideIconURL    string `json:"answer_guide_icon_url"`    // 答题页面图标 url
+	AnswerGuideIosURL     string `json:"answer_guide_ios_url"`     // 答题页面 ios url
+	AnswerGuideAndroidURL string `json:"answer_guide_android_url"` // 答题页面安卓 url
 }
 
 type CommentsDetail struct {

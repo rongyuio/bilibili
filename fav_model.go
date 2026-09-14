@@ -10,12 +10,12 @@ type CntInfo struct {
 }
 
 type FavourFolderInfo struct {
-	Id         int     `json:"id"`          // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
+	ID         int     `json:"id"`          // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
 	Fid        int     `json:"fid"`         // 收藏夹原始id
 	Mid        int     `json:"mid"`         // 创建者mid
 	Attr       int     `json:"attr"`        // 属性位（？）
 	Title      string  `json:"title"`       // 收藏夹标题
-	Cover      string  `json:"cover"`       // 	收藏夹封面图片url
+	Cover      string  `json:"cover"`       // 收藏夹封面图片url
 	Upper      Upper   `json:"upper"`       // 创建者信息
 	CoverType  int     `json:"cover_type"`  // 封面图类别（？）
 	CntInfo    CntInfo `json:"cnt_info"`    // 收藏夹状态数
@@ -36,7 +36,7 @@ type AllFavourFolderInfo struct {
 
 // AllFavourFolderItem 是用户创建的一个收藏夹摘要。
 type AllFavourFolderItem struct {
-	Id         int    `json:"id"`          // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
+	ID         int    `json:"id"`          // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
 	Fid        int    `json:"fid"`         // 收藏夹原始id
 	Mid        int    `json:"mid"`         // 创建者mid
 	Attr       int    `json:"attr"`        // 属性位（？）
@@ -45,12 +45,8 @@ type AllFavourFolderItem struct {
 	MediaCount int    `json:"media_count"` // 收藏夹内容数量
 }
 
-// FavourUpper 是收藏夹内容创建者的简要信息（mid/name/face）。
-type FavourUpper struct {
-	Mid  int    `json:"mid"`
-	Name string `json:"name"`
-	Face string `json:"face"`
-}
+// FavourUpper 是 Owner 的别名（收藏夹内容创建者的简要信息）。
+type FavourUpper = Owner
 
 // FavourResourceCntInfo 是收藏内容的计数信息（含弹幕数）。
 type FavourResourceCntInfo struct {
@@ -65,7 +61,7 @@ type FavourUgc struct {
 }
 
 type FavourInfo struct {
-	Id       int                   `json:"id"`
+	ID       int                   `json:"id"`
 	Type     int                   `json:"type"`
 	Title    string                `json:"title"`
 	Cover    string                `json:"cover"`
@@ -79,7 +75,7 @@ type FavourInfo struct {
 	Ctime    int                   `json:"ctime"`
 	Pubtime  int                   `json:"pubtime"`
 	FavTime  int                   `json:"fav_time"`
-	BvId     string                `json:"bv_id"`
+	BvID     string                `json:"bv_id"`
 	Bvid     string                `json:"bvid"`
 	Season   any                   `json:"season"`
 	Ugc      FavourUgc             `json:"ugc"`
@@ -87,7 +83,7 @@ type FavourInfo struct {
 
 // FavourFolderDetail 是收藏夹元数据（GetFavourList 的 info 字段）。
 type FavourFolderDetail struct {
-	Id         int     `json:"id"`          // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
+	ID         int     `json:"id"`          // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
 	Fid        int     `json:"fid"`         // 收藏夹原始id
 	Mid        int     `json:"mid"`         // 创建者mid
 	Attr       int     `json:"attr"`        // 属性，0：正常，1：失效
@@ -108,7 +104,7 @@ type FavourFolderDetail struct {
 
 // FavourMedia 是收藏夹内的一条内容。
 type FavourMedia struct {
-	Id       int                   `json:"id"`       // 内容id，视频稿件：视频稿件avid，音频：音频auid，视频合集：视频合集id
+	ID       int                   `json:"id"`       // 内容id，视频稿件：视频稿件avid，音频：音频auid，视频合集：视频合集id
 	Type     int                   `json:"type"`     // 内容类型，2：视频稿件，12：音频，21：视频合集
 	Title    string                `json:"title"`    // 标题
 	Cover    string                `json:"cover"`    // 封面url
@@ -122,7 +118,7 @@ type FavourMedia struct {
 	Ctime    int                   `json:"ctime"`    // 投稿时间戳
 	Pubtime  int                   `json:"pubtime"`  // 发布时间戳
 	FavTime  int                   `json:"fav_time"` // 收藏时间戳
-	BvId     string                `json:"bv_id"`    // 视频稿件bvid
+	BvID     string                `json:"bv_id"`    // 视频稿件bvid
 	Bvid     string                `json:"bvid"`     // 视频稿件bvid
 	Ugc      FavourUgc             `json:"ugc"`
 }
@@ -133,10 +129,10 @@ type FavourList struct {
 	HasMore bool               `json:"has_more"`
 }
 
-type FavourId struct {
-	Id   int    `json:"id"`    // 内容id，视频稿件：视频稿件avid，音频：音频auid，视频合集：视频合集id
+type FavourID struct {
+	ID   int    `json:"id"`    // 内容id，视频稿件：视频稿件avid，音频：音频auid，视频合集：视频合集id
 	Type int    `json:"type"`  // 内容类型，2：视频稿件，12：音频，21：视频合集
-	BvId string `json:"bv_id"` // 视频稿件bvid
+	BvID string `json:"bv_id"` // 视频稿件bvid
 	Bvid string `json:"bvid"`  // 视频稿件bvid
 }
 

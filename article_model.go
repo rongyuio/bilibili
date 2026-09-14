@@ -3,10 +3,10 @@ package bilibili
 // 专栏相关响应模型。
 
 type Articles struct {
-	Id            int    `json:"id"`             // 文集rlid
+	ID            int    `json:"id"`             // 文集rlid
 	Mid           int    `json:"mid"`            // 文集作者mid
 	Name          string `json:"name"`           // 文集名称
-	ImageUrl      string `json:"image_url"`      // 文集封面图片url
+	ImageURL      string `json:"image_url"`      // 文集封面图片url
 	UpdateTime    int    `json:"update_time"`    // 文集更新时间。时间戳
 	Ctime         int    `json:"ctime"`          // 文集创建时间。时间戳
 	PublishTime   int    `json:"publish_time"`   // 文集发布时间。时间戳
@@ -32,8 +32,8 @@ type ArticleStats struct {
 }
 
 type Category struct {
-	Id       int    `json:"id"`        // 分类id
-	ParentId int    `json:"parent_id"` // 父级分类id
+	ID       int    `json:"id"`        // 分类id
+	ParentID int    `json:"parent_id"` // 父级分类id
 	Name     string `json:"name"`      // 分类名称
 }
 
@@ -44,40 +44,40 @@ type ArticleTag struct {
 
 type Media struct {
 	Score    int    `json:"score"`     // 0
-	MediaId  int    `json:"media_id"`  // 0
+	MediaID  int    `json:"media_id"`  // 0
 	Title    string `json:"title"`     // 空串
 	Cover    string `json:"cover"`     // 空串
 	Area     string `json:"area"`      // 空串
-	TypeId   int    `json:"type_id"`   // 0
+	TypeID   int    `json:"type_id"`   // 0
 	TypeName string `json:"type_name"` // 空串
 	Spoiler  int    `json:"spoiler"`   // 0
 }
 
 type Article struct {
-	Id              int          `json:"id"`         // 专栏文章id
+	ID              int          `json:"id"`         // 专栏文章id
 	Category        Category     `json:"category"`   // 分类
 	Categories      []Category   `json:"categories"` // 分类
 	Title           string       `json:"title"`      // 标题
 	Summary         string       `json:"summary"`    // 摘要
-	BannerUrl       string       `json:"banner_url"` // 封面图
-	TemplateId      int          `json:"template_id"`
+	BannerURL       string       `json:"banner_url"` // 封面图
+	TemplateID      int          `json:"template_id"`
 	State           int          `json:"state"`
 	Author          *Author      `json:"author"` // UP主信息
 	Reprint         int          `json:"reprint"`
-	ImageUrls       []string     `json:"image_urls"`
+	ImageURLs       []string     `json:"image_urls"`
 	PublishTime     int          `json:"publish_time"` // 发布时间戳。单位：秒
 	Ctime           int          `json:"ctime"`        // 提交时间戳。单位：秒
 	Stats           ArticleStats `json:"stats"`        // 专栏文章数据统计
 	Tags            []ArticleTag `json:"tags"`         // 标签
 	Words           int          `json:"words"`
 	Dynamic         string       `json:"dynamic"` // 粉丝动态文案
-	OriginImageUrls []string     `json:"origin_image_urls"`
+	OriginImageURLs []string     `json:"origin_image_urls"`
 	IsLike          bool         `json:"is_like"`
 	Media           *Media       `json:"media"`
 	ApplyTime       string       `json:"apply_time"` // 空串
 	CheckTime       string       `json:"check_time"` // 空串
 	Original        int          `json:"original"`
-	ActId           int          `json:"act_id"`
+	ActID           int          `json:"act_id"`
 	CoverAvid       int          `json:"cover_avid"`
 	Type            int          `json:"type"`
 	LikeState       int          `json:"like_state"` // 是否点赞。0：未点赞。1：已点赞。需要登录(Cookie) 。未登录为0
@@ -113,12 +113,12 @@ type ArticleInfo struct {
 	Coin            int            `json:"coin"`              // 为文章投币数
 	Stats           ArticleStats   `json:"stats"`             // 状态数信息
 	Title           string         `json:"title"`             // 文章标题
-	BannerUrl       string         `json:"banner_url"`        // 文章头图url
+	BannerURL       string         `json:"banner_url"`        // 文章头图url
 	Mid             int            `json:"mid"`               // 文章作者mid
 	AuthorName      string         `json:"author_name"`       // 文章作者昵称
 	IsAuthor        bool           `json:"is_author"`         // true。作用尚不明确
-	ImageUrls       []string       `json:"image_urls"`        // 动态封面
-	OriginImageUrls []string       `json:"origin_image_urls"` // 封面图片
+	ImageURLs       []string       `json:"image_urls"`        // 动态封面
+	OriginImageURLs []string       `json:"origin_image_urls"` // 封面图片
 	Shareable       bool           `json:"shareable"`         // true。作用尚不明确
 	ShowLaterWatch  bool           `json:"show_later_watch"`  // true。作用尚不明确
 	ShowSmallWindow bool           `json:"show_small_window"` // true。作用尚不明确

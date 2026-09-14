@@ -60,7 +60,7 @@ func (c *Client) GetMyUserSpaceDetail(ctx context.Context) (*MyUserSpaceDetail, 
 }
 
 type CheckNickNameParam struct {
-	Nickname string `json:"nickName"` // 目标昵称。最长为16字符
+	NickName string `json:"nickName"` // 目标昵称。最长为16字符
 }
 
 // CheckNickName 检查昵称是否可注册
@@ -109,7 +109,7 @@ func (c *Client) FansSendMessage(ctx context.Context, param FansSendMessageParam
 }
 
 type BatchGetUserCardsParam struct {
-	Uids []int `json:"uids"` // 目标用户的UID列表
+	UIDs []int `json:"uids"` // 目标用户的UID列表
 }
 
 // BatchGetUserCards 获取多用户详细信息

@@ -68,7 +68,7 @@ func (c *Client) GetVideoTags(ctx context.Context, param VideoParam) ([]VideoTag
 
 type VideoTagParam struct {
 	Aid   int `json:"aid"`    // 稿件avid
-	TagId int `json:"tag_id"` // tag_id
+	TagID int `json:"tag_id"` // tag_id
 }
 
 // LikeVideoTag 点赞视频TAG，重复请求为取消
@@ -126,8 +126,8 @@ func (c *Client) CoinVideo(ctx context.Context, param CoinVideoParam) (*CoinVide
 type FavourVideoParam struct {
 	Rid         int   `json:"rid"`                                               // 稿件 avid
 	Type        int   `json:"type"`                                              // 必须为2
-	AddMediaIds []int `json:"add_media_ids,omitempty" request:"query,omitempty"` // 需要加入的收藏夹 mlid。同时添加多个，用,（%2C）分隔
-	DelMediaIds []int `json:"del_media_ids,omitempty" request:"query,omitempty"` // 需要取消的收藏夹 mlid。同时取消多个，用,（%2C）分隔
+	AddMediaIDs []int `json:"add_media_ids,omitempty" request:"query,omitempty"` // 需要加入的收藏夹 mlid。同时添加多个，用,（%2C）分隔
+	DelMediaIDs []int `json:"del_media_ids,omitempty" request:"query,omitempty"` // 需要取消的收藏夹 mlid。同时取消多个，用,（%2C）分隔
 }
 
 // FavourVideo 收藏视频
@@ -191,7 +191,7 @@ func (c *Client) GetTopRecommendVideo(ctx context.Context, param GetTopRecommend
 
 type GetVideoCollectionInfoParam struct {
 	Mid         int  `json:"mid"`                                              // UP 主 ID
-	SeasonId    int  `json:"season_id"`                                        // 视频合集 ID
+	SeasonID    int  `json:"season_id"`                                        // 视频合集 ID
 	SortReverse bool `json:"sort_reverse,omitempty" request:"query,omitempty"` // 未知
 	PageNum     int  `json:"page_num,omitempty" request:"query,omitempty"`     // 页码索引
 	PageSize    int  `json:"page_size,omitempty" request:"query,omitempty"`    // 单页内容数量
@@ -212,7 +212,7 @@ type GetVideoByKeywordsParam struct {
 	Ps       int    `json:"ps,omitempty" request:"query,omitempty"`        // 每页视频数。默认为 0, 留空为 20
 	Pn       int    `json:"pn,omitempty" request:"query,omitempty"`        // 页码。留空为 1
 	Orderby  string `json:"orderby,omitempty" request:"query,omitempty"`   // 排序方式。最新发布: pubdate(默认)。最多播放: views。senddate: 最新发布
-	SeriesId int    `json:"series_id,omitempty" request:"query,omitempty"` // 系列 ID。用于过滤结果, 即若某一视频包含在系列内则不返回该视频
+	SeriesID int    `json:"series_id,omitempty" request:"query,omitempty"` // 系列 ID。用于过滤结果, 即若某一视频包含在系列内则不返回该视频
 }
 
 // GetVideoByKeywords 根据关键词查找视频
@@ -228,7 +228,7 @@ func (c *Client) GetVideoByKeywords(ctx context.Context, param GetVideoByKeyword
 
 type GetVideoSeriesInfoParam struct {
 	Mid        int    `json:"mid"`                                             // UP 主 ID
-	SeriesId   int    `json:"series_id"`                                       // 视频合集 ID
+	SeriesID   int    `json:"series_id"`                                       // 视频合集 ID
 	Sort       string `json:"sort,omitempty" request:"query,omitempty"`        // 未知
 	Pn         int    `json:"pn,omitempty" request:"query,omitempty"`          // 页码索引
 	Ps         int    `json:"ps,omitempty" request:"query,omitempty"`          // 单页内容数量

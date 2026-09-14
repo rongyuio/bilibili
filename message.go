@@ -28,7 +28,7 @@ func (c *Client) GetUnreadPrivateMessage(ctx context.Context) (*UnreadPrivateMes
 	return execute[*UnreadPrivateMessage](ctx, c, method, url, nil)
 }
 
-var deviceId string
+var deviceID string
 
 func init() {
 	b := []byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'}
@@ -46,19 +46,19 @@ func init() {
 			s[i] = b[3&j|8]
 		}
 	}
-	deviceId = string(s)
+	deviceID = string(s)
 }
 
 type SendPrivateMessageParam struct {
-	SenderUid      int         `json:"msg[sender_uid]"`                                           // 发送者mid
-	ReceiverId     int         `json:"msg[receiver_id]"`                                          // 接收者mid
+	SenderUID      int         `json:"msg[sender_uid]"`                                           // 发送者mid
+	ReceiverID     int         `json:"msg[receiver_id]"`                                          // 接收者mid
 	ReceiverType   int         `json:"msg[receiver_type]"`                                        // 1。固定为1
 	MsgType        int         `json:"msg[msg_type]"`                                             // 消息类型。1:发送文字。2:发送图片。5:撤回消息
 	MsgStatus      int         `json:"msg[msg_status],omitempty" request:"query,omitempty"`       // 0
 	Timestamp      int         `json:"msg[timestamp]"`                                            // 时间戳（秒）
 	NewFaceVersion int         `json:"msg[new_face_version],omitempty" request:"query,omitempty"` // 表情包版本
 	Content        json.Number `json:"msg[content]"`                                              // 消息内容。发送文字时：str<br />撤回消息时：num
-	DeviceId       string      `json:"-" request:"query,field=msg[dev_id]"`                       // 设备 id，留空时由 SendPrivateMessage 填入进程内随机生成的设备标识
+	DeviceID       string      `json:"-" request:"query,field=msg[dev_id]"`                       // 设备 id，留空时由 SendPrivateMessage 填入进程内随机生成的设备标识
 }
 
 // SendPrivateMessage 发送私信（文字消息）
@@ -67,15 +67,15 @@ func (c *Client) SendPrivateMessage(ctx context.Context, param SendPrivateMessag
 		method = resty.MethodPost
 		url    = "https://api.vc.bilibili.com/web_im/v1/web_im/send_msg"
 	)
-	if param.DeviceId == "" {
-		param.DeviceId = deviceId
+	if param.DeviceID == "" {
+		param.DeviceID = deviceID
 	}
 	return execute[*SendPrivateMessageResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type GetPrivateMessageRecordsParam struct {
-	TalkerId       int    `json:"talker_id"`                                            // 聊天对象的uid
-	SenderDeviceId int    `json:"sender_device_id,omitempty" request:"query,omitempty"` // 发送者设备。1
+	TalkerID       int    `json:"talker_id"`                                            // 聊天对象的uid
+	SenderDeviceID int    `json:"sender_device_id,omitempty" request:"query,omitempty"` // 发送者设备。1
 	SessionType    int    `json:"session_type"`                                         // 聊天对象的类型。1为用户，2为粉丝团
 	Size           int    `json:"size,omitempty" request:"query,omitempty"`             // 列出消息条数。默认是20，最大为200
 	Build          int    `json:"build,omitempty" request:"query,omitempty"`            // 未知。默认是0

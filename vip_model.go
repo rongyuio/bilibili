@@ -90,45 +90,45 @@ type VipWallet struct {
 }
 
 type ChildPrivilege struct {
-	FirstId            int    `json:"first_id"`             // 特权父类 id
-	ReportId           string `json:"report_id"`            // 上报 id。该特权的代号？
+	FirstID            int    `json:"first_id"`             // 特权父类 id
+	ReportID           string `json:"report_id"`            // 上报 id。该特权的代号？
 	Name               string `json:"name"`                 // 特权名称
 	Desc               string `json:"desc"`                 // 特权简介文案
 	Explain            string `json:"explain"`              // 特权介绍正文
-	IconUrl            string `json:"icon_url"`             // 特权图标 url
-	IconGrayUrl        string `json:"icon_gray_url"`        // 特权图标灰色主题 url。某些项目无此字段
-	BackgroundImageUrl string `json:"background_image_url"` // 背景图片 url
+	IconURL            string `json:"icon_url"`             // 特权图标 url
+	IconGrayURL        string `json:"icon_gray_url"`        // 特权图标灰色主题 url。某些项目无此字段
+	BackgroundImageURL string `json:"background_image_url"` // 背景图片 url
 	Link               string `json:"link"`                 // 特权介绍页 url
-	ImageUrl           string `json:"image_url"`            // 特权示例图 url
+	ImageURL           string `json:"image_url"`            // 特权示例图 url
 	Type               int    `json:"type"`                 // 类型？。目前为0
 	HotType            int    `json:"hot_type"`             // 是否热门特权。0：普通特权。1：热门特权
 	NewType            int    `json:"new_type"`             // 是否新特权。0：普通特权。1：新特权
-	Id                 int    `json:"id"`                   // 特权子类 id
+	ID                 int    `json:"id"`                   // 特权子类 id
 }
 
 type Privilege struct {
-	Id              int              `json:"id"`               // 特权父类 id
+	ID              int              `json:"id"`               // 特权父类 id
 	Name            string           `json:"name"`             // 类型名称
 	ChildPrivileges []ChildPrivilege `json:"child_privileges"` // 特权子类列表
 }
 
 type Banner struct {
-	Id          int    `json:"id"`           // banner 卡片 id
+	ID          int    `json:"id"`           // banner 卡片 id
 	Index       int    `json:"index"`        // banner 卡片排序
 	Image       string `json:"image"`        // banner 卡片图片 url
 	Title       string `json:"title"`        // banner 卡片标题
-	Uri         string `json:"uri"`          // banner 卡片跳转页 url
+	URI         string `json:"uri"`          // banner 卡片跳转页 url
 	TrackParams any    `json:"track_params"` // 上报参数
 }
 
 type WelfareItem struct {
-	Id          int    `json:"id"`           // 福利 id
+	ID          int    `json:"id"`           // 福利 id
 	Name        string `json:"name"`         // 福利名称
-	HomepageUri string `json:"homepage_uri"` // 福利图片 url
-	BackdropUri string `json:"backdrop_uri"` // 福利图片 banner url
+	HomepageURI string `json:"homepage_uri"` // 福利图片 url
+	BackdropURI string `json:"backdrop_uri"` // 福利图片 banner url
 	Tid         int    `json:"tid"`          // (?)。目前为0
 	Rank        int    `json:"rank"`         // 排列顺序
-	ReceiveUri  string `json:"receive_uri"`  // 福利跳转页 url
+	ReceiveURI  string `json:"receive_uri"`  // 福利跳转页 url
 }
 
 type Welfare struct {
@@ -136,27 +136,27 @@ type Welfare struct {
 	List  []WelfareItem `json:"list"`  // 福利项目列表
 }
 
-type RecommendPendant struct {
-	Id      int    `json:"id"`       // 头像框 id
-	Name    string `json:"name"`     // 头像框名称
-	Image   string `json:"image"`    // 头像框图片 url
-	JumpUrl string `json:"jump_url"` // 头像框页面 url
+// RecommendItem 是推荐位条目，推荐头像框与推荐个性装扮共用同一返回结构。
+type RecommendItem struct {
+	ID      int    `json:"id"`       // 推荐位条目 id
+	Name    string `json:"name"`     // 推荐位条目名称
+	Image   string `json:"image"`    // 推荐位条目图片 url
+	JumpURL string `json:"jump_url"` // 推荐位条目页面 url
 }
 
+// RecommendPendant 是 RecommendItem 的别名（推荐头像框）。
+type RecommendPendant = RecommendItem
+
+// RecommendCard 是 RecommendItem 的别名（推荐个性装扮）。
+type RecommendCard = RecommendItem
+
 type RecommendPendants struct {
-	JumpUrl string             `json:"jump_url"` // 头像框商城页面跳转 url
+	JumpURL string             `json:"jump_url"` // 头像框商城页面跳转 url
 	List    []RecommendPendant `json:"list"`     // 推荐头像框列表
 }
 
-type RecommendCard struct {
-	Id      int    `json:"id"`       // 个性装扮 id
-	Name    string `json:"name"`     // 个性装扮名称
-	Image   string `json:"image"`    // 个性装扮图标 url
-	JumpUrl string `json:"jump_url"` // 个性装扮页面 url
-}
-
 type RecommendCards struct {
-	JumpUrl string          `json:"jump_url"` // 推荐个性装扮商城页面跳转 url
+	JumpURL string          `json:"jump_url"` // 推荐个性装扮商城页面跳转 url
 	List    []RecommendCard `json:"list"`     // 推荐个性装扮列表
 }
 

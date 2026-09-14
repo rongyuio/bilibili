@@ -15,9 +15,9 @@ type GetUserSpaceDetailParam struct {
 type SpaceVip = CardVip
 
 type Medal struct {
-	Uid              int    `json:"uid"`                // 此用户mid
-	TargetId         int    `json:"target_id"`          // 粉丝勋章所属UP的mid
-	MedalId          int    `json:"medal_id"`           // 粉丝勋章id
+	UID              int    `json:"uid"`                // 此用户mid
+	TargetID         int    `json:"target_id"`          // 粉丝勋章所属UP的mid
+	MedalID          int    `json:"medal_id"`           // 粉丝勋章id
 	Level            int    `json:"level"`              // 粉丝勋章等级
 	MedalName        string `json:"medal_name"`         // 粉丝勋章名称
 	MedalColor       int    `json:"medal_color"`        // 颜色
@@ -41,9 +41,9 @@ type FansMedal struct {
 }
 
 type SysNotice struct {
-	Id         int    `json:"id"`          // id
+	ID         int    `json:"id"`          // id
 	Content    string `json:"content"`     // 显示文案
-	Url        string `json:"url"`         // 跳转地址
+	URL        string `json:"url"`         // 跳转地址
 	NoticeType int    `json:"notice_type"` // 提示类型。1,2
 	Icon       string `json:"icon"`        // 前缀图标
 	TextColor  string `json:"text_color"`  // 文字颜色
@@ -61,14 +61,14 @@ type WatchedShow struct {
 }
 
 type LiveRoom struct {
-	Roomstatus    int         `json:"roomStatus"` // 直播间状态。0：无房间。1：有房间
-	Livestatus    int         `json:"liveStatus"` // 直播状态。0：未开播。1：直播中
-	Url           string      `json:"url"`        // 直播间网页 url
+	RoomStatus    int         `json:"roomStatus"` // 直播间状态。0：无房间。1：有房间
+	LiveStatus    int         `json:"liveStatus"` // 直播状态。0：未开播。1：直播中
+	URL           string      `json:"url"`        // 直播间网页 url
 	Title         string      `json:"title"`      // 直播间标题
 	Cover         string      `json:"cover"`      // 直播间封面 url
 	WatchedShow   WatchedShow `json:"watched_show"`
-	Roomid        int         `json:"roomid"`         // 直播间 id(短号)
-	Roundstatus   int         `json:"roundStatus"`    // 轮播状态。0：未轮播。1：轮播
+	RoomID        int         `json:"roomid"`         // 直播间 id(短号)
+	RoundStatus   int         `json:"roundStatus"`    // 轮播状态。0：未轮播。1：轮播
 	BroadcastType int         `json:"broadcast_type"` // 0
 }
 
@@ -89,7 +89,7 @@ type ElecShowInfo struct {
 	State   int    `json:"state"`    // 状态。-1：未开通。1：已开通
 	Title   string `json:"title"`    // 空串
 	Icon    string `json:"icon"`     // 空串
-	JumpUrl string `json:"jump_url"` // 空串
+	JumpURL string `json:"jump_url"` // 空串
 }
 
 type Elec struct {
@@ -202,7 +202,7 @@ type UserVideoPage struct {
 
 type EpisodicButton struct {
 	Text string `json:"text"` // 按钮文字
-	Uri  string `json:"uri"`  // 全部播放页url
+	URI  string `json:"uri"`  // 全部播放页url
 }
 
 type UserVideos struct {
@@ -215,11 +215,11 @@ type UserVideos struct {
 }
 
 type UserCardVip struct {
-	Viptype       int    `json:"vipType"`       // 大会员类型。0：无。1：月度大会员。2：年度及以上大会员
-	Dueremark     string `json:"dueRemark"`     // 空。**作用尚不明确**
-	Accessstatus  int    `json:"accessStatus"`  // 0。**作用尚不明确**
-	Vipstatus     int    `json:"vipStatus"`     // 大会员状态。0：无。1：有
-	Vipstatuswarn string `json:"vipStatusWarn"` // 空。**作用尚不明确**
+	VipType       int    `json:"vipType"`       // 大会员类型。0：无。1：月度大会员。2：年度及以上大会员
+	DueRemark     string `json:"dueRemark"`     // 空。**作用尚不明确**
+	AccessStatus  int    `json:"accessStatus"`  // 0。**作用尚不明确**
+	VipStatus     int    `json:"vipStatus"`     // 大会员状态。0：无。1：有
+	VipStatusWarn string `json:"vipStatusWarn"` // 空。**作用尚不明确**
 	ThemeType     int    `json:"theme_type"`    // 0。**作用尚不明确**
 }
 
@@ -229,7 +229,7 @@ type UserCardInfo struct {
 	Name           string         `json:"name"`            // 用户昵称
 	Sex            string         `json:"sex"`             // 用户性别。男 女 保密
 	Face           string         `json:"face"`            // 用户头像链接
-	Displayrank    string         `json:"DisplayRank"`     // 0。**作用尚不明确**
+	DisplayRank    string         `json:"DisplayRank"`     // 0。**作用尚不明确**
 	Regtime        int            `json:"regtime"`         // 0。**作用尚不明确**
 	Spacesta       int            `json:"spacesta"`        // 用户状态。0：正常。-2：被封禁
 	Birthday       string         `json:"birthday"`        // 空。**作用尚不明确**
@@ -270,7 +270,7 @@ type MyVip struct {
 }
 
 type MyProfession struct {
-	Id       int    `json:"id"`
+	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	ShowName string `json:"show_name"`
 }
@@ -326,17 +326,18 @@ type BatchGetUserCardsResult struct {
 	Silence int    `json:"silence"` // 封禁状态。0：正常。1：被封
 }
 
-type GetUserFollowersResult struct {
+// RelationUserPage 是带总数的关系明细列表（粉丝、关注、共同关注、搜索关注）。
+type RelationUserPage struct {
 	List      []RelationUser `json:"list"`       // 明细列表
 	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int            `json:"total"`      // 粉丝总数
+	Total     int            `json:"total"`      // 列表总数
 }
 
-type GetUserFollowingsResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int            `json:"total"`      // 关注总数
-}
+// GetUserFollowersResult 是 RelationUserPage 的别名。
+type GetUserFollowersResult = RelationUserPage
+
+// GetUserFollowingsResult 是 RelationUserPage 的别名。
+type GetUserFollowingsResult = RelationUserPage
 
 type UserFollowingsDetail2 struct {
 	Mid            int            `json:"mid"`             // 用户 mid
@@ -369,32 +370,26 @@ type GetUserFollowings3Result struct {
 	List []UserFollowingsDetail3 `json:"list"` // 明细列表
 }
 
-type SearchUserFollowingsResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int            `json:"total"`      // 关注总数
-}
+// SearchUserFollowingsResult 是 RelationUserPage 的别名。
+type SearchUserFollowingsResult = RelationUserPage
 
-type GetSameFollowingsResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int            `json:"total"`      // 关注总数
-}
+// GetSameFollowingsResult 是 RelationUserPage 的别名。
+type GetSameFollowingsResult = RelationUserPage
 
-type GetWhispersResult struct {
+// RelationUserList 是不带总数的关系名单（悄悄关注、互关、黑名单）。
+type RelationUserList struct {
 	List      []RelationUser `json:"list"`       // 明细列表
 	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
 }
 
-type GetFriendsResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-}
+// GetWhispersResult 是 RelationUserList 的别名。
+type GetWhispersResult = RelationUserList
 
-type GetBlacksResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-}
+// GetFriendsResult 是 RelationUserList 的别名。
+type GetFriendsResult = RelationUserList
+
+// GetBlacksResult 是 RelationUserList 的别名。
+type GetBlacksResult = RelationUserList
 
 type BatchModifyRelationResult struct {
 	FailedFids []int `json:"failed_fids"` // 操作失败的 mid 列表

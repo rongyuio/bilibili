@@ -32,38 +32,6 @@ var (
 	}
 )
 
-type Storage interface {
-	Set(key string, value any)
-	Get(key string) (v any, isSet bool)
-}
-
-type MemoryStorage struct {
-	data map[string]any
-	mu   sync.RWMutex
-}
-
-// Set 设置值
-func (impl *MemoryStorage) Set(key string, value any) {
-	impl.mu.Lock()
-	defer impl.mu.Unlock()
-
-	if impl.data == nil {
-		impl.data = make(map[string]any)
-	}
-	impl.data[key] = value
-}
-
-// Get 获取值, isSet 表示值是否存在
-func (impl *MemoryStorage) Get(key string) (v any, isSet bool) {
-	impl.mu.RLock()
-	defer impl.mu.RUnlock()
-
-	if v, isSet = impl.data[key]; isSet {
-		return v, true
-	}
-	return nil, false
-}
-
 // WBI 签名实现
 // 如果希望以登录的方式获取则使用 WithCookies or WithRawCookies 设置cookie
 // 如果希望以未登录的方式获取 WithCookies(nil) 设置cookie为 nil 即可, 这是 Default 行为
@@ -340,8 +308,8 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		Message string `json:"message"`
 		Data    struct {
 			WbiImg struct {
-				ImgUrl string `json:"img_url"`
-				SubUrl string `json:"sub_url"`
+				ImgURL string `json:"img_url"`
+				SubURL string `json:"sub_url"`
 			} `json:"wbi_img"`
 		}
 	}{}
@@ -375,7 +343,7 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		return err
 	}
 	if result.Code != 0 {
-		if result.Data.WbiImg.ImgUrl == "" || result.Data.WbiImg.SubUrl == "" {
+		if result.Data.WbiImg.ImgURL == "" || result.Data.WbiImg.SubURL == "" {
 			return fmt.Errorf("%s %s: %w", resty.MethodGet, safeEndpoint("https://api.bilibili.com/x/web-interface/nav"), Error{Code: result.Code, Message: result.Message})
 		}
 	}
@@ -385,9 +353,9 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		wbi.WithCookies(resp.Cookies())
 	}
 
-	imgKeys := strings.Split(result.Data.WbiImg.ImgUrl, "/")
+	imgKeys := strings.Split(result.Data.WbiImg.ImgURL, "/")
 	imgKey, _, _ := strings.Cut(imgKeys[len(imgKeys)-1], ".")
-	subKeys := strings.Split(result.Data.WbiImg.SubUrl, "/")
+	subKeys := strings.Split(result.Data.WbiImg.SubURL, "/")
 	subKey, _, _ := strings.Cut(subKeys[len(subKeys)-1], ".")
 
 	if len(imgKey) != 32 || len(subKey) != 32 {
