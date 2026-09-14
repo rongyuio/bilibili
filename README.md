@@ -315,7 +315,7 @@ log.Printf("本页普通勋章数: %d，总页数: %d", len(panel.List), panel.P
 
 查询任务时显式指定平台和页面位置，例如 `GetLiveActivatedMedalInfoParam{Platform: "pc", RoomId: roomID, TargetId: anchorID, WebLocation: "0.0"}`。`ReportLiveLike(ctx, ReportLiveLikeParam{ClickTime: count, RoomId: roomID, AnchorId: anchorID, Uid: myUID})` 上报点赞并返回 `error`，调用方必须处理错误；数量由调用方指定，库不调度批量任务或自动重试。
 
-任务查询的 CSRF 位于 query，点赞的 CSRF 与业务参数位于 URL 编码表单；两者均由库从本次请求的 Cookie 快照填入，无须手动传递。三个查询结果及嵌套命名类型见 [live_medal_model.go](live_medal_model.go)。模型沿用本地工具已声明字段，勋章墙与面板保留独立结构；尚未通过真实 API 验证全部字段类型。
+任务查询的 CSRF 位于 query，点赞的 CSRF 与业务参数位于 URL 编码表单；两者均由库从本次请求的 Cookie 快照填入，无须手动传递。三个查询结果及嵌套命名类型见 [live.go](live.go)。模型沿用本地工具已声明字段，勋章墙与面板保留独立结构；尚未通过真实 API 验证全部字段类型。
 
 本地工具迁移时，将原来的 `resp.Data.List` / `resp.Data.TaskInfo` 改为 `result.List` / `result.TaskInfo`，删除对应手写请求和重复响应结构。此次仅新增库 API，不改变既有公开方法或字段类型。移动端直播心跳不在本次封装范围内。
 
