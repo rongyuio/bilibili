@@ -2,7 +2,6 @@ package bilibili
 
 import (
 	"context"
-	"errors"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -19,9 +18,9 @@ type DoActivityLotteryParam struct {
 func (c *Client) DoActivityLottery(ctx context.Context, param DoActivityLotteryParam) error {
 	_, err := execute[any](ctx, c, resty.MethodPost,
 		"https://api.bilibili.com/x/lottery/x/do", param, func(r *resty.Request) error {
-			csrf := cookieValue(r.Cookies, "bili_jct")
-			if csrf == "" {
-				return errors.New("B站登录过期")
+			csrf, err := csrfValue(r)
+			if err != nil {
+				return err
 			}
 			// 复用统一参数编码，再将本接口字段移入表单。
 			for _, key := range []string{"gaia_vtoken", "num", "page_id", "sid"} {
@@ -44,9 +43,9 @@ type GetActivityLotteryTimesParam struct {
 func (c *Client) GetActivityLotteryTimes(ctx context.Context, param GetActivityLotteryTimesParam) (*GetActivityLotteryTimesResult, error) {
 	return execute[*GetActivityLotteryTimesResult](ctx, c, resty.MethodGet,
 		"https://api.bilibili.com/x/lottery/x/mytimes", param, func(r *resty.Request) error {
-			csrf := cookieValue(r.Cookies, "bili_jct")
-			if csrf == "" {
-				return errors.New("B站登录过期")
+			csrf, err := csrfValue(r)
+			if err != nil {
+				return err
 			}
 			r.SetQueryParam("csrf", csrf)
 			return nil
