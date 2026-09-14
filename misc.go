@@ -20,6 +20,9 @@ var (
 //
 // 第一个返回值如果是"bvid"，则第二个返回值是视频的bvid (string)。
 // 第一个返回值如果是"live"，则第二个返回值是直播间id (int)。
+//
+// 该接口的目标地址由调用方提供且只读取 302 Location 头，不返回
+// code/message/data 结构，因此保留 newRequest/sendRaw 而不复用 execute。
 func (c *Client) UnwrapShortUrl(ctx context.Context, shortUrl string) (string, any, error) {
 	if err := checkContext(ctx); err != nil {
 		return "", nil, err

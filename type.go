@@ -74,10 +74,9 @@ type VipLabel struct {
 
 // Vip 是评论用户（Member/RelationUser）的会员信息。
 //
-// 各业务的大会员字段命名与字段集并不一致（视频/空间用 snake_case 并含
-// tv_vip_*，空间卡用 camelCase 的 vipType，大会员中心用 vip_type），
-// 因此 Vip 与其变体（CardVip、SpaceVip、UserCardVip、MyVip、VipUserVip）
-// 各自保留独立类型，不做跨接口合并。
+// 各业务的大会员字段命名与字段集并不一致：视频卡片与用户空间共用 CardVip
+// （SpaceVip 为其别名），空间卡用 camelCase 的 UserCardVip，大会员中心用
+// VipUserVip。字段集不同的变体各自保留独立类型，不做跨接口合并。
 type Vip struct {
 	Viptype            int      `json:"vipType"`              // 大会员类型。0：无。1：月会员。2：年以上会员
 	Vipduedate         int      `json:"vipDueDate"`           // 大会员到期时间。毫秒 时间戳

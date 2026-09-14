@@ -5,76 +5,11 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// 视频相关接口。响应模型见 video_model.go。
+
 type VideoParam struct {
 	Aid  int    `json:"aid,omitempty" request:"query,omitempty"`  // 稿件avid。avid与bvid任选一个
 	Bvid string `json:"bvid,omitempty" request:"query,omitempty"` // 稿件bvid。avid与bvid任选一个
-}
-
-type CardVip struct {
-	Type               int    `json:"type"`                 // 会员类型。0：无。1：月大会员。2：年度及以上大会员
-	Status             int    `json:"status"`               // 会员状态。0：无。1：有
-	DueDate            int    `json:"due_date"`             // 会员过期时间。Unix时间戳(毫秒)
-	VipPayType         int    `json:"vip_pay_type"`         // 支付类型。0：未支付（常见于官方账号）。1：已支付（以正常渠道获取的大会员均为此值）
-	ThemeType          int    `json:"theme_type"`           // 0。作用尚不明确
-	Label              Label  `json:"label"`                // 会员标签
-	AvatarSubscript    int    `json:"avatar_subscript"`     // 是否显示会员图标。0：不显示。1：显示
-	NicknameColor      string `json:"nickname_color"`       // 会员昵称颜色。颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
-	Role               int    `json:"role"`                 // 大角色类型。1：月度大会员。3：年度大会员。7：十年大会员。15：百年大会员
-	AvatarSubscriptUrl string `json:"avatar_subscript_url"` // 大会员角标地址
-	TvVipStatus        int    `json:"tv_vip_status"`        // 电视大会员状态。0：未开通
-	TvVipPayType       int    `json:"tv_vip_pay_type"`      // 电视大会员支付类型
-}
-
-type VideoCard struct {
-	Mid            string         `json:"mid"`              // 用户mid
-	Name           string         `json:"name"`             // 用户昵称
-	Approve        bool           `json:"approve"`          // false。作用尚不明确
-	Sex            string         `json:"sex"`              // 用户性别。男 女 保密
-	Rank           string         `json:"rank"`             // 10000。作用尚不明确
-	Face           string         `json:"face"`             // 用户头像链接
-	FaceNft        int            `json:"face_nft"`         // 是否为 nft 头像。0不是nft头像。1是 nft 头像
-	Displayrank    string         `json:"DisplayRank"`      // 0。作用尚不明确
-	Regtime        int            `json:"regtime"`          // 0。作用尚不明确
-	Spacesta       int            `json:"spacesta"`         // 0。作用尚不明确
-	Birthday       string         `json:"birthday"`         // 空。作用尚不明确
-	Place          string         `json:"place"`            // 空。作用尚不明确
-	Description    string         `json:"description"`      // 空。作用尚不明确
-	Article        int            `json:"article"`          // 0。作用尚不明确
-	Attentions     []any          `json:"attentions"`       // 空。作用尚不明确
-	Fans           int            `json:"fans"`             // 粉丝数
-	Friend         int            `json:"friend"`           // 关注数
-	Attention      int            `json:"attention"`        // 关注数
-	Sign           string         `json:"sign"`             // 签名
-	LevelInfo      LevelInfo      `json:"level_info"`       // 等级
-	Pendant        Pendant        `json:"pendant"`          // 挂件
-	Nameplate      Nameplate      `json:"nameplate"`        // 勋章
-	Official       Official       `json:"Official"`         // 认证信息
-	OfficialVerify OfficialVerify `json:"official_verify"`  // 认证信息2
-	Vip            CardVip        `json:"vip"`              // 大会员状态
-	IsSeniorMember int            `json:"is_senior_member"` // 是否为硬核会员。0：否。1：是
-}
-
-type VideoDetailInfoCard struct {
-	Card         VideoCard `json:"card"`          // UP主名片信息
-	Space        CardSpace `json:"space"`         // 主页头图
-	Following    bool      `json:"following"`     // 是否关注此用户。true：已关注。false：未关注。需要登录(Cookie) 。未登录为false
-	ArchiveCount int       `json:"archive_count"` // 用户稿件数
-	ArticleCount int       `json:"article_count"` // 用户专栏数
-	Follower     int       `json:"follower"`      // 粉丝数
-	LikeNum      int       `json:"like_num"`      // UP主获赞次数
-}
-
-type VideoDetailInfo struct {
-	View      VideoInfo           `json:"View"`       // 视频基本信息
-	Card      VideoDetailInfoCard `json:"Card"`       // 视频UP主信息
-	Tags      []VideoTag          `json:"Tags"`       // 视频TAG信息
-	Reply     CommentsHotReply    `json:"Reply"`      // 视频热评信息
-	Related   []VideoInfo         `json:"Related"`    // 推荐视频信息
-	Spec      any                 `json:"Spec"`       // ？。作用尚不明确
-	HotShare  any                 `json:"hot_share"`  // ？。作用尚不明确
-	Elec      any                 `json:"elec"`       // ？。作用尚不明确
-	Recommend any                 `json:"recommend"`  // ？。作用尚不明确
-	ViewAddit any                 `json:"view_addit"` // ？。作用尚不明确
 }
 
 // GetVideoDetailInfo 获取视频超详细信息
@@ -95,8 +30,6 @@ func (c *Client) GetVideoRecommendList(ctx context.Context, param VideoParam) ([
 	return execute[[]VideoInfo](ctx, c, method, url, param)
 }
 
-// 视频详情响应模型见 video_model.go。
-
 // GetVideoInfo 获取视频详细信息
 func (c *Client) GetVideoInfo(ctx context.Context, param VideoParam) (*VideoInfo, error) {
 	const (
@@ -115,24 +48,6 @@ func (c *Client) GetVideoDesc(ctx context.Context, param VideoParam) (string, er
 	return execute[string](ctx, c, method, url, param)
 }
 
-type Dimension struct {
-	Width  int `json:"width"`  // 当前分P 宽度
-	Height int `json:"height"` // 当前分P 高度
-	Rotate int `json:"rotate"` // 是否将宽高对换。0：正常。1：对换
-}
-
-type VideoPage struct {
-	Cid        int       `json:"cid"`         // 当前分P cid
-	Page       int       `json:"page"`        // 当前分P
-	From       string    `json:"from"`        // 视频来源。vupload：普通上传（B站）。hunan：芒果TV。qq：腾讯
-	Part       string    `json:"part"`        // 当前分P标题
-	Duration   int       `json:"duration"`    // 当前分P持续时间。单位为秒
-	Vid        string    `json:"vid"`         // 站外视频vid
-	Weblink    string    `json:"weblink"`     // 站外视频跳转url
-	Dimension  Dimension `json:"dimension"`   // 当前分P分辨率。有部分视频无法获取分辨率
-	FirstFrame string    `json:"first_frame"` // 分P封面
-}
-
 // GetVideoPageList 获取视频分P列表
 func (c *Client) GetVideoPageList(ctx context.Context, param VideoParam) ([]VideoPage, error) {
 	const (
@@ -140,32 +55,6 @@ func (c *Client) GetVideoPageList(ctx context.Context, param VideoParam) ([]Vide
 		url    = "https://api.bilibili.com/x/player/pagelist"
 	)
 	return execute[[]VideoPage](ctx, c, method, url, param)
-}
-
-type StatusCount struct {
-	View  int `json:"view"`  // 0。作用尚不明确
-	Use   int `json:"use"`   // 视频添加TAG数
-	Atten int `json:"atten"` // TAG关注
-}
-
-type VideoTag struct {
-	TagId        int         `json:"tag_id"`        // tag_id
-	TagName      string      `json:"tag_name"`      // TAG名称
-	Cover        string      `json:"cover"`         // TAG图片url
-	HeadCover    string      `json:"head_cover"`    // TAG页面头图url
-	Content      string      `json:"content"`       // TAG介绍
-	ShortContent string      `json:"short_content"` // TAG简介
-	Type         int         `json:"type"`          // ？？？
-	State        int         `json:"state"`         // 0
-	Ctime        int         `json:"ctime"`         // 创建时间。时间戳
-	Count        StatusCount `json:"count"`         // 状态数
-	IsAtten      int         `json:"is_atten"`      // 是否关注。0：未关注。1：已关注。需要登录(Cookie) 。未登录为0
-	Likes        int         `json:"likes"`         // 0。作用尚不明确
-	Hates        int         `json:"hates"`         // 0。作用尚不明确
-	Attribute    int         `json:"attribute"`     // 0。作用尚不明确
-	Liked        int         `json:"liked"`         // 是否已经点赞。0：未点赞。1：已点赞。需要登录(Cookie) 。未登录为0
-	Hated        int         `json:"hated"`         // 是否已经点踩。0：未点踩。1：已点踩。需要登录(Cookie) 。未登录为0
-	ExtraAttr    int         `json:"extra_attr"`    // ? ? ?
 }
 
 // GetVideoTags 获取视频TAG
@@ -225,10 +114,6 @@ type CoinVideoParam struct {
 	SelectLike int    `json:"select_like,omitempty" request:"query,omitempty"` // 是否附加点赞。0：不点赞。1：同时点赞。默认为0
 }
 
-type CoinVideoResult struct {
-	Like bool `json:"like"` // 是否点赞成功。true：成功。false：失败。已赞过则附加点赞失败
-}
-
 // CoinVideo 投币视频
 func (c *Client) CoinVideo(ctx context.Context, param CoinVideoParam) (*CoinVideoResult, error) {
 	const (
@@ -245,10 +130,6 @@ type FavourVideoParam struct {
 	DelMediaIds []int `json:"del_media_ids,omitempty" request:"query,omitempty"` // 需要取消的收藏夹 mlid。同时取消多个，用,（%2C）分隔
 }
 
-type FavourVideoResult struct {
-	Prompt bool `json:"prompt"` // 是否为未关注用户收藏。false：否。true：是
-}
-
 // FavourVideo 收藏视频
 func (c *Client) FavourVideo(ctx context.Context, param FavourVideoParam) (*FavourVideoResult, error) {
 	const (
@@ -256,13 +137,6 @@ func (c *Client) FavourVideo(ctx context.Context, param FavourVideoParam) (*Favo
 		url    = "https://api.bilibili.com/medialist/gateway/coll/resource/deal"
 	)
 	return execute[*FavourVideoResult](ctx, c, method, url, param, fillCsrf(c))
-}
-
-type LikeCoinFavourResult struct {
-	Like     bool `json:"like"`     // 是否点赞成功。true：成功。false：失败
-	Coin     bool `json:"coin"`     // 是否投币成功。true：成功。false：失败
-	Fav      bool `json:"fav"`      // 是否收藏成功。true：成功。false：失败
-	Multiply int  `json:"multiply"` // 投币枚数。默认为2
 }
 
 // LikeCoinFavourVideo 一键三连视频
@@ -280,17 +154,6 @@ type VideoCidParam struct {
 	Cid  int    `json:"cid"`                                      // 视频cid。用于选择目标分P
 }
 
-type ShowSwitch struct {
-	Total bool `json:"total"` // 展示所有终端总计人数
-	Count bool `json:"count"` // 展示web端实时在线人数
-}
-
-type VideoOnlineInfo struct {
-	Total      string     `json:"total"`       // 所有终端总计人数。例如10万+
-	Count      string     `json:"count"`       // web端实时在线人数
-	ShowSwitch ShowSwitch `json:"show_switch"` // 数据显示控制
-}
-
 // GetVideoOnlineInfo 获取视频在线人数
 func (c *Client) GetVideoOnlineInfo(ctx context.Context, param VideoCidParam) (*VideoOnlineInfo, error) {
 	const (
@@ -298,25 +161,6 @@ func (c *Client) GetVideoOnlineInfo(ctx context.Context, param VideoCidParam) (*
 		url    = "https://api.bilibili.com/x/player/online/total"
 	)
 	return execute[*VideoOnlineInfo](ctx, c, method, url, param)
-}
-
-type VideoStatusNumber struct {
-	Aid        int            `json:"aid"`        // 稿件avid
-	Bvid       string         `json:"bvid"`       // 稿件bvid
-	View       NumberOrString `json:"view"`       // 正常：播放次数(num)。屏蔽："--"(str)
-	Danmaku    int            `json:"danmaku"`    // 弹幕条数
-	Reply      int            `json:"reply"`      // 评论条数
-	Favorite   int            `json:"favorite"`   // 收藏人数
-	Coin       int            `json:"coin"`       // 投币枚数
-	Share      int            `json:"share"`      // 分享次数
-	NowRank    int            `json:"now_rank"`   // 0。作用尚不明确
-	HisRank    int            `json:"his_rank"`   // 历史最高排行
-	Like       int            `json:"like"`       // 获赞次数
-	Dislike    int            `json:"dislike"`    // 0。作用尚不明确
-	NoReprint  int            `json:"no_reprint"` // 禁止转载标志。0：无。1：禁止
-	Copyright  int            `json:"copyright"`  // 版权标志。1：自制。2：转载
-	ArgueMsg   string         `json:"argue_msg"`  // 警告信息。默认为空
-	Evaluation string         `json:"evaluation"` // 视频评分。默认为空
 }
 
 // GetVideoStatusNumber 获取视频状态数视频
@@ -353,56 +197,6 @@ type GetVideoCollectionInfoParam struct {
 	PageSize    int  `json:"page_size,omitempty" request:"query,omitempty"`    // 单页内容数量
 }
 
-type CollectionVideoStat struct {
-	View int `json:"view"` // 稿件播放量
-	Vt   int `json:"vt"`   // 0
-}
-
-type CollectionVideo struct {
-	Aid              int                 `json:"aid"`               // 稿件avid
-	Bvid             string              `json:"bvid"`              // 稿件bvid
-	Ctime            int                 `json:"ctime"`             // 创建时间。Unix 时间戳
-	Duration         int                 `json:"duration"`          // 视频时长。单位为秒
-	EnableVt         any                 `json:"enable_vt"`         // int or bool
-	InteractiveVideo bool                `json:"interactive_video"` // false
-	Pic              string              `json:"pic"`               // 封面 URL
-	PlaybackPosition int                 `json:"playback_position"` // 会随着播放时间增长，播放完成后为 -1 。单位未知
-	Pubdate          int                 `json:"pubdate"`           // 发布日期。Unix 时间戳
-	Stat             CollectionVideoStat `json:"stat"`              // 稿件信息
-	State            int                 `json:"state"`             // 0
-	Title            string              `json:"title"`             // 稿件标题
-	UgcPay           int                 `json:"ugc_pay"`           // 0
-	VtDisplay        string              `json:"vt_display"`
-}
-
-type CollectionMeta struct {
-	Category    int    `json:"category"`    // 0
-	Covr        string `json:"covr"`        // 合集封面 URL
-	Description string `json:"description"` // 合集描述
-	Mid         int    `json:"mid"`         // UP 主 ID
-	Name        string `json:"name"`        // 合集标题
-	Ptime       int    `json:"ptime"`       // 发布时间。Unix 时间戳
-	SeasonId    int    `json:"season_id"`   // 合集 ID
-	Total       int    `json:"total"`       // 合集内视频数量
-}
-
-// CollectionPage 视频合集分页信息。
-//
-// 字段名为 page_num/page_size/total，与空间投稿、分区列表的分页字段不同，
-// 因此保留独立类型，不做跨接口合并。
-type CollectionPage struct {
-	PageNum  int `json:"page_num"`  // 分页页码
-	PageSize int `json:"page_size"` // 单页个数
-	Total    int `json:"total"`     // 合集内视频数量
-}
-
-type VideoCollectionInfo struct {
-	Aids     []int             `json:"aids"`           // 稿件avid。对应下方数组中内容 aid
-	Archives []CollectionVideo `json:"archives"`       // 合集中的视频
-	Meta     CollectionMeta    `json:"meta,omitempty"` // 合集元数据
-	Page     CollectionPage    `json:"page"`           // 分页信息
-}
-
 // GetVideoCollectionInfo 获取视频合集信息 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/collection.md#%E8%8E%B7%E5%8F%96%E8%A7%86%E9%A2%91%E5%90%88%E9%9B%86%E4%BF%A1%E6%81%AF
 func (c *Client) GetVideoCollectionInfo(ctx context.Context, param GetVideoCollectionInfoParam) (*VideoCollectionInfo, error) {
 	const (
@@ -410,11 +204,6 @@ func (c *Client) GetVideoCollectionInfo(ctx context.Context, param GetVideoColle
 		url    = "https://api.bilibili.com/x/polymer/web-space/seasons_archives_list"
 	)
 	return execute[*VideoCollectionInfo](ctx, c, method, url, param)
-}
-
-type VideoCollectionByKeywordsInfo struct {
-	Archives []CollectionVideo `json:"archives"` // 视频列表
-	Page     CollectionPage    `json:"page"`     // 页码信息
 }
 
 type GetVideoByKeywordsParam struct {
@@ -468,86 +257,6 @@ type GetVideoStreamParam struct {
 	Type        string `json:"type,omitempty" request:"query,omitempty"`         // 目前为空
 	Platform    string `json:"platform,omitempty" request:"query,omitempty"`     // pc：web播放（默认值，视频流存在 referer鉴权）。html5：移动端 HTML5 播放（仅支持 MP4 格式，无 referer 鉴权可以直接使用video标签播放）
 	HighQuality int    `json:"high_quality,omitempty" request:"query,omitempty"` // 是否高画质。platform=html5时，此值 为1可使画质为1080p
-}
-
-type SupportFormat struct {
-	Quality        int      `json:"quality"`         // 视频清晰度代码。含义见 [上表](#qn视频清晰度标识)
-	Format         string   `json:"format"`          // 视频格式
-	NewDescription string   `json:"new_description"` // 格式描述
-	DisplayDesc    string   `json:"display_desc"`    // 格式描述
-	Superscript    string   `json:"superscript"`     // (?)
-	Codecs         []string `json:"codecs"`          // 可用编码格式列表 例：av01.0.13M.08.0.110.01.01.01.0 使用AV1编码, avc1.640034 使用AVC编码, hev1.1.6.L153.90 使用HEVC编码
-}
-type Durl struct {
-	Order     int      `json:"order"`      // 视频分段序号。某些视频会分为多个片段（从1顺序增长）
-	Length    int      `json:"length"`     // 视频长度。单位为毫秒
-	Size      int      `json:"size"`       // 视频大小。单位为 Byte
-	Ahead     string   `json:"ahead"`      // （？）
-	Vhead     string   `json:"vhead"`      // （？）
-	Url       string   `json:"url"`        // 默认流 URL。注意 unicode 转义符。有效时间为120min
-	BackupUrl []string `json:"backup_url"` // 备用视频流 注意 unicode 转义符。有效时间为120min
-}
-type Dash struct {
-	Duration      int            `json:"duration"`        // 视频长度。秒值
-	Minbuffertime float64        `json:"minBufferTime"`   // 1.5？
-	MinBufferTime float64        `json:"min_buffer_time"` // 1.5？
-	Video         []AudioOrVideo `json:"video"`           // 视频流信息 同一清晰度可拥有 H.264 / H.265 / AV1 多种码流<br />HDR 仅支持 H.265 |
-	Audio         []AudioOrVideo `json:"audio"`           // 伴音流信息。当视频没有音轨时，此项为 null
-	Dolby         Dolby          `json:"dolby"`           // 杜比全景声伴音信息
-	Flac          Flac           `json:"flac"`            // 无损音轨伴音信息。当视频没有无损音轨时，此项为 null
-}
-type Dolby struct {
-	Type  int            `json:"type"`  // 杜比音效类型。1：普通杜比音效。2：全景杜比音效
-	Audio []AudioOrVideo `json:"audio"` // 杜比伴音流列表
-}
-type Flac struct {
-	Display bool         `json:"display"` // 是否在播放器显示切换Hi-Res无损音轨按钮
-	Audio   AudioOrVideo `json:"audio"`   // 音频流信息。同上文 DASH 流中video及audio数组中的对象
-}
-type AudioOrVideo struct {
-	Id           int         `json:"id"`             // 音视频清晰度代码。参考上表。[qn视频清晰度标识](#qn视频清晰度标识)。[视频伴音音质代码](#视 频伴音音质代码)
-	Baseurl      string      `json:"baseUrl"`        // 默认流 URL。注意 unicode 转义符。有效时间为 120min
-	BaseUrl      string      `json:"base_url"`       // 同上
-	Backupurl    []string    `json:"backupUrl"`      // 备用流 URL
-	BackupUrl    []string    `json:"backup_url"`     // 同上
-	Bandwidth    int         `json:"bandwidth"`      // 所需最低带宽。单位为 Byte
-	Mimetype     string      `json:"mimeType"`       // 格式 mimetype 类型
-	MimeType     string      `json:"mime_type"`      // 同上
-	Codecs       string      `json:"codecs"`         // 编码/音频类型。eg：avc1.640032
-	Width        int         `json:"width"`          // 视频宽度。单位为像素。仅视频流存在该字段
-	Height       int         `json:"height"`         // 视频高度。单位为像素。仅视频流存在该字段
-	Framerate    string      `json:"frameRate"`      // 视频帧率。仅视频流存在该字段
-	FrameRate    string      `json:"frame_rate"`     // 同上
-	Sar          string      `json:"sar"`            // Sample Aspect Ratio（单个像素的宽高比）。音频流该值恒为空
-	Startwithsap int         `json:"startWithSap"`   // Stream Access Point（流媒体访问位点）。音频流该值恒为空
-	StartWithSap int         `json:"start_with_sap"` // 同上
-	Segmentbase  SegmentBase `json:"SegmentBase"`    // 见下表。url 对应 m4s 文件中，头部的位置。音频流该值恒为空
-	SegmentBase  SegmentBase `json:"segment_base"`   // 同上
-	Codecid      int         `json:"codecid"`        // 码流编码标识代码。含义见 [上表](#视频编码代码)。音频流该值恒为0
-}
-type SegmentBase struct {
-	Initialization string `json:"initialization"` // ${init_first}-${init_last}。eg：0-821。ftyp (file type) box 加 上 moov box 在 m4s 文件中的范围（单位为 bytes）。如 0-821 表示开头 820 个字节
-	IndexRange     string `json:"index_range"`    // ${sidx_first}-${sidx_last}。eg：822-1309。sidx (segment index) box 在 m4s 文件中的范围（单位为 bytes）。sidx 的核心是一个数组，记录了各关键帧的时间戳及其在文件中的位置，。其作用是索引 (拖进 度条)
-}
-type GetVideoStreamResult struct {
-	From              string          `json:"from"`               // local？
-	Result            string          `json:"result"`             // suee？
-	Message           string          `json:"message"`            // 空？
-	Quality           int             `json:"quality"`            // 清晰度标识。含义见 [上表](#qn视频清晰度标识)
-	Format            string          `json:"format"`             // 视频格式。mp4/flv
-	Timelength        int             `json:"timelength"`         // 视频长度。单位为毫秒。不同分辨率 / 格式可能有略微差异
-	AcceptFormat      string          `json:"accept_format"`      // 支持的全部格式。每项用,分隔
-	AcceptDescription []string        `json:"accept_description"` // 支持的清晰度列表（文字说明）
-	AcceptQuality     []int           `json:"accept_quality"`     // 支持的清晰度列表（代码）。含义见 [上表](#qn视频清晰度标识)
-	VideoCodecid      int             `json:"video_codecid"`      // 默认选择视频流的编码id。含义见 [上表](#视频编码代码)
-	SeekParam         string          `json:"seek_param"`         // start？
-	SeekType          string          `json:"seek_type"`          // offset（DASH / FLV）？。 second（MP4）？
-	Durl              []Durl          `json:"durl"`               // 视频分段流信息。注：仅 FLV / MP4 格式存在此字段
-	Dash              Dash            `json:"dash"`               // DASH 流信息。注：仅 DASH 格式存在此字段
-	SupportFormats    []SupportFormat `json:"support_formats"`    // 支持格式的详细信息
-	HighFormat        *string         `json:"high_format"`        // （？）null
-	LastPlayTime      int             `json:"last_play_time"`     // 上次播放进度。毫秒值
-	LastPlayCid       int             `json:"last_play_cid"`      // 上次播放分P的 cid
 }
 
 // GetVideoStream 获取视频流地址_web端

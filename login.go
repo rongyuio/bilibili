@@ -6,7 +6,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"time"
 
@@ -16,17 +15,7 @@ import (
 	"github.com/skip2/go-qrcode"
 )
 
-type Geetest struct {
-	Gt        string `json:"gt"`        // 极验id。一般为固定值
-	Challenge string `json:"challenge"` // 极验KEY。由B站后端产生用于人机验证
-}
-
-type CaptchaResult struct {
-	Geetest Geetest `json:"geetest"` // 极验captcha数据
-	Tencent any     `json:"tencent"` // (?)。**作用尚不明确**
-	Token   string  `json:"token"`   // 登录 API token。与 captcha 无关，与登录接口有关
-	Type    string  `json:"type"`    // 验证方式。用于判断使用哪一种验证方式，目前所见只有极验。geetest：极验
-}
+// 登录相关接口。响应模型见 login_model.go。
 
 // Captcha 申请验证码参数
 func (c *Client) Captcha(ctx context.Context) (*CaptchaResult, error) {
@@ -70,14 +59,6 @@ type LoginWithPasswordParam struct {
 	Source    string `json:"source,omitempty" request:"query,omitempty"` // 登录来源。main_web：独立登录页。main_mini：小窗登录
 }
 
-type LoginWithPasswordResult struct {
-	Message      string `json:"message"`       // 扫码状态信息
-	RefreshToken string `json:"refresh_token"` // 刷新refresh_token
-	Status       int    `json:"status"`        // 成功为0
-	Timestamp    int    `json:"timestamp"`     // 登录时间。未登录为0。时间戳 单位为毫秒
-	Url          string `json:"url"`           // 游戏分站跨域登录 url
-}
-
 // LoginWithPassword 账号密码登录，其中validate, seccode字段需要在极验人机验证后获取
 func (c *Client) LoginWithPassword(ctx context.Context, param LoginWithPasswordParam) (*LoginWithPasswordResult, error) {
 	type getKeyResult struct {
@@ -110,17 +91,6 @@ func (c *Client) LoginWithPassword(ctx context.Context, param LoginWithPasswordP
 	return execute[*LoginWithPasswordResult](ctx, c, method2, url2, param)
 }
 
-type CountryCrown struct {
-	Id        int    `json:"id"`         // 国际代码值
-	Cname     string `json:"cname"`      // 国家或地区名
-	CountryId string `json:"country_id"` // 国家或地区区号
-}
-
-type GetCountryCrownResult struct {
-	Common []CountryCrown `json:"common"` // 常用国家&地区
-	Others []CountryCrown `json:"others"` // 其他国家&地区
-}
-
 // GetCountryCrown 获取国际冠字码
 func (c *Client) GetCountryCrown(ctx context.Context) (*GetCountryCrownResult, error) {
 	const (
@@ -140,10 +110,6 @@ type SendSMSParam struct {
 	Seccode   string `json:"seccode"`   // 极验 result +jordan。极验验证后得到
 }
 
-type SendSMSResult struct {
-	CaptchaKey string `json:"captcha_key"` // 短信登录 token。在下方传参时需要，请备用
-}
-
 // SendSMS 发送短信验证码
 func (c *Client) SendSMS(ctx context.Context, param SendSMSParam) (*SendSMSResult, error) {
 	const (
@@ -161,12 +127,6 @@ type LoginWithSMSParam struct {
 	CaptchaKey string `json:"captcha_key"`                                // 短信登录 token。从 SendSMS() 请求成功后返回
 	GoUrl      string `json:"go_url,omitempty" request:"query,omitempty"` // 跳转url。默认为 https://www.bilibili.com
 	Keep       bool   `json:"keep,omitempty" request:"query,omitempty"`   // 是否记住登录。true：记住登录。false：不记住登录
-}
-
-type LoginWithSMSResult struct {
-	IsNew  bool   `json:"is_new"` // 是否为新注册用户。false：非新注册用户。true：新注册用户
-	Status int    `json:"status"` // 0。未知，可能0就是成功吧
-	Url    string `json:"url"`    // 跳转 url。默认为 https://www.bilibili.com
 }
 
 // LoginWithSMS 使用短信验证码登录
@@ -208,14 +168,6 @@ type LoginWithQRCodeParam struct {
 	QrcodeKey string `json:"qrcode_key"` // 扫码登录秘钥
 }
 
-type LoginWithQRCodeResult struct {
-	Url          string `json:"url"`           // 游戏分站跨域登录 url。未登录为空
-	RefreshToken string `json:"refresh_token"` // 刷新refresh_token。未登录为空
-	Timestamp    int    `json:"timestamp"`     // 登录时间。未登录为0。时间戳 单位为毫秒
-	Code         int    `json:"code"`          // 0：扫码登录成功。86038：二维码已失效。86090：二维码已扫码未确认。86101：未扫码
-	Message      string `json:"message"`       // 扫码状态信息
-}
-
 // LoginWithQRCode 使用扫码登录。
 //
 // 该方法会阻塞直到扫码成功或者已经无法扫码。
@@ -236,17 +188,6 @@ func (c *Client) LoginWithQRCode(ctx context.Context, param LoginWithQRCodeParam
 		}
 		time.Sleep(3 * time.Second) // 主站 3s 一次请求
 	}
-}
-
-type AccountInformation struct {
-	Mid      json.Number `json:"mid"`       // 我的mid
-	Uname    string      `json:"uname"`     // 我的昵称
-	Userid   string      `json:"userid"`    // 我的用户名
-	Sign     string      `json:"sign"`      // 我的签名
-	Birthday string      `json:"birthday"`  // 我的生日。YYYY-MM-DD
-	Sex      string      `json:"sex"`       // 我的性别。男 女 保密
-	NickFree bool        `json:"nick_free"` // 是否未设置昵称。false：设置过昵称。true：未设置昵称
-	Rank     string      `json:"rank"`      // 我的会员等级
 }
 
 // GetAccountInformation 获取我的信息
