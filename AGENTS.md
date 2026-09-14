@@ -8,6 +8,7 @@
 - `request.go`、`params.go`：请求执行与参数编码。
 - `response.go`、`decode_diagnostic.go`、`errors.go`：响应解码与错误定位。
 - `number.go`：数值／字符串兼容类型。
+- `dynamic_model.go`：`DynamicItem`、`DynamicInfo` 及主要动态模块；动态请求方法和参数仍在 `dynamic.go`。
 - `tools/`：Markdown 表格转 Go 结构体工具；`video_zone.csv`：视频分区数据。
 - 根目录 `*_test.go`：已有辅助函数测试；被 Git 忽略的 `test/`：本地实用工具，可能操作真实账号。
 
@@ -41,6 +42,8 @@ Go 版本以 `go.mod` 为准。在根目录执行：
 参数先由 `encodeParams` 编码完成，再统一应用到请求。默认进入 query；`request` 标签决定省略、默认值及位置，不将 `json:",omitempty"` 当作请求省略规则。query 可与 JSON 或 multipart 并存，JSON 与 multipart 互斥；不得由字段顺序决定 Content-Type。multipart 交给 Resty 生成 boundary，不手工伪造请求体。
 
 转换失败使用 `ParamError`，通过 `errors.As` 读取根类型、Go 字段（可含切片下标）、参数名及位置。请求层用 `%w` 补充方法和去除查询参数的 URL。错误文本不包含参数值；原始 `Err` 可能包含敏感值，不直接记录。JSON 自定义编码器只执行一次，失败定位到对应顶层参数字段，不承诺完整的嵌套字段路径。
+
+动态模型使用公开命名类型，保留字段顺序、JSON 标签和指针层级。`DynamicOriginalItem` 与外层动态采用独立模型，不合并为递归类型；仅共享完全一致的 `DynamicArchive`、`DynamicDraw`。不要为复用而统一两套作者、富文本或主体类型。嵌套字段的类型身份改变时，应说明复合字面量、赋值和反射代码的迁移方式。
 
 ## Git 与协作
 

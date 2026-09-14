@@ -443,6 +443,44 @@ if errors.As(err, &pe) {
 
 本阶段仅通过 `go build ./...` 和 `go vet ./...`，已有测试源码按新的 JSON/multipart 内部表示及错误类型适配，未新增或执行测试、未访问真实 API，multipart 的线上行为尚未验证。
 
+## 动态响应模型迁移
+
+`DynamicItem`、`DynamicInfo` 和主要模块定义移至同包的 `dynamic_model.go`，接口调用与参数仍在 `dynamic.go`。导入路径、网络方法签名、返回根类型以及 `item.Modules.ModuleAuthor.Name` 等字段访问路径不变。
+
+| 字段 | 命名类型 |
+| --- | --- |
+| `DynamicItem.Basic` / `Modules` | `DynamicItemBasic` / `DynamicItemModules` |
+| 外层作者 / 头像 | `DynamicModuleAuthor` / `DynamicAuthorAvatar` |
+| 外层内容 / 描述 / 主体 | `DynamicModuleDynamic` / `*DynamicDescription` / `*DynamicMajor` |
+| 更多操作 / 统计 | `DynamicModuleMore` / `DynamicModuleStat` |
+| `DynamicItem.Orig` | `DynamicOriginalItem`，保留值类型，不是递归动态 |
+| 原动态 Basic / Modules | `DynamicOriginalBasic` / `DynamicOriginalModules` |
+| 原动态作者 / 头像 | `DynamicOriginalModuleAuthor` / `DynamicOriginalAuthorAvatar` |
+| 原动态内容 / 描述 / 主体 | `DynamicOriginalModuleDynamic` / `*DynamicOriginalDescription` / `DynamicOriginalMajor` |
+| 两套主体中的视频 / 图文 | `DynamicArchive` / `DynamicDraw` |
+
+这是嵌套字段 Go 类型身份的变更，使用命名类型而不是匿名结构别名。普通字段读取无需迁移；手写匿名结构赋值、嵌套复合字面量、函数或接口声明以及依赖类型名称的反射代码需要检查。可改用新类型构造模块，例如：
+
+```go
+item := bilibili.DynamicItem{
+    Modules: bilibili.DynamicItemModules{
+        ModuleAuthor: bilibili.DynamicModuleAuthor{Name: "作者"},
+    },
+}
+item.Modules.ModuleDynamic.Major = &bilibili.DynamicMajor{
+    Archive: bilibili.DynamicArchive{Bvid: "BV1L9Uoa9EUx"},
+}
+item.Orig.Modules.ModuleDynamic.Major = bilibili.DynamicOriginalMajor{
+    Archive: bilibili.DynamicArchive{Bvid: "BV1L9Uoa9EUx"},
+}
+```
+
+两套模型的差异完整保留：外层 `Major` 是指针，原动态 `Major` 是值；外层 `Basic.LikeIcon.Id` 为 `json.Number`，原动态对应字段为 `int`。原动态头像、作者和富文本也有不同字段，不能直接复用外层模块。更深层的小型匿名结构暂不提取。
+
+没有修改 JSON 标签、字段顺序、叶子类型或指针／切片结构，没有新增自定义反序列化；`DecodeError` 仍按既有规则遍历模型并报告 JSON 路径和 Go 字段。本地两处 `Following` 的 `json.Number` 改动随模型搬迁保留，但不属于此次提交，提交中的字段仍为 `bool`。
+
+静态展开命名类型后，已分别确认提交版本和本地版本与各自重构前结构一致，并通过 `go build ./...`、`go vet ./...`。未新增或运行测试、未访问真实 API；这些检查不能替代真实响应兼容性验证。动态模型阶段不新增话题接口，也不修改 `watchVideo` 的独立话题响应结构。
+
 ## Star History
 
 <a href="https://star-history.com/#CuteReimu/bilibili&Date">
