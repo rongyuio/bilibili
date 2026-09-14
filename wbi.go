@@ -42,6 +42,7 @@ type MemoryStorage struct {
 	mu   sync.RWMutex
 }
 
+// Set 设置值
 func (impl *MemoryStorage) Set(key string, value any) {
 	impl.mu.Lock()
 	defer impl.mu.Unlock()
@@ -52,6 +53,7 @@ func (impl *MemoryStorage) Set(key string, value any) {
 	impl.data[key] = value
 }
 
+// Get 获取值, isSet 表示值是否存在
 func (impl *MemoryStorage) Get(key string) (v any, isSet bool) {
 	impl.mu.RLock()
 	defer impl.mu.RUnlock()
@@ -86,6 +88,7 @@ type WBI struct {
 	owner   *Client
 }
 
+// NewDefaultWbi 返回一个默认的 WBI 实例
 func NewDefaultWbi() *WBI {
 	return &WBI{
 		cookies:        nil,
@@ -98,6 +101,7 @@ func NewDefaultWbi() *WBI {
 	}
 }
 
+// WithUpdateInterval 设置更新间隔
 func (wbi *WBI) WithUpdateInterval(updateInterval time.Duration) *WBI {
 	wbi.mu.Lock()
 	defer wbi.mu.Unlock()
@@ -105,6 +109,7 @@ func (wbi *WBI) WithUpdateInterval(updateInterval time.Duration) *WBI {
 	return wbi
 }
 
+// WithCookies 设置 cookies
 func (wbi *WBI) WithCookies(cookies []*http.Cookie) *WBI {
 	wbi.mu.Lock()
 	defer wbi.mu.Unlock()
@@ -112,6 +117,7 @@ func (wbi *WBI) WithCookies(cookies []*http.Cookie) *WBI {
 	return wbi
 }
 
+// WithRawCookies 如果你是从浏览器request的header中直接复制出来的cookies，调用这个函数。
 func (wbi *WBI) WithRawCookies(rawCookies string) *WBI {
 	header := http.Header{}
 	header.Add("Cookie", rawCookies)
@@ -120,6 +126,7 @@ func (wbi *WBI) WithRawCookies(rawCookies string) *WBI {
 	return wbi.WithCookies(req.Cookies())
 }
 
+// WithMixinKeyEncTab 设置 mixin key 加密表
 func (wbi *WBI) WithMixinKeyEncTab(mixinKeyEncTab []int) *WBI {
 	wbi.mu.Lock()
 	defer wbi.mu.Unlock()
@@ -127,6 +134,7 @@ func (wbi *WBI) WithMixinKeyEncTab(mixinKeyEncTab []int) *WBI {
 	return wbi
 }
 
+// WithStorage 设置存储
 func (wbi *WBI) WithStorage(storage Storage) *WBI {
 	wbi.mu.Lock()
 	defer wbi.mu.Unlock()
@@ -138,6 +146,7 @@ func (wbi *WBI) WithStorage(storage Storage) *WBI {
 	return wbi
 }
 
+// GetKeys 获取 imgKey 和 subKey
 func (wbi *WBI) GetKeys(ctx context.Context) (imgKey string, subKey string, err error) {
 	return wbi.getKeysContext(ctx)
 }
@@ -190,6 +199,7 @@ func (wbi *WBI) getKeys() (imgKey string, subKey string) {
 	return imgKey, subKey
 }
 
+// SetKeys 设置 imgKey 和 subKey
 func (wbi *WBI) SetKeys(imgKey, subKey string) {
 	wbi.mu.Lock()
 	defer wbi.mu.Unlock()
@@ -198,6 +208,7 @@ func (wbi *WBI) SetKeys(imgKey, subKey string) {
 	wbi.lastInitTime = time.Now()
 }
 
+// GetMixinKey 获取 mixin key
 func (wbi *WBI) GetMixinKey(ctx context.Context) (string, error) { return wbi.mixinKeyContext(ctx) }
 
 func (wbi *WBI) mixinKeyContext(ctx context.Context) (string, error) {
@@ -213,6 +224,7 @@ func (wbi *WBI) mixinKeyContext(ctx context.Context) (string, error) {
 	return key, nil
 }
 
+// GenerateMixinKey 生成 mixin key
 func (wbi *WBI) GenerateMixinKey(orig string) string {
 	wbi.mu.Lock()
 	defer wbi.mu.Unlock()
@@ -228,7 +240,7 @@ func (wbi *WBI) GenerateMixinKey(orig string) string {
 	return str.String()[:32]
 }
 
-func (wbi *WBI) sanitizeString(s string) string {
+func wbiSanitizeString(s string) string {
 	unwantedChars := []string{"!", "'", "(", ")", "*"}
 	for _, char := range unwantedChars {
 		s = strings.ReplaceAll(s, char, "")
@@ -236,6 +248,7 @@ func (wbi *WBI) sanitizeString(s string) string {
 	return s
 }
 
+// SignQuery 对 URL 查询参数进行 WBI 签名
 func (wbi *WBI) SignQuery(ctx context.Context, query url.Values, ts time.Time) (url.Values, error) {
 	return wbi.signQueryContext(ctx, query, ts)
 }
@@ -265,6 +278,7 @@ func (wbi *WBI) signQueryContext(ctx context.Context, query url.Values, ts time.
 	return newQuery, nil
 }
 
+// SignMap 对 map[string]string 进行 WBI 签名
 func (wbi *WBI) SignMap(ctx context.Context, payload map[string]string, ts time.Time) (map[string]string, error) {
 	return wbi.signMapContext(ctx, payload, ts)
 }
@@ -291,7 +305,7 @@ func (wbi *WBI) signMapContext(ctx context.Context, payload map[string]string, t
 
 	// Remove unwanted characters
 	for k, v := range newPayload {
-		v = wbi.sanitizeString(v)
+		v = wbiSanitizeString(v)
 		newPayload[k] = v
 	}
 
@@ -371,8 +385,10 @@ func (wbi *WBI) doInitWbi(ctx context.Context) error {
 		wbi.WithCookies(resp.Cookies())
 	}
 
-	imgKey := strings.Split(strings.Split(result.Data.WbiImg.ImgUrl, "/")[len(strings.Split(result.Data.WbiImg.ImgUrl, "/"))-1], ".")[0]
-	subKey := strings.Split(strings.Split(result.Data.WbiImg.SubUrl, "/")[len(strings.Split(result.Data.WbiImg.SubUrl, "/"))-1], ".")[0]
+	imgKeys := strings.Split(result.Data.WbiImg.ImgUrl, "/")
+	imgKey, _, _ := strings.Cut(imgKeys[len(imgKeys)-1], ".")
+	subKeys := strings.Split(result.Data.WbiImg.SubUrl, "/")
+	subKey, _, _ := strings.Cut(subKeys[len(subKeys)-1], ".")
 
 	if len(imgKey) != 32 || len(subKey) != 32 {
 		return errors.New("WBI response contains invalid keys")

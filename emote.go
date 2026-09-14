@@ -5,9 +5,9 @@ import "context"
 import "github.com/go-resty/resty/v2"
 
 type EmoteActionParam struct {
-	PackageId int    `json:"package_id"` //表情包ID
-	Business  string `json:"business"`   //表情包使用场景
-	Ids       []int  `json:"ids"`        //表情包ID集合
+	PackageId int    `json:"package_id"` // 表情包ID
+	Business  string `json:"business"`   // 表情包使用场景
+	Ids       []int  `json:"ids"`        // 表情包ID集合
 }
 type EmotePackageFlags struct {
 	Added bool `json:"added"` // 是否已添加,需要登录（SESSDATA）否则恒为false,true：已添加 false：未添加
@@ -16,7 +16,7 @@ type Meta struct {
 	Size    int    `json:"size"`               // 表情尺寸信息 1:小 2:大
 	ItemID  int    `json:"item_id,omitempty"`  // 购买物品 ID，可能为空
 	ItemURL string `json:"item_url,omitempty"` // 购买物品页面 URL，可能为空
-	Alias   string `json:"alias"`              //简写名
+	Alias   string `json:"alias"`              // 简写名
 }
 type EmoteFlags struct {
 	NoAccess bool `json:"no_access"` // 是否为禁用 true：禁用
@@ -46,7 +46,7 @@ type EmotePackage struct {
 	Flags EmotePackageFlags `json:"flags"` // 是否添加标志
 }
 
-// AddEmote添加表情包
+// AddEmote 添加表情包
 func (c *Client) AddEmote(ctx context.Context, param EmoteActionParam) error {
 	const (
 		method = resty.MethodPost
@@ -56,7 +56,7 @@ func (c *Client) AddEmote(ctx context.Context, param EmoteActionParam) error {
 	return err
 }
 
-// RemoveEmote移除表情包
+// RemoveEmote 移除表情包
 func (c *Client) RemoveEmote(ctx context.Context, param EmoteActionParam) error {
 	const (
 		method = resty.MethodPost
@@ -70,7 +70,7 @@ type EmoteList struct {
 	EmotePackages []EmotePackage `json:"packages"` // 表情包包列表
 }
 
-// GetMyEmoteList获取我的表情包列表
+// GetMyEmoteList 获取我的表情包列表
 func (c *Client) GetMyEmoteList(ctx context.Context, param EmoteActionParam) (*EmoteList, error) {
 	const (
 		method = resty.MethodGet
@@ -79,7 +79,7 @@ func (c *Client) GetMyEmoteList(ctx context.Context, param EmoteActionParam) (*E
 	return execute[*EmoteList](ctx, c, method, url, param)
 }
 
-// GetEmotePackageDetailInfo获取指定ID表情包的详细信息
+// GetEmotePackageDetailInfo 获取指定ID表情包的详细信息
 func (c *Client) GetEmotePackageDetailInfo(ctx context.Context, param EmoteActionParam) (*EmoteList, error) {
 	const (
 		method = resty.MethodGet
@@ -89,8 +89,8 @@ func (c *Client) GetEmotePackageDetailInfo(ctx context.Context, param EmoteActio
 }
 
 type Mall struct {
-	Title string `json:"title"` //商城名称
-	Url   string `json:"url"`   //商城页面url
+	Title string `json:"title"` // 商城名称
+	Url   string `json:"url"`   // 商城页面url
 }
 
 type AllEmoteList struct {
@@ -99,6 +99,7 @@ type AllEmoteList struct {
 	Mall                Mall           `json:"mall"`
 }
 
+// GetAllEmoteList 获取所有表情列表
 func (c *Client) GetAllEmoteList(ctx context.Context, param EmoteActionParam) (*AllEmoteList, error) {
 	const (
 		method = resty.MethodGet
