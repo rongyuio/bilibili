@@ -1,63 +1,87 @@
-<div align="center">
+# 哔哩哔哩 API Go 客户端
 
-# 哔哩哔哩-API-Go版本
+本仓库是基于 CuteReimu/bilibili 继续维护的 fork，封装 Bilibili API，并提供 Cookie 管理、WBI 签名、context 取消和结构化错误定位。当前模块名为 `bilibili`，要求 Go 1.27，具体依赖以 [go.mod](go.mod) 为准。
 
-[![](https://img.shields.io/github/v/tag/CuteReimu/bilibili?label=release "最新版本")](https://github.com/CuteReimu/bilibili/tags)
-![](https://img.shields.io/github/go-mod/go-version/CuteReimu/bilibili "语言")
-[![](https://img.shields.io/github/stars/CuteReimu/bilibili?style=flat&color=yellow)](#star-history "stars")
-[![](https://img.shields.io/github/actions/workflow/status/CuteReimu/bilibili/golangci-lint.yml?branch=master)](https://github.com/CuteReimu/bilibili/actions/workflows/golangci-lint.yml "代码分析")
-[![](https://img.shields.io/github/contributors/CuteReimu/bilibili)](https://github.com/CuteReimu/bilibili/graphs/contributors "贡献者")
-[![](https://img.shields.io/github/license/CuteReimu/bilibili)](https://github.com/CuteReimu/bilibili/blob/master/LICENSE "许可协议")
-</div>
+本文描述当前仓库代码，不将上游版本或构建状态作为本 fork 的发布信息。上游安装命令与来源链接见[上游历史参考](#上游历史参考)。接口可能随服务端变化，需要结合对应接口的实际响应维护。
 
-本项目是基于Go语言编写的哔哩哔哩API调用。目前常用的接口已经基本完成。
-
-**本项目不会编写单元测试代码**。一则因为各项数据会频繁变动，难以写成固定的结果；二则因为每次单元测试都要大量请求B站API，会对其产生不必要的压力。
-如果你发现有**接口bug**或者**有你需要但是本库尚未实现的接口**，可以[提交issue](https://github.com/CuteReimu/bilibili/issues/new/choose)或者[提交pull request](.github/CONTRIBUTING.md)。
-如果因为B站修改了接口导致接口突然不可用，不一定能够及时更新，很大程度上需要依赖各位的告知。
-
-> [!IMPORTANT]
-> 现在是v2.1+版本，鉴于`golang.org/x`下面的很多库都已经强制要求Go1.23以上了，我们也同步进行了更新。
-> 
-> 如果想使用v2.0版本（支持Go1.19及以上），请执行`go get -u github.com/CuteReimu/bilibili/v2@v2.0.0`获取旧版本。
-> 
-> [如果还想使用更早的版本可以点击这里跳转](https://github.com/CuteReimu/bilibili/tree/v1)。
-
-**如果你觉得本项目对你有帮助，点亮右上角的↗ :star: 不迷路**
-
-## 声明
-
-1. 本项目遵守 AGPL 开源协议。
-2. 本项目基于 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
-   中描述的接口编写。请尊重该项目作者的努力，遵循该项目的开源要求，禁止一切商业使用。
-3. **请勿滥用，本项目仅用于学习和测试！利用本项目提供的接口、文档等造成不良影响及后果与本人无关。**
-4. 由于本项目的特殊性，可能随时停止开发或删档
-5. 本项目为开源项目，不接受任何形式的催单和索取行为，更不容许存在付费内容
-
-PS：目前，B站调用接口时强制使用 `https` 协议
+- [快速开始](#快速开始)
+- [常用接口](#常用接口)
+- [自定义请求](#自定义请求)
+- [错误处理](#错误处理)
+- [迁移说明](#迁移说明)
+- [开发与贡献](#开发与贡献)
+- [声明](#声明)
+- [上游历史参考](#上游历史参考)
 
 ## 快速开始
 
-### 安装
+### 接入当前 fork
 
-```bash
-go get -u github.com/CuteReimu/bilibili/v2 # 定期执行可以更新最新版本
+在本仓库内部使用 `import "bilibili"`。外部项目可在自己的 `go.mod` 中添加本地依赖；将 replace 路径替换为实际仓库路径：
+
+```go.mod
+require bilibili v0.0.0
+
+replace bilibili => D:/Project/bilibili
 ```
 
-在项目中引用即可使用
+`v0.0.0` 在这里配合本地 replace 使用，不表示已有对应发布版本。外部项目同样需要满足 Go 1.27 要求；相对路径以该项目的 go.mod 所在目录为基准。
+
+### 创建客户端并调用接口
+
+下面是一个完整程序，按需在自己的项目运行：
 
 ```go
-import "github.com/CuteReimu/bilibili/v2"
+package main
 
-var client = bilibili.New()
+import (
+    "context"
+    "log"
+    "time"
+
+    "bilibili"
+)
+
+func main() {
+    ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+    defer cancel()
+
+    client := bilibili.New()
+    info, err := client.GetVideoInfo(ctx, bilibili.VideoParam{Bvid: "BV1L9Uoa9EUx"})
+    if err != nil {
+        log.Printf("获取视频失败: %v", err)
+        return
+    }
+    log.Println(info.Title)
+}
 ```
 
-以下网络调用都需要传入 `ctx`：HTTP 处理函数使用 `r.Context()`，独立任务可使用 `context.WithTimeout` 或 `signal.NotifyContext`。完整示例见下文“Context 迁移与任务取消”。
+所有可能联网的方法都以 `ctx context.Context` 为首参。HTTP 处理函数直接传 `r.Context()`，批量任务可从 `signal.NotifyContext(context.Background(), os.Interrupt)` 派生 context，并调用返回的停止函数释放资源。需要缩短期限时由调用方使用 `context.WithTimeout`。
+
+库在准备请求前拒绝 nil 或已结束的 context，将其传递到 HTTP 请求及 WBI 密钥刷新，不创建后台替代请求或额外重试；已有 Resty 超时可能更早结束请求。任务应在取消后停止后续操作和等待，取消不保证服务端撤销已收到的写操作。
+
+以下片段置于调用方函数中，复用已创建的 `ctx` 和 `client`，其它参数由调用方提供；用到的标准库符号需按示例导入。
+
+### 游客初始化
+
+`New()` 只创建客户端；需要从首页获取游客 Cookie 时使用 `NewAnonymousClient(ctx)`，并检查初始化错误：
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+defer cancel()
+client, err := bilibili.NewAnonymousClient(ctx)
+if err != nil {
+    log.Printf("游客初始化失败: %v", err)
+    return
+}
+// 后续使用 client；构造失败时不要继续调用其方法。
+```
+
+nil context、取消、网络故障、非 HTTP 200 或没有有效 Cookie 都会返回错误。初始化保留首页所需的浏览器请求头；构造失败后不要继续使用返回的客户端。
 
 ### 首次登录
 
-> [!TIP]
-> 下文为了篇幅更短，示例中把很多显而易见的`err`校验忽略成了`_`，实际使用请自行校验`err`。
+登录前可使用游客或已有 Cookie 客户端；登录、主动刷新会话和手动修改 Cookie 必须在普通请求之外串行进行。涉及扫码或人工验证时，应为 context 设置足够的有效期。
 
 #### 方法一：扫码登录
 
@@ -69,19 +93,23 @@ if err != nil {
     log.Printf("获取二维码失败: %v", err)
     return
 }
-buf, _ := qrCode.Encode()
-img, _ := png.Decode(buf) // 或者写入文件 os.WriteFile("qrcode.png", buf, 0644)
-// 也可以调用 qrCode.Print() 将二维码打印在控制台
+qrCode.Print() // 在控制台显示；需要 PNG 字节时调用 Encode() 并处理其返回错误。
 ```
 
-扫码并确认成功后，发送登录请求：
+显示二维码后调用登录方法，它会轮询等待扫码确认或终止状态；先检查请求错误，再检查返回的扫码状态：
 
 ```go
 result, err := client.LoginWithQRCode(ctx, bilibili.LoginWithQRCodeParam{
     QrcodeKey: qrCode.QrcodeKey,
 })
-if err == nil && result.Code == 0 {
+if err != nil {
+    log.Printf("扫码登录失败: %v", err)
+    return
+}
+if result.Code == 0 {
     log.Println("登录成功")
+} else {
+    log.Printf("扫码登录未完成，状态码: %d", result.Code)
 }
 ```
 
@@ -108,7 +136,11 @@ result, err := client.LoginWithPassword(ctx, bilibili.LoginWithPasswordParam{
     Validate:  validate,
     Seccode:   seccode,
 })
-if err == nil && result.Status == 0 {
+if err != nil {
+    log.Printf("登录请求失败: %v", err)
+    return
+}
+if result.Status == 0 {
     log.Println("登录成功")
 }
 ```
@@ -123,6 +155,7 @@ if err != nil {
     log.Printf("获取地区代码失败: %v", err)
     return
 }
+log.Printf("地区代码: %+v", countryCrownResult)
 ```
 
 当然，如果你已经确定`cid`的值，这一步可以跳过。中国大陆的`cid`就是`86`。
@@ -139,9 +172,13 @@ sendSMSResult, err := client.SendSMS(ctx, bilibili.SendSMSParam{
     Validate:  validate,
     Seccode:   seccode,
 })
+if err != nil {
+    log.Printf("发送短信失败: %v", err)
+    return
+}
 ```
 
-发送短信后先检查 `err`，失败（包括取消或超时）时结束任务，不访问 `sendSMSResult`。成功后就可以使用手机验证码登录：
+发送短信成功后，使用验证码登录：
 
 ```go
 result, err := client.LoginWithSMS(ctx, bilibili.LoginWithSMSParam{
@@ -151,12 +188,16 @@ result, err := client.LoginWithSMS(ctx, bilibili.LoginWithSMSParam{
     Source:     "main_web",
     CaptchaKey: sendSMSResult.CaptchaKey,
 })
-if err == nil && result.Status == 0 {
+if err != nil {
+    log.Printf("登录请求失败: %v", err)
+    return
+}
+if result.Status == 0 {
     log.Println("登录成功")
 }
 ```
 
-### 储存Cookies
+### 保存与恢复 Cookie
 
 使用上述任意方式登录成功后，Cookies值就已经设置好了。你可以保存Cookies值方便下次启动程序时不需要重新登录。
 
@@ -172,93 +213,106 @@ client.SetRawCookies("cookie1=xxx; cookie2=xxx")
 ```
 
 > [!NOTE]
+>
 > - `GetCookiesString`和`SetCookiesString`使用的字符串是`"cookie1=xxx; expires=xxx; domain=xxx.com; path=/\ncookie2=xxx; expires=xxx; domain=xxx.com; path=/"`，包含过期时间、domain等一些其它信息，以`"\n"`分隔多个cookie
 > - `SetRawCookies`使用的字符串是`"cookie1=xxx; cookie2=xxx"`，只包含key=value，以`"; "`分隔多个cookie，这和在浏览器F12里复制的一样
 >
 > 请注意不要混用。
 
-### 其它接口
+`Client` 独立保存 Cookie，读写都会复制 Cookie 及其 `Unparsed` 切片。修改 `GetCookies()` 返回的切片或对象不会改变客户端；需要更新时应在请求结束后调用 `SetCookie` / `SetCookies`。
 
-你可以很方便的调用其它接口，以下举个例子：
+仍按 Cookie 名称合并，不实现域名、路径或 Secure 匹配。同名响应 Cookie 以最后完成合并的响应为准；HTTP 或业务失败响应也可更新 Cookie。`MaxAge < 0` 删除同名项；正 `MaxAge` 优先于 `Expires`，导入时转换成绝对到期时间并清零 `MaxAge`，读取或重新导入快照不会续期。过期 Cookie 不进入新请求。传 nil 项会被忽略，`SetCookies(nil)` 不表示清空会话；切换账号推荐创建新的 Client。
+
+每次请求只取一次 Cookie 快照，内置 CSRF 和直播签名使用这份快照；自动合并响应期间不持锁等待网络。一次批量操作应复用已配置的客户端，但不要与登录或手动替换会话并行，也不要复制已使用的 Client。
+
+### Resty 配置与接管
+
+配置应在请求开始前完成，例如 `client.Resty().SetTimeout(20*time.Second)` 或 `SetLogger(logger)`。不要复制已使用的 Client。普通请求支持并发，登录、会话切换和配置变更需串行；自定义中间件的并发安全由调用方负责。
+
+直接使用 `Resty()` 发送请求不会自动签名、共享 Client Cookie 存储或获得统一错误处理。
+
+`NewWithClient` 接管传入 Resty 的独占使用权，自动复制其显式 `Cookies` 并清空原切片，同时关闭 HTTP CookieJar，避免两套会话来源。传 nil 与 `New()` 等效。不要将同一 Resty 再交给另一个 Client，也不要重新启用 Jar、设置 `Resty().Cookies` 或用默认 Cookie 请求头管理会话。
+
+CookieJar 没有通用的全量导出方法。对于已经登录过的外部 Resty，必须在构造前从已知 URL 提取需要的 Cookie，再显式导入，例如：
 
 ```go
-videoInfo, err := client.GetVideoInfo(ctx, bilibili.VideoParam{
-    Aid: 12345678,
-})
+// existingResty 是调用方已配置的 *resty.Client；此处不发送请求。
+target := &url.URL{Scheme: "https", Host: "api.bilibili.com", Path: "/"}
+var imported []*http.Cookie
+if jar := existingResty.GetClient().Jar; jar != nil {
+    imported = jar.Cookies(target)
+}
+client := bilibili.NewWithClient(existingResty)
+client.SetCookies(imported)
 ```
 
-参数中非必填字段你可以不填（可以通过是否有`omitempty`来判断这个字段是否为非必填字段）。
+这只能取出该 URL 对应的 Cookie，不保留 Jar 的完整作用域和过期元数据。不同 URL 导出的同名项仍按名称合并。底层直接请求需要调用方自行提供 Cookie，其响应也不会自动进入 Client 存储。
 
-方法都是按照对应功能的英文翻译命名的，因此你可以方便地使用IDE找到想要的方法，配合注释便能够知道如何使用。
+## 常用接口
 
-### 对B站返回的错误码进行处理
+### 视频与空间动态
 
-因为B站的返回内容是这样的格式：
+视频详情可使用快速开始中的 `GetVideoInfo`。空间动态按页获取：
 
-```json
-{
-   "code": 0,
-   "message": "错误信息",
-   "data": {}
+```go
+page, err := client.GetUserSpaceDynamic(ctx, bilibili.GetUserSpaceDynamicParam{
+    HostMid:        mid,
+    TimezoneOffset: -480,
+    Features:       "itemOpusStyle",
+})
+if err != nil {
+    log.Printf("获取空间动态失败: %v", err)
+    return
+}
+for _, item := range page.Items {
+    log.Println(item.IdStr.String(), item.Modules.ModuleAuthor.Name)
 }
 ```
 
-而我们这个库的接口只会返回`data`数据和一个`error`，若`code`为`0`则`error`为`nil`，否则我们并不会把`code`和`message`字段直接返回。
+`mid` 是调用方提供的 UID 字符串。需要继续读取时，根据 `page.HasMore` 将 `page.Offset` 传入下一次调用。调用方应检查取消及分页进度，避免空 offset 或重复 offset 导致循环。
 
-在一般情况下，调用者不太需要关心`code`和`message`字段，只需要关心是否有`error`即可。
-但如果你实在需要`code`和`message`字段，我们也提供了一个办法：
+### 话题动态列表
+
+`GetTopicFeed(ctx, param)` 封装 `/x/polymer/web-dynamic/v1/feed/topic`，返回一页响应的 `data`，复用统一 Cookie、context、参数编码和错误处理。参数全部位于 query，不额外启用 WBI 签名或 CSRF，也不自动重试或翻页。
 
 ```go
-videoInfo, err := client.GetVideoInfo(ctx, bilibili.VideoParam{
-    Aid: 12345678,
+result, err := client.GetTopicFeed(ctx, bilibili.GetTopicFeedParam{
+    TopicId:     topicId,
+    SortBy:      3,
+    PageSize:    20,
+    Features:    "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard",
+    WebLocation: "0.0",
 })
 if err != nil {
-    var e bilibili.Error
-    if errors.As(err, &e) { // B站返回的错误
-        log.Printf("错误码: %d, 错误信息: %s", e.Code, e.Message)
-    } else { // 其它错误
-        log.Printf("%+v", err)
+    log.Printf("获取话题动态失败: %v", err)
+    return
+}
+for _, item := range result.TopicCardList.Items {
+    if item.DynamicCardItem.Type == "DYNAMIC_TYPE_AV" {
+        log.Println(item.DynamicCardItem.Modules.ModuleDynamic.Major.Archive.Bvid)
     }
 }
 ```
 
-> [!TIP]
-> 通过 `errors.As` 检查业务错误和解码错误，通过 `errors.Is` 检查取消、超时等底层错误。新的统一请求流程不保证所有错误都携带堆栈；不要依赖错误字符串进行判断。
+示例中的 `ctx`、`client`、`topicId` 由调用方提供。库不填入工具专用默认值；`SortBy`、`PageSize`、`Offset`、`Features`、`WebLocation` 为零值时不发送。需要下一页时，根据 `result.TopicCardList.HasMore`，将 `result.TopicCardList.Offset` 传入下一次调用；调用方应检查取消、空 offset 或 offset 未变化，避免无进展循环。示例及
 
-### 可能用到的工具接口
+`test/dynamicItem.txt` 是空间动态 `GetUserSpaceDynamic` 的记录，不作为话题字段类型的证据。话题字段的全部返回形式尚未确认。
 
-```go
-// 解析短连接
-typ, id, err := client.UnwrapShortUrl(ctx, "https://b23.tv/xxxxxx")
+### 工具方法
 
-// 获取服务器当前时间
-now, err := client.Now(ctx)
+以下网络方法均需传入 context，并先处理错误再使用结果：
 
-// av号转bv号
-bvid := bilibili.AvToBv(111298867365120)
+| 方法 | 用途 |
+| --- | --- |
+| `client.UnwrapShortUrl(ctx, shortURL)` | 解析短链接，返回目标类型和标识 |
+| `client.Now(ctx)` | 获取服务器时间 |
+| `client.GetZoneLocation(ctx)` | 查询 IP 所属地理位置 |
+| `client.GetRegionDailyCount(ctx)` | 获取分区当日投稿数 |
+| `bilibili.Av2Bv(aid)` / `bilibili.Bv2Av(bvid)` | 纯计算转换，不需要 context |
 
-// bv号转av号
-aid := bilibili.BvToAv("BV1L9Uoa9EUx")
+其它接口按业务位于 `video.go`、`user.go`、`live.go` 等文件，可通过方法和参数注释查阅。内置请求是否省略参数由 `request` 标签决定，不能只根据 JSON 标签判断。
 
-// 通过ip确定地理位置
-zoneLocation, err := client.GetZoneLocation(ctx)
-
-// 获取分区当日投稿稿件数
-regionDailyCount, err := client.GetRegionDailyCount(ctx)
-```
-
-### 设置*resty.Client的一些参数
-
-调用`client.Resty()`就可以获取到`*resty.Client`，然后自行操作即可。**但是不要做一些离谱的操作**~~（比如把Cookies删了）~~
-
-```go
-client.Resty().SetTimeout(20 * time.Second) // 设置超时时间
-client.Resty().SetLogger(logger) // 自定义logger
-```
-
-## 自定义接口与重构迁移
-
-当前工作区的模块名是 `bilibili`，Go 版本以 `go.mod` 为准（目前为 1.27）。本文前面的上游安装路径和旧版本说明保留作历史参考，本次重构不调整模块路径或发布版本。
+## 自定义请求
 
 ### 调用尚未封装的接口
 
@@ -290,7 +344,69 @@ func loadAccount(ctx context.Context, client *bilibili.Client, mid string) error
 - `Query` 可与 `Form` 或 `JSON` 并用，但 `Form` 与 `JSON` 互斥。`JSON` 按标准库规则编码，包括字符串值；`Headers` 使用 `http.Header`。
 - URL 自带查询参数会参与请求，同名键以 `Request.Query` 为准。WBI 只签查询参数，不签表单；签名请求的每个查询键必须只有一个值。CSRF 由调用方按接口要求放在查询或表单中。
 - context 会传到 HTTP 请求和 WBI 密钥刷新；所有内置网络 API 同样以 context 为首参。此入口不额外启用重试；通过 Resty 自行配置的重试策略仍然有效。
-- `Resty()` 保留给特殊请求，但直接调用它不会自动签名、共享 Client 的 Cookie 存储或获得 `DecodeError`。普通 Client 请求支持并发；登录、主动刷新登录态、账号切换、手动修改 Cookie 和配置必须在请求之外串行执行。自定义中间件的并发安全由调用方负责。
+
+### 内置接口的参数标签
+
+内置接口先完成参数编码，再向请求应用 query、请求体和头部；编码失败不写入部分参数，也不会继续签名或发送请求。以下标签规则用于内置接口的参数结构体，不用于 `Client.Do` 的 JSON 对象。
+
+| 规则 | 行为 |
+| --- | --- |
+| 未指定位置／`request:"query"` | 放入 URL 查询参数，POST 方法也不自动改为表单 |
+| `request:"json"` | 作为 JSON 请求体字段，保留标准库编码语义 |
+| `request:"form-data"` | 转换为 multipart 文本字段，由 Resty 构造请求体和 boundary |
+| `request:"-"` | 跳过字段；未导出字段同样跳过 |
+| `request:"field=name"` | 优先使用该名称，其次取 JSON 标签名，最后使用原有 snake_case 规则 |
+| `request:"omitempty,default=1"` | 零值优先省略；未指定省略时才使用字符串默认值 |
+
+保留历史零值语义：非 nil 指针即使指向零值也不算零值；空但非 nil 的切片不算零值。query 切片仍按元素转换后用逗号拼接，nil 切片为 `""`，其默认值继续不参与拼接；multipart 文本切片使用相同规则。JSON 中的 `default=1` 仍是字符串 `"1"`，不会按 Go 字段类型转换成数字。
+
+只有 `request` 标签控制请求省略；`json:"-"` 不等于 `request:"-"`，`json:",omitempty"` 也不新增请求省略行为。nil 参数或 nil 指针继续视为未传参；非 nil 参数仅接受结构体或一层结构体指针。没有实际参与编码的字段时，请求保持原状。
+
+query 可以与一种请求体并存，Content-Type 由请求体类型决定。实际参与编码的字段若同时声明多个位置，或混用 JSON 与 multipart，返回错误；已被省略的字段不参与冲突判断。multipart 由 Resty 构造请求体和 boundary，不使用普通 map 加请求头模拟。当前业务参数没有使用 JSON/multipart 标签，图片上传的专用实现保持原样。
+
+## 错误处理
+
+### 分类与判断
+
+标准业务响应先判断 `code`，非零时返回业务错误；成功后再解码 `data`，失败时不写入部分结果。
+
+HTTP 状态不符合接口要求时，库返回可通过 `errors.As` 提取的 `*HTTPError`，包含 `Method`、`Endpoint` 和 `StatusCode`。库生成的 Endpoint 去掉查询参数、用户信息和片段；该错误不保存请求头、Cookie 或响应体。
+
+```go
+if err != nil {
+    var he *bilibili.HTTPError
+    var be bilibili.Error
+    switch {
+    case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+        return
+    case errors.As(err, &he):
+        log.Printf("接口=%s %s HTTP状态=%d", he.Method, he.Endpoint, he.StatusCode)
+    case errors.As(err, &be):
+        log.Printf("业务错误码=%d", be.Code)
+    default:
+        // 参数与解码失败仍可继续用 errors.As 提取 ParamError、DecodeError。
+        log.Print("请求失败")
+    }
+}
+```
+
+示例需要导入 `bilibili`、`context`、`errors`、`log`。HTTP 错误按各接口原有规则判定：普通请求、游客初始化和 WBI 要求 200；短链接要求 302；Cookie 刷新页面接受 2xx。HTTP 状态错误不自动触发重试。网络故障、取消和超时保留原始错误链，不转换成 HTTPError；HTML 解析失败、缺少有效 Cookie、无效密钥等也保持独立错误。
+
+`Message` 仍保留服务端消息，接口地址的清理不代表任意底层错误或服务端消息都经过脱敏。结构化记录优先选择接口、状态码和业务码；不要额外输出凭证、请求头或完整响应。
+
+### 定位参数错误
+
+```go
+var pe *bilibili.ParamError
+if errors.As(err, &pe) {
+    log.Printf("参数类型=%s Go字段=%s 参数名=%s 位置=%s",
+        pe.RootType, pe.GoField, pe.Parameter, pe.Location)
+}
+```
+
+`GoField` 可为 `Ids[2]`；整体参数类型错误的字段、参数名和位置为空。JSON 编码错误定位到顶层参数字段，底层 `*json.MarshalerError` 等错误可继续解包；不会重复执行自定义编码器来探测内部路径。内置请求的错误外层还包含 HTTP 方法及去除查询参数的接口地址。
+
+参数转换失败现在明确返回错误，不再静默变为空字符串。正常错误文本不包含参数值或原始错误文本；`ParamError.Err` 保留底层错误，可能含有原始值，不要直接写入日志。`Client.Do` 的手工 JSON 编码错误不转换为 `ParamError`。
 
 ### 定位反序列化失败
 
@@ -309,7 +425,9 @@ if errors.As(err, &de) {
 
 先判断业务 `code`，再解码 `data`，避免业务错误被结果类型不匹配掩盖。失败时不向 `out` 写入部分结果，不自动将无效值转成零。`out=nil` 时不会检查 `data` 的字段类型。
 
-### 字段与调用迁移
+## 迁移说明
+
+### 入口、签名与字段
 
 | 旧用法 | 新用法 |
 | --- | --- |
@@ -320,130 +438,25 @@ if errors.As(err, &de) {
 
 `NumberOrString` 保留数字、字符串（包括 `"--"`）与 `null`，`Kind()` 返回 `number`、`string` 或 `null`。数值转换会显式返回错误，JSON 再编码保留原始类别；零值表示 `null`。原有直接赋值 `json.Number` 或强制转换为字符串的代码需要迁移到这些方法；需要构造值时可使用 `json.Unmarshal`。
 
-其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。动态数据中的两处 `Following` 已根据实际响应改为 `json.Number`，迁移方式见下文。消息参数 `SendPrivateMessageParam.Content` 也包含多种语义，后续应结合实际响应／请求证据定点处理，本次不推测改型。
+其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。动态数据中的两处 `Following` 已根据实际响应改为 `json.Number`，迁移方式见下文。消息参数 `SendPrivateMessageParam.Content` 也包含多种语义，后续应结合实际响应／请求证据定点处理，暂不推测改型。
 
-### 维护与验证
+### Context 签名
 
-请求、参数、响应、诊断分别位于同包内的独立文件；内置接口继续按业务分类组织。本地 `test/` 工具已迁移到新入口，但该目录被 Git 忽略，不随库提交分发。
-
-本次仅使用 `go build ./...` 和 `go vet ./...` 验证，不新增或运行测试、不调用实机 API。并发行为未经运行或 race 检查验证，编译通过不能证明并发正确性。后续若进行测试，应先获得明确任务要求。
-
-## 客户端会话状态迁移
-
-### Cookie 所有权
-
-`Client` 现在独立保存 Cookie，读写都会复制 Cookie 及其 `Unparsed` 切片。修改 `GetCookies()` 返回的切片或对象不会改变客户端；需要更新时应在请求结束后调用 `SetCookie` / `SetCookies`。
-
-仍按 Cookie 名称合并，不实现域名、路径或 Secure 匹配。同名响应 Cookie 以最后完成合并的响应为准；HTTP 或业务失败响应也可更新 Cookie。`MaxAge < 0` 删除同名项；正 `MaxAge` 优先于 `Expires`，导入时转换成绝对到期时间并清零 `MaxAge`，读取或重新导入快照不会续期。过期 Cookie 不进入新请求。传 nil 项会被忽略，`SetCookies(nil)` 不表示清空会话；切换账号推荐创建新的 Client。
-
-每次请求只取一次 Cookie 快照，内置 CSRF 和直播签名使用这份快照；自动合并响应期间不持锁等待网络。一次批量操作应复用已配置的客户端，但不要与登录或手动替换会话并行，也不要复制已使用的 Client。
-
-### 接管自定义 Resty
-
-`NewWithClient` 接管传入 Resty 的独占使用权，自动复制其显式 `Cookies` 并清空原切片，同时关闭 HTTP CookieJar，避免两套会话来源。传 nil 与 `New()` 等效。不要将同一 Resty 再交给另一个 Client，也不要重新启用 Jar、设置 `Resty().Cookies` 或用默认 Cookie 请求头管理会话。
-
-CookieJar 没有通用的全量导出方法。对于已经登录过的外部 Resty，必须在构造前从已知 URL 提取需要的 Cookie，再显式导入，例如：
-
-```go
-// existingResty 是调用方已配置的 *resty.Client；此处不发送请求。
-target := &url.URL{Scheme: "https", Host: "api.bilibili.com", Path: "/"}
-var imported []*http.Cookie
-if jar := existingResty.GetClient().Jar; jar != nil {
-    imported = jar.Cookies(target)
-}
-client := bilibili.NewWithClient(existingResty)
-client.SetCookies(imported)
-```
-
-这只能取出该 URL 对应的 Cookie，不保留 Jar 的完整作用域和过期元数据。不同 URL 导出的同名项仍按名称合并。底层直接请求需要调用方自行提供 Cookie，其响应也不会自动进入 Client 存储。
-
-### 游客初始化
-
-旧的 `NewAnonymousClient()` 改为接收 context 并返回错误：
-
-```go
-ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-defer cancel()
-client, err := bilibili.NewAnonymousClient(ctx)
-if err != nil {
-    log.Printf("游客初始化失败: %v", err)
-    return
-}
-// 后续使用 client；构造失败时不要继续调用其方法。
-```
-
-nil context、取消、网络故障、非 HTTP 200 或没有有效 Cookie 都会返回错误。初始化复用默认配置；短链接仍要求 HTTP 302，刷新口令页面保持 HTML 解析，WBI 保留非零业务码但存在有效密钥的特殊处理。
-
-参数编码另外修复了非空、非结构体指针导致的 panic，并保留标签值中的等号；nil 参数与 nil 指针继续视为未传参。内置接口的请求参数位置及请求体编码规则不变。
-
-## Context 迁移与任务取消
-
-这是一次破坏性签名变更：所有可能联网的 `Client` 方法统一增加首参 `ctx context.Context`，例如 `client.GetVideoInfo(ctx, param)`、`client.GetMyUserSpaceDetail(ctx)`。本文调用示例中的 `ctx` 均由调用方提供。`Do` 和 `NewAnonymousClient` 已有的 context 签名不变；Cookie 读写、配置和纯计算方法不变。
+相对旧版，这是破坏性签名变更：所有可能联网的 `Client` 方法统一增加首参 `ctx context.Context`，例如 `client.GetVideoInfo(ctx, param)`、`client.GetMyUserSpaceDetail(ctx)`。本文调用示例中的 `ctx` 均由调用方提供。`Do` 和 `NewAnonymousClient` 已有的 context 签名不变；Cookie 读写、配置和纯计算方法不变。
 
 独立使用 WBI 时，改为 `wbi.GetKeys(ctx)`、`wbi.GetMixinKey(ctx)`、`wbi.SignQuery(ctx, query, ts)`、`wbi.SignMap(ctx, payload, ts)`，因为签名可能触发密钥刷新。没有新增 `XxxContext` 或无 context 的兼容包装；调用方接口声明、方法表达式和回调类型也需同步修改。
 
-批量任务应从入口创建可取消 context，并贯通辅助函数：
+### 会话与参数编码
 
-```go
-ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-defer stop()
-ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
-defer cancel()
+`NewAnonymousClient()` 迁移为 `NewAnonymousClient(ctx) (*Client, error)`；`NewWithClient` 接管 Resty 并关闭 Jar，已有 Jar 会话需要构造前显式导出。Cookie 快照和配置约束见[快速开始](#快速开始)，不要继续通过底层 Cookies 或默认 Cookie 请求头管理会话。
 
-for _, param := range params { // params 为调用方的视频参数列表
-    if ctx.Err() != nil {
-        return
-    }
-    info, err := client.GetVideoInfo(ctx, param)
-    if err != nil {
-        if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-            return
-        }
-        log.Printf("获取视频失败: %v", err)
-        continue
-    }
-    log.Println(info.Title)
-}
-```
+非 nil 的非结构体参数指针现在返回 `ParamError`，不再触发 panic；标签值中的等号完整保留。参数转换失败会返回错误而不是静默变为空字符串。JSON/multipart 混用或字段位置冲突会报错；依赖 Resty 内部 Body 为普通 map 的代码需适配已编码 JSON 字节或 multipart 构造方式。
 
-示例需要 `context`、`os`、`os/signal`、`time`、`errors`、`log`。HTTP 服务中直接使用 `r.Context()`；需要缩短期限时由调用方派生 context。库在准备请求前拒绝 nil 或已结束的 context，并将取消、超时保留在错误链中，不创建后台替代请求或增加重试；已有 Resty 请求超时仍可更早结束请求。
+### 错误包装
 
-本地批量工具已接入中断信号，取消后停止翻页、后续账号操作及等待；配置加载和独立 HTTP 工具不在本次迁移范围。取消不保证服务端撤销已经收到的写操作，不应据此自动重试。`test/` 被忽略，这些适配不随 Git 提交分发。此次仅通过编译和静态检查，未验证实机取消行为。
+普通业务失败在原有 `Error{Code, Message}` 外补充 HTTP 方法和安全接口地址。WBI 非零业务码且缺少密钥时也采用此包装；非零码但存在密钥时仍沿用原有流程并继续检查密钥合法性。`Error` 的字段和自身错误文本不变，但请求返回错误的最外层类型及整体文本发生变化。将 `err.(bilibili.Error)` 或错误字符串匹配迁移为示例中的 `var be bilibili.Error; errors.As(err, &be)`，不要改为指针类型目标。
 
-## 参数编码与错误定位
-
-内置接口先完成参数编码，再向请求应用 query、请求体和头部；编码失败不写入部分参数，也不会继续签名或发送请求。公开网络方法签名及现有业务参数位置不变，`Client.Do` 的 `Query`、`Form`、`JSON` 仍按原有方式使用。以下标签规则用于内置接口的参数结构体，不用于 `Client.Do` 的 JSON 对象。
-
-| 规则 | 行为 |
-| --- | --- |
-| 未指定位置／`request:"query"` | 放入 URL 查询参数，POST 方法也不自动改为表单 |
-| `request:"json"` | 作为 JSON 请求体字段，保留标准库编码语义 |
-| `request:"form-data"` | 转换为 multipart 文本字段，由 Resty 构造请求体和 boundary |
-| `request:"-"` | 跳过字段；未导出字段同样跳过 |
-| `request:"field=name"` | 优先使用该名称，其次取 JSON 标签名，最后使用原有 snake_case 规则 |
-| `request:"omitempty,default=1"` | 零值优先省略；未指定省略时才使用字符串默认值 |
-
-保留历史零值语义：非 nil 指针即使指向零值也不算零值；空但非 nil 的切片不算零值。query 切片仍按元素转换后用逗号拼接，nil 切片为 `""`，其默认值继续不参与拼接；multipart 文本切片使用相同规则。JSON 中的 `default=1` 仍是字符串 `"1"`，不会按 Go 字段类型转换成数字。
-
-只有 `request` 标签控制请求省略；`json:"-"` 不等于 `request:"-"`，`json:",omitempty"` 也不新增请求省略行为。nil 参数或 nil 指针继续视为未传参；非 nil 参数仅接受结构体或一层结构体指针。没有实际参与编码的字段时，请求保持原状。
-
-query 可以与一种请求体并存，不再因字段排列覆盖 Content-Type。实际参与编码的字段若同时声明多个位置，或混用 JSON 与 multipart，返回错误；已被省略的字段不参与冲突判断。multipart 不再通过普通 map 加请求头模拟，因此依赖该内部表示的代码需要调整。当前业务参数没有使用 JSON/multipart 标签，图片上传的专用实现保持原样。
-
-```go
-var pe *bilibili.ParamError
-if errors.As(err, &pe) {
-    log.Printf("参数类型=%s Go字段=%s 参数名=%s 位置=%s",
-        pe.RootType, pe.GoField, pe.Parameter, pe.Location)
-}
-```
-
-`GoField` 可为 `Ids[2]`；整体参数类型错误的字段、参数名和位置为空。JSON 编码错误定位到顶层参数字段，底层 `*json.MarshalerError` 等错误可继续解包；不会重复执行自定义编码器来探测内部路径。内置请求的错误外层还包含 HTTP 方法及去除查询参数的接口地址。
-
-参数转换失败现在明确返回错误，不再静默变为空字符串。正常错误文本不包含参数值或原始错误文本；`ParamError.Err` 保留底层错误，可能含有原始值，不要直接写入日志。`Client.Do` 的手工 JSON 编码错误不转换为 `ParamError`。
-
-本阶段仅通过 `go build ./...` 和 `go vet ./...`，已有测试源码按新的 JSON/multipart 内部表示及错误类型适配，未新增或执行测试、未访问真实 API，multipart 的线上行为尚未验证。
-
-## 动态响应模型迁移
+### 动态命名类型
 
 `DynamicItem`、`DynamicInfo` 和主要模块定义移至同包的 `dynamic_model.go`，接口调用与参数仍在 `dynamic.go`。导入路径、网络方法签名、返回根类型以及 `item.Modules.ModuleAuthor.Name` 等字段访问路径不变。
 
@@ -479,8 +492,6 @@ item.Orig.Modules.ModuleDynamic.Major = bilibili.DynamicOriginalMajor{
 
 模型提取本身没有修改 JSON 标签、字段顺序、叶子类型或指针／切片结构，没有新增自定义反序列化；`DecodeError` 仍按既有规则遍历模型并报告 JSON 路径和 Go 字段。随后单独修复了两处 `Following` 类型，见下文。
 
-静态展开命名类型后，已分别确认提交版本和本地版本与各自重构前结构一致，并通过 `go build ./...`、`go vet ./...`。未新增或运行测试、未访问真实 API；这些检查不能替代真实响应兼容性验证。动态模型阶段不新增话题接口，也不修改 `watchVideo` 的独立话题响应结构。
-
 ### Following 数值状态修复
 
 `DynamicModuleAuthor.Following` 和 `DynamicOriginalModuleAuthor.Following` 从 `bool` 改为 `json.Number`。一份成功响应包含 12 条动态，外层作者该字段均为数字 `2`，原动态作者均为数字 `1`，原来的布尔类型会导致解码失败。这份样本尚不能确定全部状态含义或所有可能返回形式，因此暂不定义状态常量，也不将非零值解释为“已关注”。
@@ -495,74 +506,56 @@ if err != nil {
     return
 }
 // 按调用方已确认的状态定义处理 status。
-_ = rawStatus
-_ = status
+log.Printf("关注状态原文=%s 数值=%d", rawStatus, status)
 ```
 
 原动态对应字段为 `item.Orig.Modules.ModuleAuthor.Following`，读取方式相同。头像尺寸仍保留 `float64`，样本包含小数；原动态 `LikeIcon` 在该样本中全部为 `null`，不能据此判断其内部 `Id` 类型，因此未改动。调试记录不随 Git 提交分发。
 
-## 话题动态列表
+## 开发与贡献
 
-`GetTopicFeed(ctx, param)` 封装 `/x/polymer/web-dynamic/v1/feed/topic`，返回一页响应的 `data`，复用统一 Cookie、context、参数编码和错误处理。参数全部位于 query，不额外启用 WBI 签名或 CSRF，也不自动重试或翻页。
+贡献约定见 [AGENTS.md](AGENTS.md)，命名规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)。接口和模型按业务组织，共享请求、参数、响应和错误处理仍在同一个 `bilibili` 包内。问题记录应注明对应方法、错误类型及必要的脱敏响应片段，不提交 Cookie、凭证或完整调试记录。
 
-```go
-result, err := client.GetTopicFeed(ctx, bilibili.GetTopicFeedParam{
-    TopicId:     topicId,
-    SortBy:      3,
-    PageSize:    20,
-    Features:    "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard",
-    WebLocation: "0.0",
-})
-if err != nil {
-    log.Printf("获取话题动态失败: %v", err)
-    return
-}
-for _, item := range result.TopicCardList.Items {
-    if item.DynamicCardItem.Type == "DYNAMIC_TYPE_AV" {
-        log.Println(item.DynamicCardItem.Modules.ModuleDynamic.Major.Archive.Bvid)
-    }
-}
+- `go build ./...`：编译库、生成器及本地工具，不执行程序。
+- `go vet ./...`：静态检查。
+- `gofmt -s -w <文件.go>`：仅格式化修改的 Go 文件。
+- `golangci-lint run`：使用仓库 v2 配置；工具未安装时应如实记录。
+
+已有辅助测试使用标准库 `testing`。默认只做编译和静态检查，任务明确要求时才运行测试；不擅自运行本地工具或访问真实 API，不自动修改现有 CI 测试配置。此前代码重构通过编译、vet 和相关静态比对，但未做实机或 race 验证；不能据此宣称所有响应、取消、multipart 或并发场景均已验证。
+
+被 Git 忽略的 `test/` 是可能操作真实账号的本地工具，不随库提交分发。`watchVideo` 已使用 `GetTopicFeed`，抽奖和视频心跳仍使用自定义请求；部分批量工具已贯通取消，配置加载和独立 HTTP 工具不在相同保证范围内。
+
+## 声明
+
+1. 本项目遵守 AGPL 开源协议。
+2. 本项目基于 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
+   中描述的接口编写。请尊重该项目作者的努力，遵循该项目的开源要求，禁止一切商业使用。
+3. **请勿滥用，本项目仅用于学习和测试！利用本项目提供的接口、文档等造成不良影响及后果与本人无关。**
+4. 由于本项目的特殊性，可能随时停止开发或删档
+5. 本项目为开源项目，不接受任何形式的催单和索取行为，更不容许存在付费内容
+
+PS：目前，B站调用接口时强制使用 `https` 协议
+
+## 上游历史参考
+
+本 fork 源自 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili)。以下版本、徽章、统计和链接都指向上游，可能已不可访问，不代表本 fork 的发布版本、Go 要求或构建结果。
+
+上游文档曾将 v2.1+ 标为需要 Go 1.23 以上，v2.0.0 标为支持 Go 1.19 以上。历史安装命令如下，仅用于获取上游代码，不用于安装本文描述的 fork：
+
+```bash
+go get -u github.com/CuteReimu/bilibili/v2
+go get -u github.com/CuteReimu/bilibili/v2@v2.0.0
 ```
 
-示例中的 `ctx`、`client`、`topicId` 由调用方提供。库不填入工具专用默认值；`SortBy`、`PageSize`、`Offset`、`Features`、`WebLocation` 为零值时不发送。需要下一页时，根据 `result.TopicCardList.HasMore`，将 `result.TopicCardList.Offset` 传入下一次调用；调用方应检查取消、空 offset 或 offset 未变化，避免无进展循环。示例及本地 `watchVideo` 仍只处理一页。
+历史导入路径为 `github.com/CuteReimu/bilibili/v2`；更早版本见[上游 v1](https://github.com/CuteReimu/bilibili/tree/v1)。上游的 [issue 入口](https://github.com/CuteReimu/bilibili/issues/new/choose)和[贡献页面](https://github.com/CuteReimu/bilibili/contribute)仅作来源记录。
 
-`topic_model.go` 保留原工具完整的已声明字段，并将卡片、作者、头像、内容和统计提取为命名类型；这不代表已经覆盖服务端所有字段。仅更多操作模块复用 `DynamicModuleMore`。话题的 `Following`、内容描述等仍为 `any`，计数保留 `int`，头像尺寸保留 `float64`，没有按空间动态模型推断改型。
+[![](https://img.shields.io/github/v/tag/CuteReimu/bilibili?label=release "最新版本")](https://github.com/CuteReimu/bilibili/tags)
+![](https://img.shields.io/github/go-mod/go-version/CuteReimu/bilibili "语言")
+[![](https://img.shields.io/github/stars/CuteReimu/bilibili?style=flat&color=yellow)](#star-history "stars")
+[![](https://img.shields.io/github/actions/workflow/status/CuteReimu/bilibili/golangci-lint.yml?branch=master)](https://github.com/CuteReimu/bilibili/actions/workflows/golangci-lint.yml "代码分析")
+[![](https://img.shields.io/github/contributors/CuteReimu/bilibili)](https://github.com/CuteReimu/bilibili/graphs/contributors "贡献者")
+[![](https://img.shields.io/github/license/CuteReimu/bilibili)](https://github.com/CuteReimu/bilibili/blob/master/LICENSE "许可协议")
 
-本地 `watchVideo` 已从 `Client.Do` 和 `topicResp.Data` 迁移至此方法及 `GetTopicFeedResult`，移除了被替代的 `topicResp`、`topicData`；抽奖和视频心跳调用不变。`test/` 被 Git 忽略，工具迁移不随提交分发。
-
-验证包含模型静态展开比对、请求参数检查以及 `go build ./...`、`go vet ./...`，未运行测试或访问真实 API。`test/dynamicItem.txt` 是 `GetUserSpaceDynamic` 返回的空间动态记录，对应 `DynamicItem`，不作为话题模型的验证样本；话题字段的全部返回形式尚未确认。
-
-## 请求错误分类与迁移
-
-HTTP 状态不符合接口要求时，库返回可通过 `errors.As` 提取的 `*HTTPError`，包含 `Method`、`Endpoint` 和 `StatusCode`。库生成的 Endpoint 去掉查询参数、用户信息和片段；该错误不保存请求头、Cookie 或响应体。
-
-```go
-if err != nil {
-    var he *bilibili.HTTPError
-    var be bilibili.Error
-    switch {
-    case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
-        return
-    case errors.As(err, &he):
-        log.Printf("接口=%s %s HTTP状态=%d", he.Method, he.Endpoint, he.StatusCode)
-    case errors.As(err, &be):
-        log.Printf("业务错误码=%d", be.Code)
-    default:
-        // 参数与解码失败仍可继续用 errors.As 提取 ParamError、DecodeError。
-        log.Print("请求失败")
-    }
-}
-```
-
-示例需要导入 `bilibili`、`context`、`errors`、`log`。HTTP 错误按各接口原有规则判定：普通请求、游客初始化和 WBI 要求 200；短链接要求 302；Cookie 刷新页面接受 2xx。HTTP 状态错误不自动触发重试。网络故障、取消和超时保留原始错误链，不转换成 HTTPError；HTML 解析失败、缺少有效 Cookie、无效密钥等也保持独立错误。
-
-普通业务失败在原有 `Error{Code, Message}` 外补充 HTTP 方法和安全接口地址。WBI 非零业务码且缺少密钥时也采用此包装；非零码但存在密钥时仍沿用原有流程并继续检查密钥合法性。`Error` 的字段和自身错误文本不变，但请求返回错误的最外层类型及整体文本发生变化。将 `err.(bilibili.Error)` 或错误字符串匹配迁移为示例中的 `var be bilibili.Error; errors.As(err, &be)`，不要改为指针类型目标。
-
-`Message` 仍保留服务端消息，接口地址的清理不代表任意底层错误或服务端消息都经过脱敏。结构化记录优先选择接口、状态码和业务码；不要额外输出凭证、请求头或完整响应。
-
-此次通过 `go build ./...`、`go vet ./...` 并静态核对成功状态规则、调用方及错误包装，未运行测试或访问真实 API，不代表已经验证线上所有错误场景。
-
-## Star History
+### Star History
 
 <a href="https://star-history.com/#CuteReimu/bilibili&Date">
  <picture>
@@ -571,9 +564,3 @@ if err != nil {
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=CuteReimu/bilibili&type=Date" />
  </picture>
 </a>
-
-## 如何为仓库做贡献？
-
-不知道在哪些方面可以做贡献？[点击这里看看吧！](https://github.com/CuteReimu/bilibili/contribute)
-
-命名规范和编码风格请参考[CONTRIBUTING.md](.github/CONTRIBUTING.md)
