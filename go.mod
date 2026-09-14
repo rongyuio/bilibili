@@ -1,4 +1,4 @@
-module bilibili
+module github.com/rongyuio/bilibili
 
 go 1.27
 
