@@ -1,6 +1,6 @@
 # 哔哩哔哩 API Go 客户端
 
-本仓库是基于 CuteReimu/bilibili 继续维护的 fork，封装 Bilibili API，并提供 Cookie 管理、WBI 签名、context 取消和结构化错误定位。当前模块名为 `bilibili`，要求 Go 1.27，具体依赖以 [go.mod](go.mod) 为准。
+本仓库是基于 CuteReimu/bilibili 继续维护的 fork，封装 Bilibili API，并提供 Cookie 管理、WBI 签名、context 取消和结构化错误定位。模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.27，具体依赖以 [go.mod](go.mod) 为准。
 
 本文描述当前仓库代码，不将上游版本或构建状态作为本 fork 的发布信息。上游安装命令与来源链接见[上游历史参考](#上游历史参考)。接口可能随服务端变化，需要结合对应接口的实际响应维护。
 
@@ -17,15 +17,13 @@
 
 ### 接入当前 fork
 
-在本仓库内部使用 `import "bilibili"`。外部项目可在自己的 `go.mod` 中添加本地依赖；将 replace 路径替换为实际仓库路径：
+在使用 Go 1.27 或更新版本的项目目录中安装当前 fork：
 
-```go.mod
-require bilibili v0.0.0
-
-replace bilibili => D:/Project/bilibili
+```bash
+go get github.com/rongyuio/bilibili@master
 ```
 
-`v0.0.0` 在这里配合本地 replace 使用，不表示已有对应发布版本。外部项目同样需要满足 Go 1.27 要求；相对路径以该项目的 go.mod 所在目录为基准。
+使用 `import "github.com/rongyuio/bilibili"`，包名仍为 `bilibili`。`@master` 会解析为具体提交对应的版本并写入调用项目的 `go.mod`，不是本 fork 的版本发布声明。
 
 ### 创建客户端并调用接口
 
@@ -39,7 +37,7 @@ import (
     "log"
     "time"
 
-    "bilibili"
+    "github.com/rongyuio/bilibili"
 )
 
 func main() {
@@ -467,6 +465,10 @@ if errors.As(err, &de) {
 
 ## 迁移说明
 
+### 模块路径迁移
+
+原来使用本地模块 `bilibili` 的项目，需要将导入路径统一替换为 `github.com/rongyuio/bilibili`，并更新 `go.mod` 中对应的 `require` 和 `replace`。远程接入请移除旧的本地替换，再执行快速开始中的安装命令；继续本地联调则按下文配置。包名和现有 API 签名不因这次模块路径迁移而改变。
+
 ### 入口、签名与字段
 
 | 旧用法 | 新用法 |
@@ -552,6 +554,18 @@ log.Printf("关注状态原文=%s 数值=%d", rawStatus, status)
 原动态对应字段为 `item.Orig.Modules.ModuleAuthor.Following`，读取方式相同。头像尺寸仍保留 `float64`，样本包含小数；原动态 `LikeIcon` 在该样本中全部为 `null`，不能据此判断其内部 `Id` 类型，因此未改动。调试记录不随 Git 提交分发。
 
 ## 开发与贡献
+
+### 本地开发接入
+
+先克隆仓库。外部项目需要使用本地修改时，可在其 `go.mod` 中配置：
+
+```go.mod
+require github.com/rongyuio/bilibili v0.0.0
+
+replace github.com/rongyuio/bilibili => ../bilibili
+```
+
+`../bilibili` 相对于调用项目的 `go.mod`，请替换为实际克隆路径。`v0.0.0` 仅作为本地替换的占位版本，不表示已有对应发布版本；已安装依赖的项目可以保留原有 `require` 版本，只添加 `replace`。本地联调同样使用完整导入路径，并要求 Go 1.27 或更新版本。
 
 贡献约定见 [AGENTS.md](AGENTS.md)，命名规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)。接口和模型按业务组织，共享请求、参数、响应和错误处理仍在同一个 `bilibili` 包内。问题记录应注明对应方法、错误类型及必要的脱敏响应片段，不提交 Cookie、凭证或完整调试记录。
 

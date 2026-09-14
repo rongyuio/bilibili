@@ -17,6 +17,8 @@
 
 ## 开发与验证
 
+模块路径为 `github.com/rongyuio/bilibili`，包名仍为 `bilibili`。仓库及本地工具统一使用完整导入路径；本地联调只在调用项目中配置 `replace`，不要向本库的 `go.mod` 添加本地路径替换。远程安装命令使用 `go get github.com/rongyuio/bilibili@master`。
+
 Go 版本以 `go.mod` 为准。在根目录执行：
 
 - `go build ./...`：编译库、生成器及本地工具，不运行程序。
