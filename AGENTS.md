@@ -8,6 +8,7 @@
 - `request.go`、`params.go`：请求执行与参数编码。
 - `response.go`、`decode_diagnostic.go`、`errors.go`：响应解码与错误定位。
 - `number.go`：数值／字符串兼容类型。
+- `lottery.go`：活动抽奖次数、活动抽奖操作和用户抽奖动态信息查询，参数与响应模型同文件维护；批量调度和动态删除决策留在调用方。
 - `dynamic_model.go`：`DynamicItem`、`DynamicInfo` 及主要动态模块；动态请求方法和参数仍在 `dynamic.go`。
 - `live.go`：直播接口及响应模型，包括勋章墙、勋章面板、已激活勋章任务和点赞上报。勋章墙与面板保留独立字段类型，不按名称相似合并。
 - `topic_model.go`：话题动态列表的完整已声明模型；`GetTopicFeed` 请求方法和参数位于 `dynamic.go`。

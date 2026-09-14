@@ -319,6 +319,25 @@ log.Printf("本页普通勋章数: %d，总页数: %d", len(panel.List), panel.P
 
 本地工具迁移时，将原来的 `resp.Data.List` / `resp.Data.TaskInfo` 改为 `result.List` / `result.TaskInfo`，删除对应手写请求和重复响应结构。此次仅新增库 API，不改变既有公开方法或字段类型。移动端直播心跳不在本次封装范围内。
 
+### 活动抽奖与动态抽奖信息
+
+`GetActivityLotteryTimes` 获取当前账号的活动剩余抽奖次数；`DoActivityLottery` 执行活动抽奖；`GetDynamicLotteryInfo` 查询用户抽奖动态的抽奖信息。参数与响应模型均位于 [lottery.go](lottery.go)，查询结果直接对应 `data`。
+
+```go
+result, err := client.GetActivityLotteryTimes(ctx, bilibili.GetActivityLotteryTimesParam{Sid: sid})
+if err != nil {
+    log.Printf("查询活动抽奖次数失败: %v", err)
+    return
+}
+log.Printf("剩余抽奖次数: %d", result.Times)
+```
+
+执行活动抽奖使用 `DoActivityLottery(ctx, DoActivityLotteryParam{Num: num, PageId: pageID, Sid: sid, GaiaVtoken: token})`，返回的 `error` 必须处理。token 为空时仍发送该表单字段。CSRF 由库从当前请求 Cookie 快照获取：次数查询放入 query，抽奖操作与业务参数一起放入 URL 编码表单。
+
+查询动态抽奖信息使用 `GetDynamicLotteryInfoParam{BusinessId: dynamicID, BusinessType: 1, WebLocation: "333.1330", DeviceReqJSON: deviceJSON}`，四个字段均进入 query，动态 ID 保留字符串。失败时先处理错误，再访问结果；业务错误可通过 `errors.As` 提取。库不据此决定是否删除动态。
+
+本地工具迁移后，直接读取 `result.Times`、`result.Status`，删除对应手写请求和重复响应结构。模型完整沿用工具已声明字段，尚未实机验证全部类型；执行抽奖暂不解析中奖明细，需要明细时使用 `Client.Do`。库不包含活动配置、批量循环或自动重试。此次仅新增 API，不改变现有公开类型或方法。
+
 ### 工具方法
 
 以下网络方法均需传入 context，并先处理错误再使用结果：
