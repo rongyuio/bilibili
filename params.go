@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 	"reflect"
 	"strings"
@@ -21,6 +22,12 @@ type encodedParams struct {
 	present      bool
 }
 
+var (
+	errParamNotStruct       = errors.New("parameters must be a struct or a pointer to a struct")
+	errConflictingLocations = errors.New("a field must declare at most one request location")
+	errConflictingBodies    = errors.New("JSON and multipart fields cannot share a request body")
+)
+
 func withParams(r *resty.Request, in any) error {
 	params, err := encodeParams(in)
 	if err != nil {
@@ -29,9 +36,7 @@ func withParams(r *resty.Request, in any) error {
 	if !params.present {
 		return nil
 	}
-	for key, values := range params.query {
-		r.QueryParam[key] = values
-	}
+	maps.Copy(r.QueryParam, params.query)
 	switch params.bodyLocation {
 	case "json":
 		r.SetHeader("Content-Type", "application/json")
@@ -60,7 +65,7 @@ func encodeParams(in any) (params encodedParams, err error) {
 	}
 	root := diagnosticTypeName(inType)
 	if inType.Kind() != reflect.Struct {
-		return params, parameterError(root, "", "", "", "invalid parameter type", errors.New("parameters must be a struct or a pointer to a struct"))
+		return params, parameterError(root, "", "", "", "invalid parameter type", errParamNotStruct)
 	}
 	params.query = make(url.Values)
 	params.multipart = make(map[string]string)
@@ -88,7 +93,7 @@ func encodeParams(in any) (params encodedParams, err error) {
 		}
 		if location != "query" {
 			if params.bodyLocation != "" && params.bodyLocation != location {
-				return params, parameterError(root, field.Name, name, location, "conflicting body encodings", errors.New("JSON and multipart fields cannot share a request body"))
+				return params, parameterError(root, field.Name, name, location, "conflicting body encodings", errConflictingBodies)
 			}
 			params.bodyLocation = location
 		}
@@ -140,7 +145,7 @@ func parameterLocation(tags map[string]string) (string, error) {
 		}
 	}
 	if len(locations) > 1 {
-		return strings.Join(locations, ","), errors.New("a field must declare at most one request location")
+		return strings.Join(locations, ","), errConflictingLocations
 	}
 	if len(locations) == 1 {
 		return locations[0], nil
@@ -148,20 +153,20 @@ func parameterLocation(tags map[string]string) (string, error) {
 	return "query", nil
 }
 
-func parameterString(value reflect.Value, realVal any, field string) (string, string, error) {
+func parameterString(value reflect.Value, realVal any, field string) (text string, fieldPath string, err error) {
 	// Preserve the existing query slice convention, including nil slices and defaults.
 	if value.Kind() == reflect.Slice {
 		values := make([]string, value.Len())
 		for i := range value.Len() {
-			text, err := cast.ToStringE(value.Index(i).Interface())
-			if err != nil {
-				return "", fmt.Sprintf("%s[%d]", field, i), err
+			s, convErr := cast.ToStringE(value.Index(i).Interface())
+			if convErr != nil {
+				return "", fmt.Sprintf("%s[%d]", field, i), convErr
 			}
-			values[i] = text
+			values[i] = s
 		}
 		return strings.Join(values, ","), field, nil
 	}
-	text, err := cast.ToStringE(realVal)
+	text, err = cast.ToStringE(realVal)
 	return text, field, err
 }
 

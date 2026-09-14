@@ -1,8 +1,9 @@
 package bilibili
 
 import (
+	"cmp"
 	"reflect"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -76,24 +77,30 @@ func decodeFields(root reflect.Type) []decodeField {
 	}
 	var fields []decodeField
 	for _, group := range groups {
-		sort.SliceStable(group, func(i, j int) bool {
-			if len(group[i].index) != len(group[j].index) {
-				return len(group[i].index) < len(group[j].index)
+		slices.SortStableFunc(group, func(a, b decodeField) int {
+			if c := cmp.Compare(len(a.index), len(b.index)); c != 0 {
+				return c
 			}
-			return group[i].tagged && !group[j].tagged
+			if a.tagged != b.tagged {
+				if a.tagged {
+					return -1
+				}
+				return 1
+			}
+			return 0
 		})
 		if len(group) > 1 && len(group[0].index) == len(group[1].index) && group[0].tagged == group[1].tagged {
 			continue
 		}
 		fields = append(fields, group[0])
 	}
-	sort.Slice(fields, func(i, j int) bool {
-		for k := 0; k < len(fields[i].index) && k < len(fields[j].index); k++ {
-			if fields[i].index[k] != fields[j].index[k] {
-				return fields[i].index[k] < fields[j].index[k]
+	slices.SortFunc(fields, func(a, b decodeField) int {
+		for k := 0; k < len(a.index) && k < len(b.index); k++ {
+			if c := cmp.Compare(a.index[k], b.index[k]); c != 0 {
+				return c
 			}
 		}
-		return len(fields[i].index) < len(fields[j].index)
+		return cmp.Compare(len(a.index), len(b.index))
 	})
 	return fields
 }
@@ -131,8 +138,8 @@ func diagnosticTypeName(t reflect.Type) string {
 		name := t.String()
 		// Generic arguments may themselves contain an entire anonymous struct.
 		if strings.Contains(name, "struct {") {
-			if index := strings.IndexByte(name, '['); index >= 0 {
-				return name[:index] + "[...]"
+			if before, _, ok := strings.Cut(name, "["); ok {
+				return before + "[...]"
 			}
 		}
 		return name

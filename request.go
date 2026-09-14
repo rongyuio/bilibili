@@ -182,6 +182,9 @@ func (c *Client) newRequest(ctx context.Context) *resty.Request {
 }
 
 // sendRaw merges response cookies even when the status or business code is an error.
+// errMissingHTTPResponse 表示请求未取得 HTTP 响应。
+var errMissingHTTPResponse = errors.New("missing HTTP response")
+
 func (c *Client) sendRaw(r *resty.Request, method, endpoint string) (*resty.Response, error) {
 	if err := checkContext(r.Context()); err != nil {
 		return nil, fmt.Errorf("%s %s: %w", method, safeEndpoint(endpoint), err)
@@ -194,7 +197,7 @@ func (c *Client) sendRaw(r *resty.Request, method, endpoint string) (*resty.Resp
 		return resp, fmt.Errorf("%s %s: %w", method, safeEndpoint(endpoint), err)
 	}
 	if resp == nil || resp.RawResponse == nil {
-		return nil, fmt.Errorf("%s %s: missing HTTP response", method, safeEndpoint(endpoint))
+		return nil, fmt.Errorf("%s %s: %w", method, safeEndpoint(endpoint), errMissingHTTPResponse)
 	}
 	return resp, nil
 }

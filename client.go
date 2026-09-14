@@ -2,6 +2,7 @@ package bilibili
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,6 +11,9 @@ import (
 
 	"github.com/go-resty/resty/v2"
 )
+
+// errNoCookies 表示匿名客户端初始化未取得任何 Cookie。
+var errNoCookies = errors.New("initialize anonymous client: response contains no valid cookies")
 
 // Client supports concurrent ordinary requests after configuration.
 // Login, session replacement and configuration changes must happen between requests.
@@ -64,7 +68,7 @@ func NewAnonymousClient(ctx context.Context) (*Client, error) {
 		return nil, fmt.Errorf("initialize anonymous client: %w", newHTTPError(resty.MethodGet, endpoint, resp.StatusCode()))
 	}
 	if len(client.GetCookies()) == 0 {
-		return nil, fmt.Errorf("initialize anonymous client: response contains no valid cookies")
+		return nil, errNoCookies
 	}
 	return client, nil
 }

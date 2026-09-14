@@ -38,7 +38,8 @@ func encrypt(publicKey, data string) (string, error) {
 		return "", errors.WithStack(err)
 	}
 	pk, _ := publicKeyInterface.(*rsa.PublicKey)
-	// 加密
+	// 加密。B 站登录接口要求 PKCS#1 v1.5 填充，不能改用 OAEP。
+	//nolint:staticcheck
 	cipherText, err := rsa.EncryptPKCS1v15(rand.Reader, pk, []byte(data))
 	if err != nil {
 		return "", errors.WithStack(err)

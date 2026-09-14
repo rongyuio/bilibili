@@ -8,7 +8,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -119,14 +119,15 @@ func (wbi *WBI) GetKeys(ctx context.Context) (imgKey string, subKey string, err 
 	return wbi.getKeysContext(ctx)
 }
 
-func (wbi *WBI) cachedKeys() (string, string, bool) {
+func (wbi *WBI) cachedKeys() (img string, sub string, valid bool) {
 	wbi.mu.Lock()
 	defer wbi.mu.Unlock()
-	img, sub := wbi.getKeys()
-	return img, sub, img != "" && sub != "" && time.Since(wbi.lastInitTime) < wbi.updateCheckerInterval
+	img, sub = wbi.getKeys()
+	valid = img != "" && sub != "" && time.Since(wbi.lastInitTime) < wbi.updateCheckerInterval
+	return img, sub, valid
 }
 
-func (wbi *WBI) getKeysContext(ctx context.Context) (string, string, error) {
+func (wbi *WBI) getKeysContext(ctx context.Context) (img string, sub string, err error) {
 	if err := checkContext(ctx); err != nil {
 		return "", "", err
 	}
@@ -151,7 +152,7 @@ func (wbi *WBI) getKeysContext(ctx context.Context) (string, string, error) {
 	}
 	wbi.mu.Lock()
 	defer wbi.mu.Unlock()
-	img, sub := wbi.getKeys()
+	img, sub = wbi.getKeys()
 	return img, sub, nil
 }
 
@@ -269,7 +270,7 @@ func (wbi *WBI) signMapContext(ctx context.Context, payload map[string]string, t
 		keys = append(keys, k)
 	}
 
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	// Remove unwanted characters
 	for k, v := range newPayload {
@@ -376,9 +377,9 @@ func cloneCookies(cookies []*http.Cookie) []*http.Cookie {
 	result := make([]*http.Cookie, 0, len(cookies))
 	for _, cookie := range cookies {
 		if cookie != nil {
-			copy := *cookie
-			copy.Unparsed = append([]string(nil), cookie.Unparsed...)
-			result = append(result, &copy)
+			clone := *cookie
+			clone.Unparsed = append([]string(nil), cookie.Unparsed...)
+			result = append(result, &clone)
 		}
 	}
 	return result

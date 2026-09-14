@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"net/url"
-	"sort"
+	"slices"
 )
 
 // calculateAppSign 计算 APP API 签名
@@ -19,7 +19,7 @@ func calculateAppSign(params map[string]string, appSecret string) string {
 	}
 
 	// 按 key 排序
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	// 构建查询字符串
 	query := url.Values{}

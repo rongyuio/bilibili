@@ -19,9 +19,12 @@ type FormatCtrl struct {
 type ResourceType int
 
 var (
-	ResourceTypeVideo     ResourceType = 2  // 视频稿件
-	ResourceTypeAudio                  = 12 // 音频
-	ResourceTypeVideoList              = 21 // 视频合集
+	// ResourceTypeVideo 表示视频稿件。
+	ResourceTypeVideo ResourceType = 2
+	// ResourceTypeAudio 表示音频。
+	ResourceTypeAudio ResourceType = 12
+	// ResourceTypeVideoList 表示视频合集。
+	ResourceTypeVideoList ResourceType = 21
 )
 
 type Resource struct {
