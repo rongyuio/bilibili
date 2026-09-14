@@ -21,9 +21,8 @@ func (c *Client) GetArticlesInfo(ctx context.Context, param GetArticlesInfoParam
 	return execute[*ArticlesInfo](ctx, c, method, url, param)
 }
 
-type GetArticleInfoParam struct {
-	ID int `json:"id"` // 专栏cvid
-}
+// GetArticleInfoParam 是 GetArticlesInfoParam 的别名。
+type GetArticleInfoParam = GetArticlesInfoParam
 
 // GetArticleInfo 获取专栏文章基本信息
 func (c *Client) GetArticleInfo(ctx context.Context, param GetArticleInfoParam) (*ArticleInfo, error) {
@@ -65,9 +64,8 @@ func (c *Client) CoinArticle(ctx context.Context, param CoinArticleParam) (*Coin
 	return execute[*CoinArticleResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
-type FavoritesArticleParam struct {
-	ID int `json:"id"` // 文章cvid
-}
+// FavoritesArticleParam 是 GetArticlesInfoParam 的别名。
+type FavoritesArticleParam = GetArticlesInfoParam
 
 // FavoritesArticle 收藏文章
 func (c *Client) FavoritesArticle(ctx context.Context, param FavoritesArticleParam) error {

@@ -129,9 +129,8 @@ type ArticleInfo struct {
 	Type            int            `json:"type"`              // 文章类别。0：文章。2：笔记
 }
 
-type CoinArticleResult struct {
-	Like bool `json:"like"` // 是否点赞成功。true：成功。false：失败。已赞过则附加点赞失败
-}
+// CoinArticleResult 是 CoinVideoResult 的别名（专栏投币与视频投币的响应字段完全一致）。
+type CoinArticleResult = CoinVideoResult
 
 type UserArticleList struct {
 	Articles []Article `json:"articles"` // 专栏文章信息列表

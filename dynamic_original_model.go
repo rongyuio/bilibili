@@ -170,8 +170,5 @@ type DynamicOriginalRichTextNode struct {
 }
 
 // DynamicOriginalMajor contains the original media body, retaining its field order.
-type DynamicOriginalMajor struct {
-	Archive DynamicArchive `json:"archive,omitempty"`
-	Type    string         `json:"type"`
-	Draw    DynamicDraw    `json:"draw,omitempty"`
-}
+// DynamicOriginalMajor 是 DynamicMajor 的别名（原动态的 major 与整体动态字段完全一致）。
+type DynamicOriginalMajor = DynamicMajor

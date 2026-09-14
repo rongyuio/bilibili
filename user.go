@@ -170,11 +170,8 @@ func (c *Client) GetUserFollowings2(ctx context.Context, param GetUserFollowings
 	return execute[*GetUserFollowings2Result](ctx, c, method, url, param)
 }
 
-type GetUserFollowings3Param struct {
-	Vmid int `json:"vmid"`                                   // 目标用户mid
-	Ps   int `json:"ps,omitempty" request:"query,omitempty"` // 每页项数。默认为20
-	Pn   int `json:"pn,omitempty" request:"query,omitempty"` // 页码。默认为1
-}
+// GetUserFollowings3Param 是 GetUserFollowersParam 的别名。
+type GetUserFollowings3Param = GetUserFollowersParam
 
 // GetUserFollowings3 查询用户关注明细3
 //
@@ -203,11 +200,8 @@ func (c *Client) SearchUserFollowings(ctx context.Context, param SearchUserFollo
 	return execute[*SearchUserFollowingsResult](ctx, c, method, url, param)
 }
 
-type GetSameFollowingsParam struct {
-	Vmid int `json:"vmid"`                                   // 目标用户 mid
-	Ps   int `json:"ps,omitempty" request:"query,omitempty"` // 每页项数。默认为 50
-	Pn   int `json:"pn,omitempty" request:"query,omitempty"` // 页码。默认为 1
-}
+// GetSameFollowingsParam 是 GetUserFollowersParam 的别名。
+type GetSameFollowingsParam = GetUserFollowersParam
 
 // GetSameFollowings 查询共同关注明细
 func (c *Client) GetSameFollowings(ctx context.Context, param GetSameFollowingsParam) (*GetSameFollowingsResult, error) {
@@ -306,9 +300,8 @@ func (c *Client) GetUserRelation(ctx context.Context, param GetUserRelationParam
 	return execute[*RelationDetail](ctx, c, method, url, param)
 }
 
-type GetUserRelation2Param struct {
-	Mid int `json:"mid"` // 目标用户mid
-}
+// GetUserRelation2Param 是 GetUserSpaceDetailParam 的别名。
+type GetUserRelation2Param = GetUserSpaceDetailParam
 
 // GetUserRelation2 查询用户与自己关系（互相关系）
 func (c *Client) GetUserRelation2(ctx context.Context, param GetUserRelation2Param) (*GetUserRelation2Result, error) {
