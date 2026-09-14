@@ -116,7 +116,7 @@ for _, item := range page.Items {
 
 ```go
 result, err := client.GetTopicFeed(ctx, bilibili.GetTopicFeedParam{
-    TopicId:     topicId,
+    TopicID:     topicId,
     SortBy:      3,
     PageSize:    20,
     Features:    "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard",
@@ -173,7 +173,7 @@ log.Printf("剩余抽奖次数: %d", result.Times)
 
 | 方法 | 用途 |
 | --- | --- |
-| `client.UnwrapShortUrl(ctx, shortURL)` | 解析短链接，返回目标类型和标识 |
+| `client.UnwrapShortURL(ctx, shortURL)` | 解析短链接，返回目标类型和标识 |
 | `client.Now(ctx)` | 获取服务器时间 |
 | `client.GetZoneLocation(ctx)` | 查询 IP 所属地理位置 |
 | `client.GetRegionDailyCount(ctx)` | 获取分区当日投稿数 |

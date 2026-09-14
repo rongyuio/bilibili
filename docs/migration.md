@@ -220,3 +220,59 @@ log.Printf("关注状态原文=%s 数值=%d", rawStatus, status)
 - `cookie.go` 的 `type ( ... )` 分组声明改为逐个声明，与其它文件保持一致。
 
 同包内的文件搬移不影响导入方式；`wbi.go` 与 `decode_diagnostic.go` 拆分后对外签名、错误语义与 `DecodeError` 可解包性均未变化。
+
+## 第四轮重构：初始缩写规范化、清理与模型文件细分
+
+### Go 初始缩写命名规范化（破坏性）
+
+按 Go 惯例把初始缩写统一为大写，规则为：`Id`→`ID`、`Ids`→`IDs`、`Uid`→`UID`、`Uids`→`UIDs`、`Url`→`URL`、`Urls`→`URLs`、`Uri`→`URI`、`Uuid`→`UUID`、`Json`→`JSON`。规则只作用于标识符，**JSON 标签一个都没有改动**（改名前后的 2857 个标签集合完全一致），请求与响应数据不受影响。
+
+共涉及 107 个不同标识符、29 个源码文件。常见对照：
+
+| 旧名 | 新名 |
+| --- | --- |
+| `Id`、`Ids` | `ID`、`IDs` |
+| `DynamicId`、`DynamicIdStr` | `DynamicID`、`DynamicIDStr` |
+| `RoomId`、`TargetId`、`AreaId` | `RoomID`、`TargetID`、`AreaID` |
+| `Uid`、`Uids`、`SenderUid`、`UidType` | `UID`、`UIDs`、`SenderUID`、`UIDType` |
+| `MediaIdParam`、`FavourId`、`GetFavourIds` | `MediaIDParam`、`FavourID`、`GetFavourIDs` |
+| `Url`、`Urls`、`JumpUrl`、`AvatarSubscriptUrl` | `URL`、`URLs`、`JumpURL`、`AvatarSubscriptURL` |
+| `UnwrapShortUrl` | `UnwrapShortURL` |
+| `Uri`、`BackdropUri`、`HistoryList.Uri` | `URI`、`BackdropURI`、`HistoryList.URI` |
+| `Json`、`ExtendJson` | `JSON`、`ExtendJSON` |
+| `deviceId`（包内变量） | `deviceID` |
+
+迁移方式：调用方按同一规则批量改名即可，无兼容别名（字段与方法名无法用别名承接）。上一轮新增的 `HistoryList.Uri` 在本轮已改名为 `HistoryList.URI`。
+
+**刻意未纳入**的缩写字：`Mid`、`Aid`、`Cid`、`Tid`、`Rid`、`Fid`、`Pid`、`Oid`、`Bvid`、`Vmid`、`Vip`、`Nft`、`Md5`。它们不在 Go 官方初始缩写表内（属 B 站专有缩写或商品名），改动收益低而破坏面大。若后续要一并调整，应作为单独的大版本变更处理。
+
+被忽略的本地工具 `test/` 也已同步改名，以保持 `go build ./...` 通过。
+
+### 死代码清理（破坏性）
+
+| 删除项 | 说明 |
+| --- | --- |
+| `ResultData` | `search_model.go` 中的空结构体，全仓零引用 |
+| `VideoSubtitles` | `video_model.go` 中全仓零引用的类型；字幕列表请使用 `[]VideoSubtitle` |
+
+### 机械一致性
+
+- `live_model.go`、`topic_model.go` 中的 10 处 `interface{}` 统一为 `any`。
+- `emote_model.go` 的 `User_panel_packages`、`All_packages` 改为 `UserPanelPackages`、`AllPackages`（JSON 标签 `user_panel_packages`、`all_packages` 保持不变）。
+- 清理 `fav_model.go` 封面字段注释中的游离制表符、`search.go` 参数注释中的制表符，并把 `article.go` 的两条 `import` 语句合并为一个 import 块。
+
+### 文件组织
+
+`dynamic_model.go` 原先 775 行、79 个类型，现按子领域拆为 5 个文件（同包，导入方式不变）：
+
+| 文件 | 内容 |
+| --- | --- |
+| `dynamic_model.go` | 整体动态（`DynamicItem` 及其各 `Module*`）、`AvatarContainerSize` |
+| `dynamic_original_model.go` | 转发动态内嵌的原动态（`DynamicOriginal*`、`DynamicDecorate*`） |
+| `dynamic_repost_model.go` | 转发列表与转发用户、`@` 搜索（`DynamicRepost*`、`DynamicUserVip` 等） |
+| `dynamic_interact_model.go` | 点赞列表、直播中关注者、更新 UP 主（`DynamicLike*`、`DynamicLiveUser*`、`DynamicUp*`） |
+| `dynamic_portal_model.go` | 动态卡片、门户与发布接口（`DynamicCard`、`DynamicPortal*`、`CreateDynamicResult` 等） |
+
+### 版本影响
+
+导出标识符与字段改名、以及删除导出类型，按语义化版本约定都属于**破坏性变更**，需以 major 版本发布。
