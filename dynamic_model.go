@@ -102,20 +102,7 @@ type DynamicAuthorAvatar struct {
 	FallbackLayers struct {
 		IsCriticalGroup bool `json:"is_critical_group"`
 		Layers          []struct {
-			GeneralSpec struct {
-				PosSpec struct {
-					AxisX         float64 `json:"axis_x"`
-					AxisY         float64 `json:"axis_y"`
-					CoordinatePos int     `json:"coordinate_pos"`
-				} `json:"pos_spec"`
-				RenderSpec struct {
-					Opacity int `json:"opacity"`
-				} `json:"render_spec"`
-				SizeSpec struct {
-					Height float64 `json:"height"`
-					Width  float64 `json:"width"`
-				} `json:"size_spec"`
-			} `json:"general_spec"`
+			GeneralSpec AvatarLayerGeneralSpec `json:"general_spec"`
 			LayerConfig struct {
 				IsCritical bool `json:"is_critical,omitempty"`
 				Tags       struct {
@@ -124,12 +111,7 @@ type DynamicAuthorAvatar struct {
 					GeneralCfg struct {
 						ConfigType    int `json:"config_type"`
 						GeneralConfig struct {
-							WebCssStyle struct {
-								BorderRadius    string `json:"borderRadius"`
-								BackgroundColor string `json:"background-color,omitempty"`
-								Border          string `json:"border,omitempty"`
-								BoxSizing       string `json:"boxSizing,omitempty"`
-							} `json:"web_css_style"`
+							WebCssStyle AvatarLayerWebCssStyle `json:"web_css_style"`
 						} `json:"general_config"`
 					} `json:"GENERAL_CFG"`
 					IconLayer struct{} `json:"ICON_LAYER,omitempty"`

@@ -297,22 +297,28 @@ func (wbi *WBI) signMapContext(ctx context.Context, payload map[string]string, t
 	return newPayload, nil
 }
 
+// wbiNavResult 是 nav 接口（WBI 密钥来源）的响应。
+type wbiNavResult struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		WbiImg wbiImg `json:"wbi_img"`
+	} `json:"data"`
+}
+
+// wbiImg 是 nav 接口返回的 WBI 密钥图片地址。
+type wbiImg struct {
+	ImgURL string `json:"img_url"`
+	SubURL string `json:"sub_url"`
+}
+
 func (wbi *WBI) doInitWbi(ctx context.Context) error {
 	wbi.mu.Lock()
 	cookies := cloneCookies(wbi.cookies)
 	transport := wbi.http
 	owner := wbi.owner
 	wbi.mu.Unlock()
-	result := struct {
-		Code    int    `json:"code"`
-		Message string `json:"message"`
-		Data    struct {
-			WbiImg struct {
-				ImgURL string `json:"img_url"`
-				SubURL string `json:"sub_url"`
-			} `json:"wbi_img"`
-		}
-	}{}
+	result := wbiNavResult{}
 
 	r := transport.R().SetContext(ctx).SetCookies(cookies)
 	if owner != nil {
