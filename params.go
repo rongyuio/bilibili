@@ -1,21 +1,24 @@
 package bilibili
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 	"unicode"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 )
 
 type encodedParams struct {
-	query       url.Values
-	body        map[string]any
-	contentType string
-	present     bool
+	query        url.Values
+	jsonBody     []byte
+	multipart    map[string]string
+	bodyLocation string
+	present      bool
 }
 
 func withParams(r *resty.Request, in any) error {
@@ -29,9 +32,15 @@ func withParams(r *resty.Request, in any) error {
 	for key, values := range params.query {
 		r.QueryParam[key] = values
 	}
-	r.SetHeader("Content-Type", params.contentType)
-	if len(params.body) > 0 {
-		r.SetBody(params.body)
+	switch params.bodyLocation {
+	case "json":
+		r.SetHeader("Content-Type", "application/json")
+		r.SetBody(params.jsonBody)
+	case "form-data":
+		// Resty constructs the body and sets a matching boundary when sending.
+		r.SetMultipartFormData(params.multipart)
+	default:
+		r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
 	}
 	return nil
 }
@@ -40,108 +49,124 @@ func encodeParams(in any) (params encodedParams, err error) {
 	if in == nil {
 		return params, nil
 	}
-
 	inType := reflect.TypeOf(in)
 	inValue := reflect.ValueOf(in)
-
-	switch inType.Kind() {
-	case reflect.Ptr:
-		// 如果是空指针，直接返回
+	if inType.Kind() == reflect.Pointer {
 		if inValue.IsNil() {
 			return params, nil
 		}
 		inType = inType.Elem()
 		inValue = inValue.Elem()
-		if inType.Kind() != reflect.Struct {
-			return params, errors.New("参数类型错误")
-		}
-	case reflect.Struct:
-	default:
-		return params, errors.New("参数类型错误")
 	}
-
-	params.present = true
+	root := diagnosticTypeName(inType)
+	if inType.Kind() != reflect.Struct {
+		return params, parameterError(root, "", "", "", "invalid parameter type", errors.New("parameters must be a struct or a pointer to a struct"))
+	}
 	params.query = make(url.Values)
-	bodyMap := make(map[string]any, 4)
-	contentType := ""
+	params.multipart = make(map[string]string)
+	body := make(map[string]json.RawMessage)
 	for i := range inType.NumField() {
-		fieldType := inType.Field(i)
-		if !fieldType.IsExported() {
+		field := inType.Field(i)
+		if !field.IsExported() || field.Tag.Get("request") == "-" {
 			continue
 		}
-		fieldValue := inValue.Field(i)
-		tValue := fieldType.Tag.Get("request")
-
-		if tValue == "-" {
-			continue
-		}
-
-		// 获取字段名
-		var fieldName string
-
-		tagMap := parseTag(tValue)
-		if name, ok := tagMap["field"]; ok {
-			fieldName = name
-		} else if jsonValue := fieldType.Tag.Get("json"); jsonValue != "" && jsonValue != "-" {
-			if index := strings.Index(jsonValue, ","); index != -1 {
-				jsonValue = jsonValue[:index]
-			}
-			fieldName = jsonValue
-		} else {
-			fieldName = toSnakeCase(fieldType.Name)
-		}
-
-		var realVal any
-		if !fieldValue.IsZero() {
-			realVal = fieldValue.Interface()
-		} else {
-			// 设置了 omitempty 代表不传
-			if _, ok := tagMap["omitempty"]; ok {
+		value := inValue.Field(i)
+		tags := parseTag(field.Tag.Get("request"))
+		name := parameterName(field, tags)
+		realVal := value.Interface()
+		if value.IsZero() {
+			if _, omit := tags["omitempty"]; omit {
 				continue
 			}
-			// 设置了 default 代表使用默认值
-			if v, ok := tagMap["default"]; ok {
-				realVal = v
-			} else {
-				// 否则使用零值
-				realVal = fieldValue.Interface()
+			if fallback, ok := tags["default"]; ok {
+				realVal = fallback
 			}
 		}
-
-		contentType = "application/x-www-form-urlencoded"
-		for name := range tagMap {
-			switch name {
-			case "query":
-				contentType = "application/x-www-form-urlencoded"
-			case "json":
-				contentType = "application/json"
-			case "form-data":
-				contentType = "multipart/form-data"
-			}
+		location, err := parameterLocation(tags)
+		if err != nil {
+			return params, parameterError(root, field.Name, name, location, "conflicting request locations", err)
 		}
-		if contentType == "application/x-www-form-urlencoded" {
-			_, ok1 := tagMap["json"]
-			_, ok2 := tagMap["form-data"]
-			if !ok1 && !ok2 {
-				// 对query类型的字段进行特殊处理
-				if fieldType.Type.Kind() == reflect.Slice {
-					strSlice := make([]string, 0, 4)
-					for i := range fieldValue.Len() {
-						strSlice = append(strSlice, cast.ToString(fieldValue.Index(i).Interface()))
-					}
-					realVal = strings.Join(strSlice, ",")
-				}
+		if location != "query" {
+			if params.bodyLocation != "" && params.bodyLocation != location {
+				return params, parameterError(root, field.Name, name, location, "conflicting body encodings", errors.New("JSON and multipart fields cannot share a request body"))
 			}
-			params.query.Set(fieldName, cast.ToString(realVal))
+			params.bodyLocation = location
+		}
+		params.present = true
+		if location == "json" {
+			// Encode each value once so custom marshalers are not executed again by Resty.
+			raw, err := json.Marshal(realVal)
+			if err != nil {
+				return params, parameterError(root, field.Name, name, location, "JSON encoding failed", err)
+			}
+			body[name] = raw
+			continue
+		}
+		text, fieldPath, err := parameterString(value, realVal, field.Name)
+		if err != nil {
+			return params, parameterError(root, fieldPath, name, location, "string conversion failed", err)
+		}
+		if location == "query" {
+			params.query.Set(name, text)
 		} else {
-			bodyMap[fieldName] = realVal
+			params.multipart[name] = text
 		}
 	}
-
-	params.contentType = contentType
-	params.body = bodyMap
-
+	if params.bodyLocation == "json" {
+		params.jsonBody, err = json.Marshal(body)
+		if err != nil {
+			return params, parameterError(root, "", "", "json", "JSON encoding failed", err)
+		}
+	}
 	return params, nil
+}
+
+func parameterName(field reflect.StructField, tags map[string]string) string {
+	if name, ok := tags["field"]; ok {
+		return name
+	}
+	if name := field.Tag.Get("json"); name != "" && name != "-" {
+		name, _, _ = strings.Cut(name, ",")
+		return name
+	}
+	return toSnakeCase(field.Name)
+}
+
+func parameterLocation(tags map[string]string) (string, error) {
+	var locations []string
+	for _, name := range []string{"query", "json", "form-data"} {
+		if _, ok := tags[name]; ok {
+			locations = append(locations, name)
+		}
+	}
+	if len(locations) > 1 {
+		return strings.Join(locations, ","), errors.New("a field must declare at most one request location")
+	}
+	if len(locations) == 1 {
+		return locations[0], nil
+	}
+	return "query", nil
+}
+
+func parameterString(value reflect.Value, realVal any, field string) (string, string, error) {
+	// Preserve the existing query slice convention, including nil slices and defaults.
+	if value.Kind() == reflect.Slice {
+		values := make([]string, value.Len())
+		for i := range value.Len() {
+			text, err := cast.ToStringE(value.Index(i).Interface())
+			if err != nil {
+				return "", fmt.Sprintf("%s[%d]", field, i), err
+			}
+			values[i] = text
+		}
+		return strings.Join(values, ","), field, nil
+	}
+	text, err := cast.ToStringE(realVal)
+	return text, field, err
+}
+
+func parameterError(root, field, name, location, reason string, cause error) *ParamError {
+	return &ParamError{RootType: root, GoField: field, Parameter: name, Location: location, Err: cause, reason: reason}
 }
 
 func parseTag(tag string) map[string]string {

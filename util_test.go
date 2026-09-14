@@ -1,6 +1,8 @@
 package bilibili
 
 import (
+	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/go-resty/resty/v2"
@@ -148,16 +150,19 @@ func TestJson(t *testing.T) {
 		t.Fatal("withParams content type not correct ", r.Header.Get("Content-Type"))
 	}
 
-	body := r.Body.(map[string]any)
+	var body map[string]any
+	if err := json.Unmarshal(r.Body.([]byte), &body); err != nil {
+		t.Fatal(err)
+	}
 	if len(body) != 9 ||
 		body["test_a"] != "" ||
 		body["tb"] != "1" ||
 		body["test_e"] != "1" ||
-		body["test_f"] != &f ||
+		body["test_f"] != float64(f) ||
 		body["test_g"] != "1" ||
-		body["test_i"] != &i ||
-		body["test_j"] != (*int)(nil) ||
-		body["test_k"] != 0 ||
+		body["test_i"] != float64(i) ||
+		body["test_j"] != nil ||
+		body["test_k"] != float64(0) ||
 		body["testM"] != "" {
 		t.Fatal("withParams body result not correct ", r.Body)
 	}
@@ -189,30 +194,29 @@ func TestFormData(t *testing.T) {
 		testL: 10,
 	}
 
-	r := resty.New().R()
-	err := withParams(r, params)
+	encoded, err := encodeParams(params)
 
 	if err != nil {
 		t.Fatal(err)
 		return
 	}
 
-	if r.Header.Get("Content-Type") != "multipart/form-data" {
-		t.Fatal("withParams content type not correct ", r.Header.Get("Content-Type"))
+	if encoded.bodyLocation != "form-data" {
+		t.Fatal("withParams content type not correct ", encoded.bodyLocation)
 	}
 
-	body := r.Body.(map[string]any)
+	body := encoded.multipart
 	if len(body) != 9 ||
 		body["test_a"] != "" ||
 		body["tb"] != "1" ||
 		body["test_e"] != "1" ||
-		body["test_f"] != &f ||
+		body["test_f"] != "10" ||
 		body["test_g"] != "1" ||
-		body["test_i"] != &i ||
-		body["test_j"] != (*int)(nil) ||
-		body["test_k"] != 0 ||
+		body["test_i"] != "0" ||
+		body["test_j"] != "" ||
+		body["test_k"] != "0" ||
 		body["testM"] != "" {
-		t.Fatal("withParams body result not correct ", r.Body)
+		t.Fatal("withParams body result not correct ", body)
 	}
 }
 
@@ -251,7 +255,8 @@ func TestWithParamsNil(t *testing.T) {
 	r := resty.New().R()
 	err := withParams(r, []int{1, 2, 3})
 
-	if err == nil || err.Error() != "参数类型错误" {
+	var paramErr *ParamError
+	if !errors.As(err, &paramErr) || paramErr.RootType != "[]int" {
 		t.Fatal(err)
 	}
 

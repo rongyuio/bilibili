@@ -122,7 +122,7 @@ func executeRequest[Out any](c *Client, r *resty.Request, method, endpoint strin
 		return out, err
 	}
 	if err = withParams(r, in); err != nil {
-		return out, err
+		return out, fmt.Errorf("%s %s: %w", method, safeEndpoint(endpoint), err)
 	}
 	for _, handler := range handlers {
 		if err = handler(r); err != nil {

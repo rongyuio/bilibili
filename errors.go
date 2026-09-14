@@ -5,6 +5,29 @@ import (
 	"net/url"
 )
 
+// ParamError identifies an invalid request parameter. GoField includes a slice
+// index when conversion of an element fails. Empty fields indicate a root error.
+// Error omits parameter values and the cause text; Err may contain sensitive data.
+type ParamError struct {
+	RootType  string
+	GoField   string
+	Parameter string
+	Location  string
+	Err       error
+	reason    string
+}
+
+func (e *ParamError) Error() string {
+	reason := e.reason
+	if reason == "" {
+		reason = "parameter encoding failed"
+	}
+	return fmt.Sprintf("encode %s (Go field %s, parameter %s, location %s): %s",
+		e.RootType, e.GoField, e.Parameter, e.Location, reason)
+}
+
+func (e *ParamError) Unwrap() error { return e.Err }
+
 // DecodeError describes a failed response decode without including response values.
 // Offset is one-based in the response body; zero means unavailable.
 // Exact is false when only a custom decoder boundary or the root can be located.
