@@ -3,7 +3,7 @@ package bilibili
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"strconv"
 )
 
@@ -14,6 +14,10 @@ type NumberOrString struct {
 	kind string
 }
 
+// errInvalidNumberOrString 表示值既不是数字也不是字符串。
+var errInvalidNumberOrString = errors.New("NumberOrString requires a number, string, or null")
+
+// String returns the raw text form.
 func (n NumberOrString) String() string { return n.text }
 
 // Kind returns "number", "string", or "null".
@@ -24,9 +28,13 @@ func (n NumberOrString) Kind() string {
 	return n.kind
 }
 
-func (n NumberOrString) Int64() (int64, error)     { return strconv.ParseInt(n.text, 10, 64) }
+// Int64 parses the value as a decimal int64.
+func (n NumberOrString) Int64() (int64, error) { return strconv.ParseInt(n.text, 10, 64) }
+
+// Float64 parses the value as a float64.
 func (n NumberOrString) Float64() (float64, error) { return strconv.ParseFloat(n.text, 64) }
 
+// UnmarshalJSON accepts a JSON number, string, or null.
 func (n *NumberOrString) UnmarshalJSON(data []byte) error {
 	data = bytes.TrimSpace(data)
 	if bytes.Equal(data, []byte("null")) {
@@ -42,12 +50,13 @@ func (n *NumberOrString) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	if !json.Valid(data) || jsonKind(data) != "number" {
-		return fmt.Errorf("NumberOrString requires a number, string, or null")
+		return errInvalidNumberOrString
 	}
 	*n = NumberOrString{text: string(data), kind: "number"}
 	return nil
 }
 
+// MarshalJSON emits null, the original string, or the original number text.
 func (n NumberOrString) MarshalJSON() ([]byte, error) {
 	switch n.kind {
 	case "string":

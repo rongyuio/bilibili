@@ -67,14 +67,12 @@ func jsonKind(raw []byte) string {
 func newDecodeError(method, endpoint string, raw []byte, typ reflect.Type, path string, base int64, cause error) *DecodeError {
 	e := &DecodeError{Method: method, Endpoint: safeEndpoint(endpoint), RootType: diagnosticTypeName(typ),
 		JSONPath: path, Expected: diagnosticTypeName(typ), Actual: jsonKind(raw), Err: cause}
-	var syntax *json.SyntaxError
-	if errors.As(cause, &syntax) {
+	if syntax, ok := errors.AsType[*json.SyntaxError](cause); ok {
 		e.Offset = base + syntax.Offset
 		e.Actual = "invalid JSON"
 		return e
 	}
-	var mismatch *json.UnmarshalTypeError
-	if errors.As(cause, &mismatch) {
+	if mismatch, ok := errors.AsType[*json.UnmarshalTypeError](cause); ok {
 		e.Offset = base + mismatch.Offset
 		e.Expected = diagnosticTypeName(mismatch.Type)
 		e.GoField = mismatch.Field
@@ -173,7 +171,7 @@ func diagnoseValue(raw []byte, t reflect.Type, path, field string, offset int64,
 				return location, false
 			}
 			// Map-key conversion errors are located at their JSON member.
-			keyJSON, _ := json.Marshal(child.key)
+			keyJSON, _ := json.Marshal(child.key) //nolint:errchkjson // 键为字符串，Marshal 不会失败
 			probe := append(append([]byte{'{'}, keyJSON...), []byte(":null}")...)
 			if err := json.Unmarshal(probe, reflect.New(reflect.MapOf(t.Key(), rawMessageType)).Interface()); err != nil {
 				location.JSONPath = appendJSONKey(path, child.key)
@@ -208,7 +206,7 @@ func appendJSONKey(path, key string) string {
 	if key != "" {
 		identifier := true
 		for i, r := range key {
-			if !(r == '_' || unicode.IsLetter(r) || (i > 0 && unicode.IsDigit(r))) {
+			if r != '_' && !unicode.IsLetter(r) && (i <= 0 || !unicode.IsDigit(r)) {
 				identifier = false
 				break
 			}
@@ -217,6 +215,6 @@ func appendJSONKey(path, key string) string {
 			return path + "." + key
 		}
 	}
-	encoded, _ := json.Marshal(key)
+	encoded, _ := json.Marshal(key) //nolint:errchkjson // key 为字符串，Marshal 不会失败
 	return path + "[" + string(encoded) + "]"
 }

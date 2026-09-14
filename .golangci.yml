@@ -30,6 +30,12 @@ linters:
     - varnamelen
     - wsl
     - wsl_v5
+    # 以下为不适合本库的规则：
+    - contextcheck     # context 由 newRequest/execute 统一快照与传递，内部传输函数按设计不另带 ctx
+    - exhaustruct_v5   # JSON 解码目标结构体字段完整性无意义（exhaustruct 已禁用，此为 v5 版本）
+    - gocyclo          # decode_diagnostic 的诊断逻辑天然分支较多，重构有改动解码行为的风险
+    - gomodguard       # 已被 gomodguard_v2 取代，禁用旧名以消除弃用告警
+    - wrapcheck        # 本库错误模型刻意保留原始错误供 errors.As/errors.Is 提取
   settings:
     revive:
       enable-all-rules: true
@@ -66,6 +72,8 @@ linters:
           disabled: true
         - name: cyclomatic
           disabled: true
+        - name: flag-parameter
+          disabled: true
         - name: function-length
           arguments: [0, 100]
     gosec:
@@ -83,9 +91,14 @@ linters:
         - G505
         - G506
         - G507
+        - G124
+    modernize:
+      disable:
+        - omitzero
   exclusions:
     paths:
       - tools/
+      - test/
 run:
   tests: false
   timeout: 3m
