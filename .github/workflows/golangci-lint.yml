@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: go-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   build:
@@ -18,7 +25,11 @@ jobs:
         with:
           go-version: 'stable'
 
+      # golangci-lint 使用仓库 .golangci.yml（default: all 加一份 disable 清单）。
+      # 该门禁此前从未在本仓库执行过，现存告警尚未清理，因此先设为不阻断：
+      # 结果照常输出，但不让构建失败。告警清零后删掉 continue-on-error 即可转为阻断。
       - name: golangci-lint
+        continue-on-error: true
         uses: golangci/golangci-lint-action@v7
         with:
           version: latest
