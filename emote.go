@@ -1,5 +1,7 @@
 package bilibili
 
+import "context"
+
 import "github.com/go-resty/resty/v2"
 
 type EmoteActionParam struct {
@@ -45,22 +47,22 @@ type EmotePackage struct {
 }
 
 // AddEmote添加表情包
-func (c *Client) AddEmote(param EmoteActionParam) error {
+func (c *Client) AddEmote(ctx context.Context, param EmoteActionParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/emote/package/add"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
 // RemoveEmote移除表情包
-func (c *Client) RemoveEmote(param EmoteActionParam) error {
+func (c *Client) RemoveEmote(ctx context.Context, param EmoteActionParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/emote/package/remove"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -69,21 +71,21 @@ type EmoteList struct {
 }
 
 // GetMyEmoteList获取我的表情包列表
-func (c *Client) GetMyEmoteList(param EmoteActionParam) (*EmoteList, error) {
+func (c *Client) GetMyEmoteList(ctx context.Context, param EmoteActionParam) (*EmoteList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/emote/user/panel"
 	)
-	return execute[*EmoteList](c, method, url, param)
+	return execute[*EmoteList](ctx, c, method, url, param)
 }
 
 // GetEmotePackageDetailInfo获取指定ID表情包的详细信息
-func (c *Client) GetEmotePackageDetailInfo(param EmoteActionParam) (*EmoteList, error) {
+func (c *Client) GetEmotePackageDetailInfo(ctx context.Context, param EmoteActionParam) (*EmoteList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/emote/package"
 	)
-	return execute[*EmoteList](c, method, url, param)
+	return execute[*EmoteList](ctx, c, method, url, param)
 }
 
 type Mall struct {
@@ -97,10 +99,10 @@ type AllEmoteList struct {
 	Mall                Mall           `json:"mall"`
 }
 
-func (c *Client) GetAllEmoteList(param EmoteActionParam) (*AllEmoteList, error) {
+func (c *Client) GetAllEmoteList(ctx context.Context, param EmoteActionParam) (*AllEmoteList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/emote/setting/panel"
 	)
-	return execute[*AllEmoteList](c, method, url, param)
+	return execute[*AllEmoteList](ctx, c, method, url, param)
 }

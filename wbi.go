@@ -137,8 +137,8 @@ func (wbi *WBI) WithStorage(storage Storage) *WBI {
 	return wbi
 }
 
-func (wbi *WBI) GetKeys() (imgKey string, subKey string, err error) {
-	return wbi.getKeysContext(context.Background())
+func (wbi *WBI) GetKeys(ctx context.Context) (imgKey string, subKey string, err error) {
+	return wbi.getKeysContext(ctx)
 }
 
 func (wbi *WBI) cachedKeys() (string, string, bool) {
@@ -149,7 +149,7 @@ func (wbi *WBI) cachedKeys() (string, string, bool) {
 }
 
 func (wbi *WBI) getKeysContext(ctx context.Context) (string, string, error) {
-	if err := ctx.Err(); err != nil {
+	if err := checkContext(ctx); err != nil {
 		return "", "", err
 	}
 	if img, sub, valid := wbi.cachedKeys(); valid {
@@ -162,7 +162,7 @@ func (wbi *WBI) getKeysContext(ctx context.Context) (string, string, error) {
 		return "", "", ctx.Err()
 	}
 	defer func() { <-wbi.refresh }()
-	if err := ctx.Err(); err != nil {
+	if err := checkContext(ctx); err != nil {
 		return "", "", err
 	}
 	if img, sub, valid := wbi.cachedKeys(); valid {
@@ -197,7 +197,7 @@ func (wbi *WBI) SetKeys(imgKey, subKey string) {
 	wbi.lastInitTime = time.Now()
 }
 
-func (wbi *WBI) GetMixinKey() (string, error) { return wbi.mixinKeyContext(context.Background()) }
+func (wbi *WBI) GetMixinKey(ctx context.Context) (string, error) { return wbi.mixinKeyContext(ctx) }
 
 func (wbi *WBI) mixinKeyContext(ctx context.Context) (string, error) {
 	imgKey, subKey, err := wbi.getKeysContext(ctx)
@@ -235,11 +235,14 @@ func (wbi *WBI) sanitizeString(s string) string {
 	return s
 }
 
-func (wbi *WBI) SignQuery(query url.Values, ts time.Time) (url.Values, error) {
-	return wbi.signQueryContext(context.Background(), query, ts)
+func (wbi *WBI) SignQuery(ctx context.Context, query url.Values, ts time.Time) (url.Values, error) {
+	return wbi.signQueryContext(ctx, query, ts)
 }
 
 func (wbi *WBI) signQueryContext(ctx context.Context, query url.Values, ts time.Time) (newQuery url.Values, err error) {
+	if err := checkContext(ctx); err != nil {
+		return nil, err
+	}
 	payload := make(map[string]string, 10)
 	for k := range query {
 		if len(query[k]) != 1 {
@@ -261,11 +264,14 @@ func (wbi *WBI) signQueryContext(ctx context.Context, query url.Values, ts time.
 	return newQuery, nil
 }
 
-func (wbi *WBI) SignMap(payload map[string]string, ts time.Time) (map[string]string, error) {
-	return wbi.signMapContext(context.Background(), payload, ts)
+func (wbi *WBI) SignMap(ctx context.Context, payload map[string]string, ts time.Time) (map[string]string, error) {
+	return wbi.signMapContext(ctx, payload, ts)
 }
 
 func (wbi *WBI) signMapContext(ctx context.Context, payload map[string]string, ts time.Time) (newPayload map[string]string, err error) {
+	if err := checkContext(ctx); err != nil {
+		return nil, err
+	}
 	newPayload = maps.Clone(payload)
 	if newPayload == nil {
 		newPayload = make(map[string]string)

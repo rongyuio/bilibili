@@ -34,12 +34,12 @@ type SearchDynamicAtResult struct {
 }
 
 // SearchDynamicAt 根据关键字搜索用户(at别人时的填充列表)
-func (c *Client) SearchDynamicAt(param SearchDynamicAtParam) (*SearchDynamicAtResult, error) {
+func (c *Client) SearchDynamicAt(ctx context.Context, param SearchDynamicAtParam) (*SearchDynamicAtResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/dynamic_mix/v1/dynamic_mix/at_search"
 	)
-	return execute[*SearchDynamicAtResult](c, method, url, param)
+	return execute[*SearchDynamicAtResult](ctx, c, method, url, param)
 }
 
 type GetDynamicRepostDetailParam struct {
@@ -204,12 +204,12 @@ type DynamicRepostDetail struct {
 // GetDynamicRepostDetail 获取动态转发列表
 //
 // 见 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/basicInfo.md
-func (c *Client) GetDynamicRepostDetail(param GetDynamicRepostDetailParam) (*DynamicRepostDetail, error) {
+func (c *Client) GetDynamicRepostDetail(ctx context.Context, param GetDynamicRepostDetailParam) (*DynamicRepostDetail, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/dynamic_repost/v1/dynamic_repost/repost_detail"
 	)
-	return execute[*DynamicRepostDetail](c, method, url, param)
+	return execute[*DynamicRepostDetail](ctx, c, method, url, param)
 }
 
 type GetDynamicLikeListParam struct {
@@ -273,12 +273,12 @@ type DynamicLikeList struct {
 }
 
 // GetDynamicLikeList 获取动态点赞列表
-func (c *Client) GetDynamicLikeList(param GetDynamicLikeListParam) (*DynamicLikeList, error) {
+func (c *Client) GetDynamicLikeList(ctx context.Context, param GetDynamicLikeListParam) (*DynamicLikeList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/dynamic_like/v1/dynamic_like/spec_item_likes"
 	)
-	return execute[*DynamicLikeList](c, method, url, param)
+	return execute[*DynamicLikeList](ctx, c, method, url, param)
 }
 
 type GetDynamicLiveUserListParam struct {
@@ -299,12 +299,12 @@ type DynamicLiveUserList struct {
 }
 
 // GetDynamicLiveUserList 获取正在直播的已关注者
-func (c *Client) GetDynamicLiveUserList(param GetDynamicLiveUserListParam) (*DynamicLiveUserList, error) {
+func (c *Client) GetDynamicLiveUserList(ctx context.Context, param GetDynamicLiveUserListParam) (*DynamicLiveUserList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/w_live_users"
 	)
-	return execute[*DynamicLiveUserList](c, method, url, param)
+	return execute[*DynamicLiveUserList](ctx, c, method, url, param)
 }
 
 type DynamicUpList struct {
@@ -360,12 +360,12 @@ type GetDynamicUpListParam struct {
 }
 
 // GetDynamicUpList 获取发布新动态的已关注者
-func (c *Client) GetDynamicUpList(param GetDynamicUpListParam) (*DynamicUpList, error) {
+func (c *Client) GetDynamicUpList(ctx context.Context, param GetDynamicUpListParam) (*DynamicUpList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/w_dyn_uplist"
 	)
-	return execute[*DynamicUpList](c, method, url, param)
+	return execute[*DynamicUpList](ctx, c, method, url, param)
 }
 
 type RemoveDynamicParam struct {
@@ -373,12 +373,12 @@ type RemoveDynamicParam struct {
 }
 
 // RemoveDynamic 删除动态
-func (c *Client) RemoveDynamic(param RemoveDynamicParam) error {
+func (c *Client) RemoveDynamic(ctx context.Context, param RemoveDynamicParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/rm_dynamic"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -402,12 +402,12 @@ type DynamicDetail struct {
 }
 
 // GetDynamicDetail 获取特定动态卡片信息
-func (c *Client) GetDynamicDetail(param GetDynamicDetailParam) (*DynamicDetail, error) {
+func (c *Client) GetDynamicDetail(ctx context.Context, param GetDynamicDetailParam) (*DynamicDetail, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/get_dynamic_detail"
 	)
-	return execute[*DynamicDetail](c, method, url, param)
+	return execute[*DynamicDetail](ctx, c, method, url, param)
 }
 
 type DynamicPortal struct {
@@ -471,17 +471,20 @@ type DynamicPortal struct {
 }
 
 // GetDynamicPortal 获取最近更新UP主列表（其实就是获取自己的动态门户）
-func (c *Client) GetDynamicPortal() (*DynamicPortal, error) {
+func (c *Client) GetDynamicPortal(ctx context.Context) (*DynamicPortal, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/polymer/web-dynamic/v1/portal"
 	)
-	return execute[*DynamicPortal](c, method, url, nil)
+	return execute[*DynamicPortal](ctx, c, method, url, nil)
 }
 
 // UploadDynamicBfs 为图片动态上传图片
-func (c *Client) UploadDynamicBfs(fileName string, file io.Reader, category string) (url string, size Size, err error) {
-	r := c.newRequest(context.Background())
+func (c *Client) UploadDynamicBfs(ctx context.Context, fileName string, file io.Reader, category string) (url string, size Size, err error) {
+	if err := checkContext(ctx); err != nil {
+		return "", Size{}, err
+	}
+	r := c.newRequest(ctx)
 	biliJct := cookieValue(r.Cookies, "bili_jct")
 	if len(biliJct) == 0 {
 		return "", Size{}, errors.New("B站登录过期")
@@ -524,12 +527,12 @@ type CreateDynamicResult struct {
 }
 
 // CreateDynamic 发表纯文本动态
-func (c *Client) CreateDynamic(param CreateDynamicParam) (*CreateDynamicResult, error) {
+func (c *Client) CreateDynamic(ctx context.Context, param CreateDynamicParam) (*CreateDynamicResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/create"
 	)
-	return execute[*CreateDynamicResult](c, method, url, param, fillCsrf(c))
+	return execute[*CreateDynamicResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 // DynamicList 包含置顶及热门的动态列表
@@ -968,10 +971,10 @@ type GetUserSpaceDynamicParam struct {
 // GetUserSpaceDynamic 获取用户空间动态，mid就是用户UID，无需登录。
 //
 // 返回结构较为繁琐，见 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/space.md
-func (c *Client) GetUserSpaceDynamic(param GetUserSpaceDynamicParam) (*DynamicInfo, error) {
+func (c *Client) GetUserSpaceDynamic(ctx context.Context, param GetUserSpaceDynamicParam) (*DynamicInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space"
 	)
-	return execute[*DynamicInfo](c, method, url, param)
+	return execute[*DynamicInfo](ctx, c, method, url, param)
 }

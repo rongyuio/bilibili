@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -67,12 +68,12 @@ type HistoryInfo struct {
 }
 
 // GetHistory 获取历史记录列表
-func (c *Client) GetHistory(param GetHistoryParam) (*HistoryInfo, error) {
+func (c *Client) GetHistory(ctx context.Context, param GetHistoryParam) (*HistoryInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/history/cursor"
 	)
-	return execute[*HistoryInfo](c, method, url, param)
+	return execute[*HistoryInfo](ctx, c, method, url, param)
 }
 
 type DeleteHistoryParam struct {
@@ -80,22 +81,22 @@ type DeleteHistoryParam struct {
 }
 
 // DeleteHistory 删除历史记录
-func (c *Client) DeleteHistory(param DeleteHistoryParam) error {
+func (c *Client) DeleteHistory(ctx context.Context, param DeleteHistoryParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v2/history/delete"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
 // ClearHistory 清空历史记录
-func (c *Client) ClearHistory() error {
+func (c *Client) ClearHistory(ctx context.Context) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v2/history/clear"
 	)
-	_, err := execute[any](c, method, url, nil, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, nil, fillCsrf(c))
 	return err
 }
 
@@ -104,31 +105,31 @@ type SetHistoryDisableParam struct {
 }
 
 // SetHistoryDisable 停用历史记录
-func (c *Client) SetHistoryDisable(param SetHistoryDisableParam) error {
+func (c *Client) SetHistoryDisable(ctx context.Context, param SetHistoryDisableParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v2/history/shadow/set"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
 // GetHistoryDisableState 查询历史记录停用状态 true：停用 false：正常
-func (c *Client) GetHistoryDisableState() (bool, error) {
+func (c *Client) GetHistoryDisableState(ctx context.Context) (bool, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v2/history/shadow"
 	)
-	return execute[bool](c, method, url, nil)
+	return execute[bool](ctx, c, method, url, nil)
 }
 
 // AddToView 视频添加稍后再看
-func (c *Client) AddToView(param VideoParam) error {
+func (c *Client) AddToView(ctx context.Context, param VideoParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v2/history/toview/add"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -138,12 +139,12 @@ type AddChannelAllToViewParam struct {
 }
 
 // AddChannelkAllToView 添加频道中所有视频到稍后再看
-func (c *Client) AddChannelkAllToView(param AddChannelAllToViewParam) error {
+func (c *Client) AddChannelkAllToView(ctx context.Context, param AddChannelAllToViewParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://space.bilibili.com/ajax/channel/addAllToView"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -178,12 +179,12 @@ type ToViewDetail struct {
 }
 
 // GetToViewList 获取稍后再看视频列表
-func (c *Client) GetToViewList() (*ToViewInfo, error) {
+func (c *Client) GetToViewList(ctx context.Context) (*ToViewInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v2/history/toview"
 	)
-	return execute[*ToViewInfo](c, method, url, nil)
+	return execute[*ToViewInfo](ctx, c, method, url, nil)
 }
 
 type DeleteToViewParam struct {
@@ -192,21 +193,21 @@ type DeleteToViewParam struct {
 }
 
 // DeleteToView 删除稍后再看视频
-func (c *Client) DeleteToView(param DeleteToViewParam) error {
+func (c *Client) DeleteToView(ctx context.Context, param DeleteToViewParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v2/history/toview/del"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
 // ClearToView 清空稍后再看视频列表
-func (c *Client) ClearToView() error {
+func (c *Client) ClearToView(ctx context.Context) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v2/history/toview/clear"
 	)
-	_, err := execute[any](c, method, url, nil, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, nil, fillCsrf(c))
 	return err
 }

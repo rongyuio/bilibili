@@ -21,13 +21,13 @@ type GetWebCookieRefreshInfoResult struct {
 }
 
 // GetWebCookieRefreshInfo 获取web端cookie刷新信息
-func (c *Client) GetWebCookieRefreshInfo() (*GetWebCookieRefreshInfoResult, error) {
+func (c *Client) GetWebCookieRefreshInfo(ctx context.Context) (*GetWebCookieRefreshInfoResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://passport.bilibili.com/x/passport-login/web/cookie/info"
 	)
 
-	return execute[*GetWebCookieRefreshInfoResult](c, method, url, nil)
+	return execute[*GetWebCookieRefreshInfoResult](ctx, c, method, url, nil)
 }
 
 type (
@@ -43,14 +43,17 @@ type (
 var refreshCsrfRegex = regexp.MustCompile(`<div\s+id="1-name"\s*>(.*?)</div>`)
 
 // GetWebCookieRefreshCsrf 获取web端cookie刷新口令
-func (c *Client) GetWebCookieRefreshCsrf(param GetWebCookieRefreshCsrfParam) (*GetWebCookieRefreshCsrfResult, error) {
+func (c *Client) GetWebCookieRefreshCsrf(ctx context.Context, param GetWebCookieRefreshCsrfParam) (*GetWebCookieRefreshCsrfResult, error) {
+	if err := checkContext(ctx); err != nil {
+		return nil, err
+	}
 	correspondPath, err := getCorrespondPath(param.Timestamp)
 	if err != nil {
 		return nil, fmt.Errorf("getCorrespondPath failed: %w", err)
 	}
 
 	url := "https://www.bilibili.com/correspond/1/" + correspondPath
-	response, err := c.sendRaw(c.newRequest(context.Background()), resty.MethodGet, url)
+	response, err := c.sendRaw(c.newRequest(ctx), resty.MethodGet, url)
 	if err != nil {
 		return nil, fmt.Errorf("request refresh CSRF: %w", err)
 	}
@@ -81,8 +84,11 @@ type (
 )
 
 // RefreshCookie 刷新Cookie
-func (c *Client) RefreshCookie(param RefreshCookieParam) (*RefreshCookieResult, error) {
-	r := c.newRequest(context.Background())
+func (c *Client) RefreshCookie(ctx context.Context, param RefreshCookieParam) (*RefreshCookieResult, error) {
+	if err := checkContext(ctx); err != nil {
+		return nil, err
+	}
+	r := c.newRequest(ctx)
 	if param.Csrf == "" {
 		param.Csrf = cookieValue(r.Cookies, "bili_jct")
 	}

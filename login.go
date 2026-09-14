@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -28,12 +29,12 @@ type CaptchaResult struct {
 }
 
 // Captcha 申请验证码参数
-func (c *Client) Captcha() (*CaptchaResult, error) {
+func (c *Client) Captcha(ctx context.Context) (*CaptchaResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://passport.bilibili.com/x/passport-login/captcha"
 	)
-	return execute[*CaptchaResult](c, method, url, nil, fillParam("source", "main_web"))
+	return execute[*CaptchaResult](ctx, c, method, url, nil, fillParam("source", "main_web"))
 }
 
 func encrypt(publicKey, data string) (string, error) {
@@ -78,7 +79,7 @@ type LoginWithPasswordResult struct {
 }
 
 // LoginWithPassword 账号密码登录，其中validate, seccode字段需要在极验人机验证后获取
-func (c *Client) LoginWithPassword(param LoginWithPasswordParam) (*LoginWithPasswordResult, error) {
+func (c *Client) LoginWithPassword(ctx context.Context, param LoginWithPasswordParam) (*LoginWithPasswordResult, error) {
 	type getKeyResult struct {
 		Hash string `json:"hash"` // 密码盐值。有效时间为 20s。恒为 16 字符。需要拼接在明文密码之前
 		Key  string `json:"key"`  // rsa 公钥。PEM 格式编码。加密密码时需要使用
@@ -89,7 +90,7 @@ func (c *Client) LoginWithPassword(param LoginWithPasswordParam) (*LoginWithPass
 		method1 = resty.MethodGet
 		url1    = "https://passport.bilibili.com/x/passport-login/web/key"
 	)
-	getKey, err := execute[*getKeyResult](c, method1, url1, nil)
+	getKey, err := execute[*getKeyResult](ctx, c, method1, url1, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +107,7 @@ func (c *Client) LoginWithPassword(param LoginWithPasswordParam) (*LoginWithPass
 		method2 = resty.MethodPost
 		url2    = "https://passport.bilibili.com/x/passport-login/web/login"
 	)
-	return execute[*LoginWithPasswordResult](c, method2, url2, param)
+	return execute[*LoginWithPasswordResult](ctx, c, method2, url2, param)
 }
 
 type CountryCrown struct {
@@ -121,12 +122,12 @@ type GetCountryCrownResult struct {
 }
 
 // GetCountryCrown 获取国际冠字码
-func (c *Client) GetCountryCrown() (*GetCountryCrownResult, error) {
+func (c *Client) GetCountryCrown(ctx context.Context) (*GetCountryCrownResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://passport.bilibili.com/web/generic/country/list"
 	)
-	return execute[*GetCountryCrownResult](c, method, url, nil)
+	return execute[*GetCountryCrownResult](ctx, c, method, url, nil)
 }
 
 type SendSMSParam struct {
@@ -144,12 +145,12 @@ type SendSMSResult struct {
 }
 
 // SendSMS 发送短信验证码
-func (c *Client) SendSMS(param SendSMSParam) (*SendSMSResult, error) {
+func (c *Client) SendSMS(ctx context.Context, param SendSMSParam) (*SendSMSResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://passport.bilibili.com/x/passport-login/web/sms/send"
 	)
-	return execute[*SendSMSResult](c, method, url, param)
+	return execute[*SendSMSResult](ctx, c, method, url, param)
 }
 
 type LoginWithSMSParam struct {
@@ -169,12 +170,12 @@ type LoginWithSMSResult struct {
 }
 
 // LoginWithSMS 使用短信验证码登录
-func (c *Client) LoginWithSMS(param LoginWithSMSParam) (*LoginWithSMSResult, error) {
+func (c *Client) LoginWithSMS(ctx context.Context, param LoginWithSMSParam) (*LoginWithSMSResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://passport.bilibili.com/x/passport-login/web/login/sms"
 	)
-	return execute[*LoginWithSMSResult](c, method, url, param)
+	return execute[*LoginWithSMSResult](ctx, c, method, url, param)
 }
 
 type QRCode struct {
@@ -195,12 +196,12 @@ func (result *QRCode) Print() {
 }
 
 // GetQRCode 申请二维码
-func (c *Client) GetQRCode() (*QRCode, error) {
+func (c *Client) GetQRCode(ctx context.Context) (*QRCode, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://passport.bilibili.com/x/passport-login/web/qrcode/generate"
 	)
-	return execute[*QRCode](c, method, url, nil)
+	return execute[*QRCode](ctx, c, method, url, nil)
 }
 
 type LoginWithQRCodeParam struct {
@@ -218,13 +219,13 @@ type LoginWithQRCodeResult struct {
 // LoginWithQRCode 使用扫码登录。
 //
 // 该方法会阻塞直到扫码成功或者已经无法扫码。
-func (c *Client) LoginWithQRCode(param LoginWithQRCodeParam) (*LoginWithQRCodeResult, error) {
+func (c *Client) LoginWithQRCode(ctx context.Context, param LoginWithQRCodeParam) (*LoginWithQRCodeResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://passport.bilibili.com/x/passport-login/web/qrcode/poll"
 	)
 	for {
-		result, err := execute[*LoginWithQRCodeResult](c, method, url, param)
+		result, err := execute[*LoginWithQRCodeResult](ctx, c, method, url, param)
 		if err != nil {
 			return nil, err
 		}
@@ -249,10 +250,10 @@ type AccountInformation struct {
 }
 
 // GetAccountInformation 获取我的信息
-func (c *Client) GetAccountInformation() (*AccountInformation, error) {
+func (c *Client) GetAccountInformation(ctx context.Context) (*AccountInformation, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/member/web/account"
 	)
-	return execute[*AccountInformation](c, method, url, nil)
+	return execute[*AccountInformation](ctx, c, method, url, nil)
 }

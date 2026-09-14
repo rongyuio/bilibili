@@ -1,5 +1,7 @@
 package bilibili
 
+import "context"
+
 import "github.com/go-resty/resty/v2"
 
 type GetCommentsDetailParam struct {
@@ -146,12 +148,12 @@ type CommentsDetail struct {
 }
 
 // GetCommentsDetail 获取评论区明细
-func (c *Client) GetCommentsDetail(param GetCommentsDetailParam) (*CommentsDetail, error) {
+func (c *Client) GetCommentsDetail(ctx context.Context, param GetCommentsDetailParam) (*CommentsDetail, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v2/reply"
 	)
-	return execute[*CommentsDetail](c, method, url, param)
+	return execute[*CommentsDetail](ctx, c, method, url, param)
 }
 
 type GetCommentReplyParam struct {
@@ -176,12 +178,12 @@ type CommentReply struct {
 }
 
 // GetCommentReply 获取指定评论的回复，按照回复顺序排序
-func (c *Client) GetCommentReply(param GetCommentReplyParam) (*CommentReply, error) {
+func (c *Client) GetCommentReply(ctx context.Context, param GetCommentReplyParam) (*CommentReply, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v2/reply/reply"
 	)
-	return execute[*CommentReply](c, method, url, param)
+	return execute[*CommentReply](ctx, c, method, url, param)
 }
 
 type GetCommentsHotReplyParam struct {
@@ -198,10 +200,10 @@ type CommentsHotReply struct {
 }
 
 // GetCommentsHotReply 获取评论区热评
-func (c *Client) GetCommentsHotReply(param GetCommentsHotReplyParam) (*CommentsHotReply, error) {
+func (c *Client) GetCommentsHotReply(ctx context.Context, param GetCommentsHotReplyParam) (*CommentsHotReply, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v2/reply/hot"
 	)
-	return execute[*CommentsHotReply](c, method, url, param)
+	return execute[*CommentsHotReply](ctx, c, method, url, param)
 }

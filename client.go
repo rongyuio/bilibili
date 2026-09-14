@@ -37,8 +37,8 @@ func New() *Client {
 // NewAnonymousClient fetches guest cookies using the default client configuration.
 // It returns initialization failures, including cancellation, to the caller.
 func NewAnonymousClient(ctx context.Context) (*Client, error) {
-	if ctx == nil {
-		return nil, fmt.Errorf("anonymous client context is nil")
+	if err := checkContext(ctx); err != nil {
+		return nil, fmt.Errorf("initialize anonymous client: %w", err)
 	}
 	client := New()
 	r := client.newRequest(ctx).

@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/go-resty/resty/v2"
 )
@@ -71,12 +72,12 @@ type UserVideos struct {
 }
 
 // GetUserVideos 查询用户投稿视频明细
-func (c *Client) GetUserVideos(param GetUserVideosParam) (*UserVideos, error) {
+func (c *Client) GetUserVideos(ctx context.Context, param GetUserVideosParam) (*UserVideos, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/space/wbi/arc/search"
 	)
-	return execute[*UserVideos](c, method, url, param, c.fillWbi())
+	return execute[*UserVideos](ctx, c, method, url, param, c.fillWbi())
 }
 
 type GetUserSpaceDetailParam struct {
@@ -230,12 +231,12 @@ type UserSpaceDetail struct {
 }
 
 // GetUserSpaceDetail 获取用户空间详细信息
-func (c *Client) GetUserSpaceDetail(param GetUserSpaceDetailParam) (*UserSpaceDetail, error) {
+func (c *Client) GetUserSpaceDetail(ctx context.Context, param GetUserSpaceDetailParam) (*UserSpaceDetail, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/space/wbi/acc/info"
 	)
-	return execute[*UserSpaceDetail](c, method, url, param, c.fillWbi())
+	return execute[*UserSpaceDetail](ctx, c, method, url, param, c.fillWbi())
 }
 
 type GetUserCardParam struct {
@@ -290,12 +291,12 @@ type UserCard struct {
 
 // GetUserCard 获取用户用户名片 免登录
 // https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/user/info.md#%E7%94%A8%E6%88%B7%E5%90%8D%E7%89%87%E4%BF%A1%E6%81%AF
-func (c *Client) GetUserCard(param GetUserCardParam) (*UserCard, error) {
+func (c *Client) GetUserCard(ctx context.Context, param GetUserCardParam) (*UserCard, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/card"
 	)
-	return execute[*UserCard](c, method, url, param)
+	return execute[*UserCard](ctx, c, method, url, param)
 }
 
 type MyVip struct {
@@ -346,12 +347,12 @@ type MyUserSpaceDetail struct {
 }
 
 // GetMyUserSpaceDetail 获取登录用户空间详细信息
-func (c *Client) GetMyUserSpaceDetail() (*MyUserSpaceDetail, error) {
+func (c *Client) GetMyUserSpaceDetail(ctx context.Context) (*MyUserSpaceDetail, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/space/myinfo"
 	)
-	return execute[*MyUserSpaceDetail](c, method, url, nil)
+	return execute[*MyUserSpaceDetail](ctx, c, method, url, nil)
 }
 
 type CheckNickNameParam struct {
@@ -359,12 +360,12 @@ type CheckNickNameParam struct {
 }
 
 // CheckNickName 检查昵称是否可注册
-func (c *Client) CheckNickName(param CheckNickNameParam) error {
+func (c *Client) CheckNickName(ctx context.Context, param CheckNickNameParam) error {
 	const (
 		method = resty.MethodGet
 		url    = "https://passport.bilibili.com/web/generic/check/nickname"
 	)
-	_, err := execute[any](c, method, url, param)
+	_, err := execute[any](ctx, c, method, url, param)
 	return err
 }
 
@@ -384,12 +385,12 @@ type JoinOldFansResult struct {
 }
 
 // JoinOldFans 加入老粉计划
-func (c *Client) JoinOldFans(param JoinOldFansParam) (*JoinOldFansResult, error) {
+func (c *Client) JoinOldFans(ctx context.Context, param JoinOldFansParam) (*JoinOldFansResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v1/contract/add_contract"
 	)
-	return execute[*JoinOldFansResult](c, method, url, param, fillCsrf(c))
+	return execute[*JoinOldFansResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type FansSendMessageParam struct {
@@ -405,12 +406,12 @@ type FansSendMessageResult struct {
 }
 
 // FansSendMessage 老粉计划发送留言
-func (c *Client) FansSendMessage(param FansSendMessageParam) (*FansSendMessageResult, error) {
+func (c *Client) FansSendMessage(ctx context.Context, param FansSendMessageParam) (*FansSendMessageResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v1/contract/add_message"
 	)
-	return execute[*FansSendMessageResult](c, method, url, param, fillCsrf(c))
+	return execute[*FansSendMessageResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type BatchGetUserCardsParam struct {
@@ -428,12 +429,12 @@ type BatchGetUserCardsResult struct {
 }
 
 // BatchGetUserCards 获取多用户详细信息
-func (c *Client) BatchGetUserCards(param BatchGetUserCardsParam) ([]*BatchGetUserCardsResult, error) {
+func (c *Client) BatchGetUserCards(ctx context.Context, param BatchGetUserCardsParam) ([]*BatchGetUserCardsResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/account/v1/user/cards"
 	)
-	return execute[[]*BatchGetUserCardsResult](c, method, url, param)
+	return execute[[]*BatchGetUserCardsResult](ctx, c, method, url, param)
 }
 
 type GetUserFollowersParam struct {
@@ -449,12 +450,12 @@ type GetUserFollowersResult struct {
 }
 
 // GetUserFollowers 查询用户粉丝明细（需要登录）
-func (c *Client) GetUserFollowers(param GetUserFollowersParam) (*GetUserFollowersResult, error) {
+func (c *Client) GetUserFollowers(ctx context.Context, param GetUserFollowersParam) (*GetUserFollowersResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/followers"
 	)
-	return execute[*GetUserFollowersResult](c, method, url, param)
+	return execute[*GetUserFollowersResult](ctx, c, method, url, param)
 }
 
 type GetUserFollowingsParam struct {
@@ -471,12 +472,12 @@ type GetUserFollowingsResult struct {
 }
 
 // GetUserFollowings 查询用户关注明细（需要登录）
-func (c *Client) GetUserFollowings(param GetUserFollowingsParam) (*GetUserFollowingsResult, error) {
+func (c *Client) GetUserFollowings(ctx context.Context, param GetUserFollowingsParam) (*GetUserFollowingsResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/followings"
 	)
-	return execute[*GetUserFollowingsResult](c, method, url, param)
+	return execute[*GetUserFollowingsResult](ctx, c, method, url, param)
 }
 
 type GetUserFollowings2Param struct {
@@ -509,12 +510,12 @@ type GetUserFollowings2Result struct {
 // GetUserFollowings2 查询用户关注明细2
 //
 // 仅可查看前 5 页，对于已设置可见性隐私关注列表的用户，则返回的List为nil，Total为0
-func (c *Client) GetUserFollowings2(param GetUserFollowings2Param) (*GetUserFollowings2Result, error) {
+func (c *Client) GetUserFollowings2(ctx context.Context, param GetUserFollowings2Param) (*GetUserFollowings2Result, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://app.biliapi.net/x/v2/relation/followings"
 	)
-	return execute[*GetUserFollowings2Result](c, method, url, param)
+	return execute[*GetUserFollowings2Result](ctx, c, method, url, param)
 }
 
 type GetUserFollowings3Param struct {
@@ -537,12 +538,12 @@ type GetUserFollowings3Result struct {
 // GetUserFollowings3 查询用户关注明细3
 //
 // 对于设置了可见性隐私关注列表的用户会返回空列表
-func (c *Client) GetUserFollowings3(param GetUserFollowings3Param) (*GetUserFollowings3Result, error) {
+func (c *Client) GetUserFollowings3(ctx context.Context, param GetUserFollowings3Param) (*GetUserFollowings3Result, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://line3-h5-mobile-api.biligame.com/game/center/h5/user/relationship/following_list"
 	)
-	return execute[*GetUserFollowings3Result](c, method, url, param)
+	return execute[*GetUserFollowings3Result](ctx, c, method, url, param)
 }
 
 type SearchUserFollowingsParam struct {
@@ -559,12 +560,12 @@ type SearchUserFollowingsResult struct {
 }
 
 // SearchUserFollowings 搜索关注明细
-func (c *Client) SearchUserFollowings(param SearchUserFollowingsParam) (*SearchUserFollowingsResult, error) {
+func (c *Client) SearchUserFollowings(ctx context.Context, param SearchUserFollowingsParam) (*SearchUserFollowingsResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/followings/search"
 	)
-	return execute[*SearchUserFollowingsResult](c, method, url, param)
+	return execute[*SearchUserFollowingsResult](ctx, c, method, url, param)
 }
 
 type GetSameFollowingsParam struct {
@@ -580,12 +581,12 @@ type GetSameFollowingsResult struct {
 }
 
 // GetSameFollowings 查询共同关注明细
-func (c *Client) GetSameFollowings(param GetSameFollowingsParam) (*GetSameFollowingsResult, error) {
+func (c *Client) GetSameFollowings(ctx context.Context, param GetSameFollowingsParam) (*GetSameFollowingsResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/same/followings"
 	)
-	return execute[*GetSameFollowingsResult](c, method, url, param)
+	return execute[*GetSameFollowingsResult](ctx, c, method, url, param)
 }
 
 type GetWhispersResult struct {
@@ -594,12 +595,12 @@ type GetWhispersResult struct {
 }
 
 // GetWhispers 查询悄悄关注明细
-func (c *Client) GetWhispers() (*GetWhispersResult, error) {
+func (c *Client) GetWhispers(ctx context.Context) (*GetWhispersResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/whispers"
 	)
-	return execute[*GetWhispersResult](c, method, url, nil)
+	return execute[*GetWhispersResult](ctx, c, method, url, nil)
 }
 
 type GetFriendsResult struct {
@@ -608,12 +609,12 @@ type GetFriendsResult struct {
 }
 
 // GetFriends 查询互相关注明细
-func (c *Client) GetFriends() (*GetFriendsResult, error) {
+func (c *Client) GetFriends(ctx context.Context) (*GetFriendsResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/friends"
 	)
-	return execute[*GetFriendsResult](c, method, url, nil)
+	return execute[*GetFriendsResult](ctx, c, method, url, nil)
 }
 
 type GetBlacksParam struct {
@@ -627,12 +628,12 @@ type GetBlacksResult struct {
 }
 
 // GetBlacks 查询黑名单明细
-func (c *Client) GetBlacks(param GetBlacksParam) (*GetBlacksResult, error) {
+func (c *Client) GetBlacks(ctx context.Context, param GetBlacksParam) (*GetBlacksResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/blacks"
 	)
-	return execute[*GetBlacksResult](c, method, url, param)
+	return execute[*GetBlacksResult](ctx, c, method, url, param)
 }
 
 type ModifyRelationAct int
@@ -654,12 +655,12 @@ type ModifyRelationParam struct {
 }
 
 // ModifyRelation 操作用户关系
-func (c *Client) ModifyRelation(param ModifyRelationParam) error {
+func (c *Client) ModifyRelation(ctx context.Context, param ModifyRelationParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/relation/modify"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -674,12 +675,12 @@ type BatchModifyRelationResult struct {
 }
 
 // BatchModifyRelation 批量操作用户关系
-func (c *Client) BatchModifyRelation(param BatchModifyRelationParam) (*BatchModifyRelationResult, error) {
+func (c *Client) BatchModifyRelation(ctx context.Context, param BatchModifyRelationParam) (*BatchModifyRelationResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/relation/batch/modify"
 	)
-	return execute[*BatchModifyRelationResult](c, method, url, param, fillCsrf(c))
+	return execute[*BatchModifyRelationResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type GetUserRelationParam struct {
@@ -695,12 +696,12 @@ type RelationDetail struct {
 }
 
 // GetUserRelation 查询用户与自己关系（仅关注）
-func (c *Client) GetUserRelation(param GetUserRelationParam) (*RelationDetail, error) {
+func (c *Client) GetUserRelation(ctx context.Context, param GetUserRelationParam) (*RelationDetail, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation"
 	)
-	return execute[*RelationDetail](c, method, url, param)
+	return execute[*RelationDetail](ctx, c, method, url, param)
 }
 
 type GetUserRelation2Param struct {
@@ -713,12 +714,12 @@ type GetUserRelation2Result struct {
 }
 
 // GetUserRelation2 查询用户与自己关系（互相关系）
-func (c *Client) GetUserRelation2(param GetUserRelation2Param) (*GetUserRelation2Result, error) {
+func (c *Client) GetUserRelation2(ctx context.Context, param GetUserRelation2Param) (*GetUserRelation2Result, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/space/wbi/acc/relation"
 	)
-	return execute[*GetUserRelation2Result](c, method, url, param, c.fillWbi())
+	return execute[*GetUserRelation2Result](ctx, c, method, url, param, c.fillWbi())
 }
 
 type BatchGetUserRelationParam struct {
@@ -726,12 +727,12 @@ type BatchGetUserRelationParam struct {
 }
 
 // BatchGetUserRelation 批量查询用户与自己关系
-func (c *Client) BatchGetUserRelation(param BatchGetUserRelationParam) (map[int]*RelationDetail, error) {
+func (c *Client) BatchGetUserRelation(ctx context.Context, param BatchGetUserRelationParam) (map[int]*RelationDetail, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/relations"
 	)
-	return execute[map[int]*RelationDetail](c, method, url, param)
+	return execute[map[int]*RelationDetail](ctx, c, method, url, param)
 }
 
 type RelationTag struct {
@@ -742,10 +743,10 @@ type RelationTag struct {
 }
 
 // GetRelationTags 查询关注分组列表
-func (c *Client) GetRelationTags() ([]RelationTag, error) {
+func (c *Client) GetRelationTags(ctx context.Context) ([]RelationTag, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/relation/tags"
 	)
-	return execute[[]RelationTag](c, method, url, nil)
+	return execute[[]RelationTag](ctx, c, method, url, nil)
 }

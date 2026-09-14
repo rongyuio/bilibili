@@ -1,5 +1,7 @@
 package bilibili
 
+import "context"
+
 import "github.com/go-resty/resty/v2"
 
 // https://socialsisteryi.github.io/bilibili-API-collect/docs/search/*
@@ -105,10 +107,10 @@ type ResultData struct {
 
 // IntergratedSearch 综合搜索（web端）
 // https://socialsisteryi.github.io/bilibili-API-collect/docs/search/search_request.html#%E7%BB%BC%E5%90%88%E6%90%9C%E7%B4%A2-web%E7%AB%AF
-func (c *Client) IntergratedSearch(param SearchParam) (*SearchRespData, error) {
+func (c *Client) IntergratedSearch(ctx context.Context, param SearchParam) (*SearchRespData, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/wbi/search/all/v2"
 	)
-	return execute[*SearchRespData](c, method, url, param, c.fillWbi())
+	return execute[*SearchRespData](ctx, c, method, url, param, c.fillWbi())
 }

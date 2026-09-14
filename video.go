@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -77,21 +78,21 @@ type VideoDetailInfo struct {
 }
 
 // GetVideoDetailInfo 获取视频超详细信息
-func (c *Client) GetVideoDetailInfo(param VideoParam) (*VideoDetailInfo, error) {
+func (c *Client) GetVideoDetailInfo(ctx context.Context, param VideoParam) (*VideoDetailInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/view/detail"
 	)
-	return execute[*VideoDetailInfo](c, method, url, param)
+	return execute[*VideoDetailInfo](ctx, c, method, url, param)
 }
 
 // GetVideoRecommendList 获取单视频推荐列表
-func (c *Client) GetVideoRecommendList(param VideoParam) ([]VideoInfo, error) {
+func (c *Client) GetVideoRecommendList(ctx context.Context, param VideoParam) ([]VideoInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/archive/related"
 	)
-	return execute[[]VideoInfo](c, method, url, param)
+	return execute[[]VideoInfo](ctx, c, method, url, param)
 }
 
 type DescV2 struct {
@@ -293,21 +294,21 @@ type VideoInfo struct {
 }
 
 // GetVideoInfo 获取视频详细信息
-func (c *Client) GetVideoInfo(param VideoParam) (*VideoInfo, error) {
+func (c *Client) GetVideoInfo(ctx context.Context, param VideoParam) (*VideoInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/view"
 	)
-	return execute[*VideoInfo](c, method, url, param)
+	return execute[*VideoInfo](ctx, c, method, url, param)
 }
 
 // GetVideoDesc 获取视频简介
-func (c *Client) GetVideoDesc(param VideoParam) (string, error) {
+func (c *Client) GetVideoDesc(ctx context.Context, param VideoParam) (string, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/archive/desc"
 	)
-	return execute[string](c, method, url, param)
+	return execute[string](ctx, c, method, url, param)
 }
 
 type Dimension struct {
@@ -329,12 +330,12 @@ type VideoPage struct {
 }
 
 // GetVideoPageList 获取视频分P列表
-func (c *Client) GetVideoPageList(param VideoParam) ([]VideoPage, error) {
+func (c *Client) GetVideoPageList(ctx context.Context, param VideoParam) ([]VideoPage, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/player/pagelist"
 	)
-	return execute[[]VideoPage](c, method, url, param)
+	return execute[[]VideoPage](ctx, c, method, url, param)
 }
 
 type StatusCount struct {
@@ -364,12 +365,12 @@ type VideoTag struct {
 }
 
 // GetVideoTags 获取视频TAG
-func (c *Client) GetVideoTags(param VideoParam) ([]VideoTag, error) {
+func (c *Client) GetVideoTags(ctx context.Context, param VideoParam) ([]VideoTag, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/tag/archive/tags"
 	)
-	return execute[[]VideoTag](c, method, url, param)
+	return execute[[]VideoTag](ctx, c, method, url, param)
 }
 
 type VideoTagParam struct {
@@ -378,22 +379,22 @@ type VideoTagParam struct {
 }
 
 // LikeVideoTag 点赞视频TAG，重复请求为取消
-func (c *Client) LikeVideoTag(param VideoTagParam) error {
+func (c *Client) LikeVideoTag(ctx context.Context, param VideoTagParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/tag/archive/like2"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
 // HateVideoTag 点踩视频TAG，重复访问为取消
-func (c *Client) HateVideoTag(param VideoTagParam) error {
+func (c *Client) HateVideoTag(ctx context.Context, param VideoTagParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/tag/archive/hate2"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -404,12 +405,12 @@ type LikeVideoParam struct {
 }
 
 // LikeVideo 点赞视频
-func (c *Client) LikeVideo(param LikeVideoParam) error {
+func (c *Client) LikeVideo(ctx context.Context, param LikeVideoParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/web-interface/archive/like"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -425,12 +426,12 @@ type CoinVideoResult struct {
 }
 
 // CoinVideo 投币视频
-func (c *Client) CoinVideo(param CoinVideoParam) (*CoinVideoResult, error) {
+func (c *Client) CoinVideo(ctx context.Context, param CoinVideoParam) (*CoinVideoResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/web-interface/coin/add"
 	)
-	return execute[*CoinVideoResult](c, method, url, param, fillCsrf(c))
+	return execute[*CoinVideoResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type FavourVideoParam struct {
@@ -445,12 +446,12 @@ type FavourVideoResult struct {
 }
 
 // FavourVideo 收藏视频
-func (c *Client) FavourVideo(param FavourVideoParam) (*FavourVideoResult, error) {
+func (c *Client) FavourVideo(ctx context.Context, param FavourVideoParam) (*FavourVideoResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/medialist/gateway/coll/resource/deal"
 	)
-	return execute[*FavourVideoResult](c, method, url, param, fillCsrf(c))
+	return execute[*FavourVideoResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type LikeCoinFavourResult struct {
@@ -461,12 +462,12 @@ type LikeCoinFavourResult struct {
 }
 
 // LikeCoinFavourVideo 一键三连视频
-func (c *Client) LikeCoinFavourVideo(param VideoParam) (*LikeCoinFavourResult, error) {
+func (c *Client) LikeCoinFavourVideo(ctx context.Context, param VideoParam) (*LikeCoinFavourResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/web-interface/archive/like/triple"
 	)
-	return execute[*LikeCoinFavourResult](c, method, url, param, fillCsrf(c))
+	return execute[*LikeCoinFavourResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type VideoCidParam struct {
@@ -487,12 +488,12 @@ type VideoOnlineInfo struct {
 }
 
 // GetVideoOnlineInfo 获取视频在线人数
-func (c *Client) GetVideoOnlineInfo(param VideoCidParam) (*VideoOnlineInfo, error) {
+func (c *Client) GetVideoOnlineInfo(ctx context.Context, param VideoCidParam) (*VideoOnlineInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/player/online/total"
 	)
-	return execute[*VideoOnlineInfo](c, method, url, param)
+	return execute[*VideoOnlineInfo](ctx, c, method, url, param)
 }
 
 type VideoStatusNumber struct {
@@ -515,12 +516,12 @@ type VideoStatusNumber struct {
 }
 
 // GetVideoStatusNumber 获取视频状态数视频
-func (c *Client) GetVideoStatusNumber(param VideoParam) (*VideoStatusNumber, error) {
+func (c *Client) GetVideoStatusNumber(ctx context.Context, param VideoParam) (*VideoStatusNumber, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/archive/stat"
 	)
-	return execute[*VideoStatusNumber](c, method, url, param)
+	return execute[*VideoStatusNumber](ctx, c, method, url, param)
 }
 
 type GetTopRecommendVideoParam struct {
@@ -532,12 +533,12 @@ type GetTopRecommendVideoParam struct {
 }
 
 // GetTopRecommendVideo 获取首页视频推荐列表
-func (c *Client) GetTopRecommendVideo(param GetTopRecommendVideoParam) (*TopRecommendVideoList, error) {
+func (c *Client) GetTopRecommendVideo(ctx context.Context, param GetTopRecommendVideoParam) (*TopRecommendVideoList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd"
 	)
-	return execute[*TopRecommendVideoList](c, method, url, param)
+	return execute[*TopRecommendVideoList](ctx, c, method, url, param)
 }
 
 type GetVideoCollectionInfoParam struct {
@@ -595,12 +596,12 @@ type VideoCollectionInfo struct {
 }
 
 // GetVideoCollectionInfo 获取视频合集信息 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/collection.md#%E8%8E%B7%E5%8F%96%E8%A7%86%E9%A2%91%E5%90%88%E9%9B%86%E4%BF%A1%E6%81%AF
-func (c *Client) GetVideoCollectionInfo(param GetVideoCollectionInfoParam) (*VideoCollectionInfo, error) {
+func (c *Client) GetVideoCollectionInfo(ctx context.Context, param GetVideoCollectionInfoParam) (*VideoCollectionInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/polymer/web-space/seasons_archives_list"
 	)
-	return execute[*VideoCollectionInfo](c, method, url, param)
+	return execute[*VideoCollectionInfo](ctx, c, method, url, param)
 }
 
 type VideoCollectionByKeywordsInfo struct {
@@ -619,12 +620,12 @@ type GetVideoByKeywordsParam struct {
 
 // GetVideoByKeywords根据关键词查找视频
 // https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/collection.md#%E6%A0%B9%E6%8D%AE%E5%85%B3%E9%94%AE%E8%AF%8D%E6%9F%A5%E6%89%BE%E8%A7%86%E9%A2%91
-func (c *Client) GetVideoByKeywords(param GetVideoByKeywordsParam) (*VideoCollectionByKeywordsInfo, error) {
+func (c *Client) GetVideoByKeywords(ctx context.Context, param GetVideoByKeywordsParam) (*VideoCollectionByKeywordsInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/series/recArchivesByKeywords"
 	)
-	return execute[*VideoCollectionByKeywordsInfo](c, method, url, param)
+	return execute[*VideoCollectionByKeywordsInfo](ctx, c, method, url, param)
 }
 
 type GetVideoSeriesInfoParam struct {
@@ -637,12 +638,12 @@ type GetVideoSeriesInfoParam struct {
 }
 
 // GetVideoSeriesInfo 获取视频列表信息（在个人空间里创建的叫做视频列表，在创作中心里创建的叫合集，注意区分）
-func (c *Client) GetVideoSeriesInfo(param GetVideoSeriesInfoParam) (*VideoCollectionInfo, error) {
+func (c *Client) GetVideoSeriesInfo(ctx context.Context, param GetVideoSeriesInfoParam) (*VideoCollectionInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/series/archives"
 	)
-	return execute[*VideoCollectionInfo](c, method, url, param)
+	return execute[*VideoCollectionInfo](ctx, c, method, url, param)
 }
 
 type GetVideoStreamParam struct {
@@ -741,10 +742,10 @@ type GetVideoStreamResult struct {
 }
 
 // GetVideoStream 获取视频流地址_web端
-func (c *Client) GetVideoStream(param GetVideoStreamParam) (*GetVideoStreamResult, error) {
+func (c *Client) GetVideoStream(ctx context.Context, param GetVideoStreamParam) (*GetVideoStreamResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/player/wbi/playurl"
 	)
-	return execute[*GetVideoStreamResult](c, method, url, param, c.fillWbi())
+	return execute[*GetVideoStreamResult](ctx, c, method, url, param, c.fillWbi())
 }

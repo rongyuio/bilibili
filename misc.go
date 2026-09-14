@@ -19,8 +19,11 @@ var (
 //
 // 第一个返回值如果是"bvid"，则第二个返回值是视频的bvid (string)。
 // 第一个返回值如果是"live"，则第二个返回值是直播间id (int)。
-func (c *Client) UnwrapShortUrl(shortUrl string) (string, any, error) {
-	resp, err := c.sendRaw(c.newRequest(context.Background()), resty.MethodGet, shortUrl)
+func (c *Client) UnwrapShortUrl(ctx context.Context, shortUrl string) (string, any, error) {
+	if err := checkContext(ctx); err != nil {
+		return "", nil, err
+	}
+	resp, err := c.sendRaw(c.newRequest(ctx), resty.MethodGet, shortUrl)
 	if err != nil {
 		return "", nil, errors.WithStack(err)
 	}
@@ -48,7 +51,7 @@ func (c *Client) UnwrapShortUrl(shortUrl string) (string, any, error) {
 }
 
 // Now 获取服务器当前时间
-func (c *Client) Now() (time.Time, error) {
+func (c *Client) Now(ctx context.Context) (time.Time, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/report/click/now"
@@ -56,7 +59,7 @@ func (c *Client) Now() (time.Time, error) {
 	type resultType struct {
 		Now int64 `json:"now"`
 	}
-	result, err := execute[*resultType](c, method, url, nil)
+	result, err := execute[*resultType](ctx, c, method, url, nil)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -110,12 +113,12 @@ type ZoneLocation struct {
 }
 
 // GetZoneLocation 通过ip确定地理位置
-func (c *Client) GetZoneLocation() (*ZoneLocation, error) {
+func (c *Client) GetZoneLocation(ctx context.Context) (*ZoneLocation, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/zone"
 	)
-	return execute[*ZoneLocation](c, method, url, nil)
+	return execute[*ZoneLocation](ctx, c, method, url, nil)
 }
 
 type RegionDailyCount struct {
@@ -123,10 +126,10 @@ type RegionDailyCount struct {
 }
 
 // GetRegionDailyCount 获取分区当日投稿稿件数
-func (c *Client) GetRegionDailyCount() (*RegionDailyCount, error) {
+func (c *Client) GetRegionDailyCount(ctx context.Context) (*RegionDailyCount, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/online"
 	)
-	return execute[*RegionDailyCount](c, method, url, nil)
+	return execute[*RegionDailyCount](ctx, c, method, url, nil)
 }

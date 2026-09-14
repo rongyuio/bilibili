@@ -1,5 +1,7 @@
 package bilibili
 
+import "context"
+
 import "github.com/go-resty/resty/v2"
 
 type ZoneVideoRankListParam struct {
@@ -13,12 +15,12 @@ type ZoneVideoRankList struct {
 }
 
 // GetZoneVideoRankList 获取分区视频排行榜列表
-func (c *Client) GetZoneVideoRankList(param ZoneVideoRankListParam) (*ZoneVideoRankList, error) {
+func (c *Client) GetZoneVideoRankList(ctx context.Context, param ZoneVideoRankListParam) (*ZoneVideoRankList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/ranking/v2"
 	)
-	return execute[*ZoneVideoRankList](c, method, url, param)
+	return execute[*ZoneVideoRankList](ctx, c, method, url, param)
 }
 
 type GetZoneVideoListNewParam struct {
@@ -37,12 +39,12 @@ type ZoneVideoPage struct {
 }
 
 // GetZoneVideoListNew 获取分区最新视频列表
-func (c *Client) GetZoneVideoListNew(param GetZoneVideoListNewParam) (*ZoneVideoListInfo, error) {
+func (c *Client) GetZoneVideoListNew(ctx context.Context, param GetZoneVideoListNewParam) (*ZoneVideoListInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/dynamic/region"
 	)
-	return execute[*ZoneVideoListInfo](c, method, url, param)
+	return execute[*ZoneVideoListInfo](ctx, c, method, url, param)
 }
 
 type GetZoneVideoListWithTagParam struct {
@@ -53,12 +55,12 @@ type GetZoneVideoListWithTagParam struct {
 }
 
 // GetZoneVideoListWithTag 获取分区标签近期互动列表
-func (c *Client) GetZoneVideoListWithTag(param GetZoneVideoListWithTagParam) (*ZoneVideoListInfo, error) {
+func (c *Client) GetZoneVideoListWithTag(ctx context.Context, param GetZoneVideoListWithTagParam) (*ZoneVideoListInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/dynamic/tag"
 	)
-	return execute[*ZoneVideoListInfo](c, method, url, param)
+	return execute[*ZoneVideoListInfo](ctx, c, method, url, param)
 }
 
 type GetZoneVideoListRecentParam struct {
@@ -69,12 +71,12 @@ type GetZoneVideoListRecentParam struct {
 }
 
 // GetZoneVideoListRecent 获取分区近期投稿列表
-func (c *Client) GetZoneVideoListRecent(param GetZoneVideoListRecentParam) (*ZoneVideoListInfo, error) {
+func (c *Client) GetZoneVideoListRecent(ctx context.Context, param GetZoneVideoListRecentParam) (*ZoneVideoListInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/newlist"
 	)
-	return execute[*ZoneVideoListInfo](c, method, url, param)
+	return execute[*ZoneVideoListInfo](ctx, c, method, url, param)
 }
 
 type GetZoneVideoListByOrderParam struct {
@@ -142,10 +144,10 @@ type RankVideoInfo struct {
 }
 
 // GetZoneVideoListByOrder 获取分区近期投稿列表 (带排序)
-func (c *Client) GetZoneVideoListByOrder(param GetZoneVideoListByOrderParam) (*ZoneVideoRankInfo, error) {
+func (c *Client) GetZoneVideoListByOrder(ctx context.Context, param GetZoneVideoListByOrderParam) (*ZoneVideoRankInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/web-interface/newlist_rank"
 	)
-	return execute[*ZoneVideoRankInfo](c, method, url, param)
+	return execute[*ZoneVideoRankInfo](ctx, c, method, url, param)
 }

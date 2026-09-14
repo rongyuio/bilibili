@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -9,22 +10,22 @@ type ReceiveVipPrivilegeParam struct {
 }
 
 // ReceiveVipPrivilege 兑换大会员卡券，1：B币券，2：会员购优惠券，3：漫画福利券，4：会员购包邮券，5：漫画商城优惠券
-func (c *Client) ReceiveVipPrivilege(param ReceiveVipPrivilegeParam) error {
+func (c *Client) ReceiveVipPrivilege(ctx context.Context, param ReceiveVipPrivilegeParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/vip/privilege/receive"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
 // SignVipScore 大积分签到
-func (c *Client) SignVipScore() error {
+func (c *Client) SignVipScore(ctx context.Context) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/pgc/activity/score/task/sign"
 	)
-	_, err := execute[any](c, method, url, nil, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, nil, fillCsrf(c))
 	return err
 }
 
@@ -50,12 +51,12 @@ type VipPrivilege struct {
 }
 
 // GetVipPrivilege 卡券状态查询
-func (c *Client) GetVipPrivilege() (*VipPrivilege, error) {
+func (c *Client) GetVipPrivilege(ctx context.Context) (*VipPrivilege, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/vip/privilege/my"
 	)
-	return execute[*VipPrivilege](c, method, url, nil)
+	return execute[*VipPrivilege](ctx, c, method, url, nil)
 }
 
 type GetVipCenterInfoParam struct {
@@ -247,10 +248,10 @@ type VipCenterInfo struct {
 }
 
 // GetVipCenterInfo 获取大会员中心信息
-func (c *Client) GetVipCenterInfo(param GetVipCenterInfoParam) (*VipCenterInfo, error) {
+func (c *Client) GetVipCenterInfo(ctx context.Context, param GetVipCenterInfoParam) (*VipCenterInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/vip/privilege/my"
 	)
-	return execute[*VipCenterInfo](c, method, url, param)
+	return execute[*VipCenterInfo](ctx, c, method, url, param)
 }

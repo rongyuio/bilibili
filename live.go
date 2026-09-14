@@ -84,12 +84,12 @@ type LiveRoomInfo struct {
 }
 
 // GetLiveRoomInfo 获取直播间信息
-func (c *Client) GetLiveRoomInfo(param GetLiveRoomInfoParam) (*LiveRoomInfo, error) {
+func (c *Client) GetLiveRoomInfo(ctx context.Context, param GetLiveRoomInfoParam) (*LiveRoomInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.live.bilibili.com/room/v1/Room/get_info"
 	)
-	return execute[*LiveRoomInfo](c, method, url, param)
+	return execute[*LiveRoomInfo](ctx, c, method, url, param)
 }
 
 type UpdateLiveRoomTitleParam struct {
@@ -108,12 +108,12 @@ type UpdateLiveRoomTitleResult struct {
 }
 
 // UpdateLiveRoomTitle 更新直播间信息
-func (c *Client) UpdateLiveRoomTitle(param UpdateLiveRoomTitleParam) (*UpdateLiveRoomTitleResult, error) {
+func (c *Client) UpdateLiveRoomTitle(ctx context.Context, param UpdateLiveRoomTitleParam) (*UpdateLiveRoomTitleResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.live.bilibili.com/room/v1/Room/update"
 	)
-	return execute[*UpdateLiveRoomTitleResult](c, method, url, param, fillCsrf(c))
+	return execute[*UpdateLiveRoomTitleResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type StartLiveParam struct {
@@ -169,8 +169,11 @@ type StartLiveResult struct {
 // StartLive 开始直播
 //
 // 注意：为了方便使用，这个函数的很多参数做了自动填入，使用例子可以参考：https://github.com/CuteReimu/bilibili/issues/121
-func (c *Client) StartLive(param StartLiveParam) (*StartLiveResult, error) {
-	r := c.newRequest(context.Background())
+func (c *Client) StartLive(ctx context.Context, param StartLiveParam) (*StartLiveResult, error) {
+	if err := checkContext(ctx); err != nil {
+		return nil, err
+	}
+	r := c.newRequest(ctx)
 	const (
 		method = resty.MethodPost
 		url    = "https://api.live.bilibili.com/room/v1/Room/startLive"
@@ -217,12 +220,12 @@ type StopLiveResult struct {
 }
 
 // StopLive 关闭直播
-func (c *Client) StopLive(param StopLiveParam) (*StopLiveResult, error) {
+func (c *Client) StopLive(ctx context.Context, param StopLiveParam) (*StopLiveResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.live.bilibili.com/room/v1/Room/stopLive"
 	)
-	return execute[*StopLiveResult](c, method, url, param, fillCsrf(c))
+	return execute[*StopLiveResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type SubLiveArea struct {
@@ -246,12 +249,12 @@ type LiveAreaList struct {
 }
 
 // GetLiveAreaList 获取全部直播间分区列表
-func (c *Client) GetLiveAreaList() ([]LiveAreaList, error) {
+func (c *Client) GetLiveAreaList(ctx context.Context) ([]LiveAreaList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.live.bilibili.com/room/v1/Area/getList"
 	)
-	return execute[[]LiveAreaList](c, method, url, nil)
+	return execute[[]LiveAreaList](ctx, c, method, url, nil)
 }
 
 type GetHomePageLiveVersionParam struct {
@@ -271,10 +274,10 @@ type HomePageLiveVersion struct {
 }
 
 // GetHomePageLiveVersion PC直播姬版本号获取
-func (c *Client) GetHomePageLiveVersion(param GetHomePageLiveVersionParam) (*HomePageLiveVersion, error) {
+func (c *Client) GetHomePageLiveVersion(ctx context.Context, param GetHomePageLiveVersionParam) (*HomePageLiveVersion, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.live.bilibili.com/xlive/app-blink/v1/liveVersionInfo/getHomePageLiveVersion"
 	)
-	return execute[*HomePageLiveVersion](c, method, url, param)
+	return execute[*HomePageLiveVersion](ctx, c, method, url, param)
 }

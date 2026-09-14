@@ -29,8 +29,8 @@ type Request struct {
 // Do decodes data into out, which must be a non-nil pointer, or nil to discard data.
 // On failure out is unchanged. Client configuration must not change during requests.
 func (c *Client) Do(ctx context.Context, req Request, out any) error {
-	if ctx == nil {
-		return errors.New("request context is nil")
+	if err := checkContext(ctx); err != nil {
+		return err
 	}
 	if err := validateOutput(out); err != nil {
 		return err
@@ -110,11 +110,17 @@ func (c *Client) fillWbi() paramHandler {
 	}
 }
 
-func execute[Out any](c *Client, method, endpoint string, in any, handlers ...paramHandler) (out Out, err error) {
-	return executeRequest[Out](c, c.newRequest(context.Background()), method, endpoint, in, handlers...)
+func execute[Out any](ctx context.Context, c *Client, method, endpoint string, in any, handlers ...paramHandler) (out Out, err error) {
+	if err := checkContext(ctx); err != nil {
+		return out, err
+	}
+	return executeRequest[Out](c, c.newRequest(ctx), method, endpoint, in, handlers...)
 }
 
 func executeRequest[Out any](c *Client, r *resty.Request, method, endpoint string, in any, handlers ...paramHandler) (out Out, err error) {
+	if err = checkContext(r.Context()); err != nil {
+		return out, err
+	}
 	if err = withParams(r, in); err != nil {
 		return out, err
 	}
@@ -166,6 +172,9 @@ func (c *Client) newRequest(ctx context.Context) *resty.Request {
 
 // sendRaw merges response cookies even when the status or business code is an error.
 func (c *Client) sendRaw(r *resty.Request, method, endpoint string) (*resty.Response, error) {
+	if err := checkContext(r.Context()); err != nil {
+		return nil, fmt.Errorf("%s %s: %w", method, safeEndpoint(endpoint), err)
+	}
 	resp, err := r.Execute(method, endpoint)
 	if resp != nil && resp.RawResponse != nil {
 		c.SetCookies(resp.Cookies())
@@ -177,4 +186,12 @@ func (c *Client) sendRaw(r *resty.Request, method, endpoint string) (*resty.Resp
 		return nil, fmt.Errorf("%s %s: missing HTTP response", method, safeEndpoint(endpoint))
 	}
 	return resp, nil
+}
+
+// checkContext rejects missing or finished contexts before request preparation.
+func checkContext(ctx context.Context) error {
+	if ctx == nil {
+		return errors.New("request context is nil")
+	}
+	return ctx.Err()
 }

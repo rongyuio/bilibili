@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -12,12 +13,12 @@ type AddFavourFolderParam struct {
 }
 
 // AddFavourFolder 新建收藏夹
-func (c *Client) AddFavourFolder(param AddFavourFolderParam) (*FavourFolderInfo, error) {
+func (c *Client) AddFavourFolder(ctx context.Context, param AddFavourFolderParam) (*FavourFolderInfo, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v3/fav/folder/add"
 	)
-	return execute[*FavourFolderInfo](c, method, url, param, fillCsrf(c))
+	return execute[*FavourFolderInfo](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type EditFavourFolderParam struct {
@@ -29,12 +30,12 @@ type EditFavourFolderParam struct {
 }
 
 // EditFavourFolder 修改收藏夹
-func (c *Client) EditFavourFolder(param EditFavourFolderParam) (*FavourFolderInfo, error) {
+func (c *Client) EditFavourFolder(ctx context.Context, param EditFavourFolderParam) (*FavourFolderInfo, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v3/fav/folder/edit"
 	)
-	return execute[*FavourFolderInfo](c, method, url, param, fillCsrf(c))
+	return execute[*FavourFolderInfo](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type DeleteFavourFolderParam struct {
@@ -42,12 +43,12 @@ type DeleteFavourFolderParam struct {
 }
 
 // DeleteFavourFolder 删除收藏夹
-func (c *Client) DeleteFavourFolder(param DeleteFavourFolderParam) error {
+func (c *Client) DeleteFavourFolder(ctx context.Context, param DeleteFavourFolderParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v3/fav/folder/del"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -60,22 +61,22 @@ type MoveFavourResourcesParam struct {
 }
 
 // CopyFavourResources 批量复制收藏内容
-func (c *Client) CopyFavourResources(param MoveFavourResourcesParam) error {
+func (c *Client) CopyFavourResources(ctx context.Context, param MoveFavourResourcesParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v3/fav/resource/copy"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
 // MoveFavourResources 批量复制收藏内容
-func (c *Client) MoveFavourResources(param MoveFavourResourcesParam) error {
+func (c *Client) MoveFavourResources(ctx context.Context, param MoveFavourResourcesParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v3/fav/resource/move"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -86,12 +87,12 @@ type DeleteFavourResourcesParam struct {
 }
 
 // DeleteFavourResources 批量删除收藏内容
-func (c *Client) DeleteFavourResources(param DeleteFavourResourcesParam) error {
+func (c *Client) DeleteFavourResources(ctx context.Context, param DeleteFavourResourcesParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v3/fav/resource/batch-del"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -100,12 +101,12 @@ type MediaIdParam struct {
 }
 
 // CleanFavourResources 清空所有失效收藏内容
-func (c *Client) CleanFavourResources(param MediaIdParam) error {
+func (c *Client) CleanFavourResources(ctx context.Context, param MediaIdParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/v3/fav/resource/clean"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -137,12 +138,12 @@ type FavourFolderInfo struct {
 }
 
 // GetFavourFolderInfo 获取收藏夹元数据
-func (c *Client) GetFavourFolderInfo(param MediaIdParam) (*FavourFolderInfo, error) {
+func (c *Client) GetFavourFolderInfo(ctx context.Context, param MediaIdParam) (*FavourFolderInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v3/fav/folder/info"
 	)
-	return execute[*FavourFolderInfo](c, method, url, param)
+	return execute[*FavourFolderInfo](ctx, c, method, url, param)
 }
 
 type GetAllFavourFolderInfoParam struct {
@@ -165,12 +166,12 @@ type AllFavourFolderInfo struct {
 }
 
 // GetAllFavourFolderInfo 获取指定用户创建的所有收藏夹信息
-func (c *Client) GetAllFavourFolderInfo(param GetAllFavourFolderInfoParam) (*AllFavourFolderInfo, error) {
+func (c *Client) GetAllFavourFolderInfo(ctx context.Context, param GetAllFavourFolderInfoParam) (*AllFavourFolderInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v3/fav/folder/created/list-all"
 	)
-	return execute[*AllFavourFolderInfo](c, method, url, param)
+	return execute[*AllFavourFolderInfo](ctx, c, method, url, param)
 }
 
 type FavourInfo struct {
@@ -210,12 +211,12 @@ type GetFavourInfoParam struct {
 }
 
 // GetFavourInfo 获取收藏内容
-func (c *Client) GetFavourInfo(param GetFavourInfoParam) ([]FavourInfo, error) {
+func (c *Client) GetFavourInfo(ctx context.Context, param GetFavourInfoParam) ([]FavourInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v3/fav/resource/infos"
 	)
-	return execute[[]FavourInfo](c, method, url, param)
+	return execute[[]FavourInfo](ctx, c, method, url, param)
 }
 
 type GetFavourListParam struct {
@@ -294,12 +295,12 @@ type FavourList struct {
 }
 
 // GetFavourList 获取收藏夹内容明细列表
-func (c *Client) GetFavourList(param GetFavourListParam) (*FavourList, error) {
+func (c *Client) GetFavourList(ctx context.Context, param GetFavourListParam) (*FavourList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v3/fav/resource/list"
 	)
-	return execute[*FavourList](c, method, url, param)
+	return execute[*FavourList](ctx, c, method, url, param)
 }
 
 type GetFavourIdsParam struct {
@@ -315,12 +316,12 @@ type FavourId struct {
 }
 
 // GetFavourIds 获取收藏夹全部内容id
-func (c *Client) GetFavourIds(param GetFavourIdsParam) ([]FavourId, error) {
+func (c *Client) GetFavourIds(ctx context.Context, param GetFavourIdsParam) ([]FavourId, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v3/fav/resource/ids"
 	)
-	return execute[[]FavourId](c, method, url, param)
+	return execute[[]FavourId](ctx, c, method, url, param)
 }
 
 type SelfFavourList struct {
@@ -363,10 +364,10 @@ type SelfFavourList struct {
 }
 
 // GetSelfFavourList 获取自己的收藏夹列表
-func (c *Client) GetSelfFavourList() ([]SelfFavourList, error) {
+func (c *Client) GetSelfFavourList(ctx context.Context) ([]SelfFavourList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/v3/fav/folder/list4navigate"
 	)
-	return execute[[]SelfFavourList](c, method, url, nil)
+	return execute[[]SelfFavourList](ctx, c, method, url, nil)
 }

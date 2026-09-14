@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"github.com/go-resty/resty/v2"
@@ -16,12 +17,12 @@ type UnreadMessage struct {
 }
 
 // GetUnreadMessage 获取未读消息数
-func (c *Client) GetUnreadMessage() (*UnreadMessage, error) {
+func (c *Client) GetUnreadMessage(ctx context.Context) (*UnreadMessage, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/msgfeed/unread"
 	)
-	return execute[*UnreadMessage](c, method, url, nil)
+	return execute[*UnreadMessage](ctx, c, method, url, nil)
 }
 
 type UnreadPrivateMessage struct {
@@ -31,12 +32,12 @@ type UnreadPrivateMessage struct {
 }
 
 // GetUnreadPrivateMessage 获取未读私信数
-func (c *Client) GetUnreadPrivateMessage() (*UnreadPrivateMessage, error) {
+func (c *Client) GetUnreadPrivateMessage(ctx context.Context) (*UnreadPrivateMessage, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/session_svr/v1/session_svr/single_unread"
 	)
-	return execute[*UnreadPrivateMessage](c, method, url, nil)
+	return execute[*UnreadPrivateMessage](ctx, c, method, url, nil)
 }
 
 var deviceId string
@@ -78,12 +79,12 @@ type SendPrivateMessageResult struct {
 }
 
 // SendPrivateMessage 发送私信（文字消息）
-func (c *Client) SendPrivateMessage(param SendPrivateMessageParam) (*SendPrivateMessageResult, error) {
+func (c *Client) SendPrivateMessage(ctx context.Context, param SendPrivateMessageParam) (*SendPrivateMessageResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.vc.bilibili.com/web_im/v1/web_im/send_msg"
 	)
-	return execute[*SendPrivateMessageResult](c, method, url, param, fillCsrf(c), func(request *resty.Request) error {
+	return execute[*SendPrivateMessageResult](ctx, c, method, url, param, fillCsrf(c), func(request *resty.Request) error {
 		request.SetQueryParam("msg[dev_id]", deviceId)
 		return nil
 	})
@@ -130,12 +131,12 @@ type PrivateMessageRecords struct {
 }
 
 // GetPrivateMessageRecords 获取与聊天对象的私信消息记录
-func (c *Client) GetPrivateMessageRecords(param GetPrivateMessageRecordsParam) (*PrivateMessageRecords, error) {
+func (c *Client) GetPrivateMessageRecords(ctx context.Context, param GetPrivateMessageRecordsParam) (*PrivateMessageRecords, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs"
 	)
-	return execute[*PrivateMessageRecords](c, method, url, param)
+	return execute[*PrivateMessageRecords](ctx, c, method, url, param)
 }
 
 type GetPrivateMessageListParam struct {
@@ -197,10 +198,10 @@ type PrivateMessageList struct {
 // GetPrivateMessageList 获取消息列表 session_type，1：系统，2：用户，3：应援团
 //
 // 参照 https://github.com/CuteReimu/bilibili/issues/8
-func (c *Client) GetPrivateMessageList(param GetPrivateMessageListParam) (*PrivateMessageList, error) {
+func (c *Client) GetPrivateMessageList(ctx context.Context, param GetPrivateMessageListParam) (*PrivateMessageList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.vc.bilibili.com/session_svr/v1/session_svr/get_sessions"
 	)
-	return execute[*PrivateMessageList](c, method, url, param)
+	return execute[*PrivateMessageList](ctx, c, method, url, param)
 }

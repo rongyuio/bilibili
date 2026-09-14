@@ -1,5 +1,7 @@
 package bilibili
 
+import "context"
+
 import "github.com/go-resty/resty/v2"
 
 type GetArticlesInfoParam struct {
@@ -105,12 +107,12 @@ type ArticlesInfo struct {
 }
 
 // GetArticlesInfo 获取文集基本信息
-func (c *Client) GetArticlesInfo(param GetArticlesInfoParam) (*ArticlesInfo, error) {
+func (c *Client) GetArticlesInfo(ctx context.Context, param GetArticlesInfoParam) (*ArticlesInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/article/list/web/articles"
 	)
-	return execute[*ArticlesInfo](c, method, url, param)
+	return execute[*ArticlesInfo](ctx, c, method, url, param)
 }
 
 type ShareChannel struct {
@@ -147,12 +149,12 @@ type GetArticleInfoParam struct {
 }
 
 // GetArticleInfo 获取专栏文章基本信息
-func (c *Client) GetArticleInfo(param GetArticleInfoParam) (*ArticleInfo, error) {
+func (c *Client) GetArticleInfo(ctx context.Context, param GetArticleInfoParam) (*ArticleInfo, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/article/viewinfo"
 	)
-	return execute[*ArticleInfo](c, method, url, param)
+	return execute[*ArticleInfo](ctx, c, method, url, param)
 }
 
 type LikeArticleParam struct {
@@ -161,12 +163,12 @@ type LikeArticleParam struct {
 }
 
 // LikeArticle 点赞文章
-func (c *Client) LikeArticle(param LikeArticleParam) error {
+func (c *Client) LikeArticle(ctx context.Context, param LikeArticleParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/article/like"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -182,12 +184,12 @@ type CoinArticleResult struct {
 }
 
 // CoinArticle 投币文章
-func (c *Client) CoinArticle(param CoinArticleParam) (*CoinArticleResult, error) {
+func (c *Client) CoinArticle(ctx context.Context, param CoinArticleParam) (*CoinArticleResult, error) {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/web-interface/coin/add"
 	)
-	return execute[*CoinArticleResult](c, method, url, param, fillCsrf(c))
+	return execute[*CoinArticleResult](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type FavoritesArticleParam struct {
@@ -195,12 +197,12 @@ type FavoritesArticleParam struct {
 }
 
 // FavoritesArticle 收藏文章
-func (c *Client) FavoritesArticle(param FavoritesArticleParam) error {
+func (c *Client) FavoritesArticle(ctx context.Context, param FavoritesArticleParam) error {
 	const (
 		method = resty.MethodPost
 		url    = "https://api.bilibili.com/x/article/favorites/add"
 	)
-	_, err := execute[any](c, method, url, param, fillCsrf(c))
+	_, err := execute[any](ctx, c, method, url, param, fillCsrf(c))
 	return err
 }
 
@@ -219,12 +221,12 @@ type UserArticleList struct {
 }
 
 // GetUserArticleList 获取用户专栏文章列表
-func (c *Client) GetUserArticleList(param GetUserArticleListParam) (*UserArticleList, error) {
+func (c *Client) GetUserArticleList(ctx context.Context, param GetUserArticleListParam) (*UserArticleList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/space/article"
 	)
-	return execute[*UserArticleList](c, method, url, param, fillCsrf(c))
+	return execute[*UserArticleList](ctx, c, method, url, param, fillCsrf(c))
 }
 
 type GetUserArticlesListParam struct {
@@ -240,10 +242,10 @@ type UserArticlesList struct {
 }
 
 // GetUserArticlesList 获取用户专栏文集列表
-func (c *Client) GetUserArticlesList(param GetUserArticlesListParam) (*UserArticlesList, error) {
+func (c *Client) GetUserArticlesList(ctx context.Context, param GetUserArticlesListParam) (*UserArticlesList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.bilibili.com/x/article/up/lists"
 	)
-	return execute[*UserArticlesList](c, method, url, param, fillCsrf(c))
+	return execute[*UserArticlesList](ctx, c, method, url, param, fillCsrf(c))
 }
