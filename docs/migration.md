@@ -39,7 +39,7 @@
 
 ## 动态命名类型
 
-`DynamicItem`、`DynamicInfo` 和主要模块定义与动态接口、参数统一放在 `dynamic.go`；话题接口 `GetTopicFeed`、参数和模型统一放在 `topic.go`。仅就模型提取而言，网络方法签名、返回根类型以及 `item.Modules.ModuleAuthor.Name` 等字段访问路径不变。
+`DynamicItem`、`DynamicInfo` 和主要模块定义放在 `dynamic_model.go`，接口方法与请求参数放在 `dynamic.go`；话题接口 `GetTopicFeed`、参数放在 `topic.go`，模型放在 `topic_model.go`。仅就模型提取而言，网络方法签名、返回根类型以及 `item.Modules.ModuleAuthor.Name` 等字段访问路径不变。
 
 | 字段 | 命名类型 |
 | --- | --- |
@@ -69,7 +69,7 @@ item.Orig.Modules.ModuleDynamic.Major = bilibili.DynamicOriginalMajor{
 }
 ```
 
-两套模型的差异完整保留：外层 `Major` 是指针，原动态 `Major` 是值；外层 `Basic.LikeIcon.Id` 为 `json.Number`，原动态对应字段为 `int`。原动态头像、作者和富文本也有不同字段，不能直接复用外层模块。更深层的小型匿名结构暂不提取。
+两套模型的差异完整保留：外层 `Major` 是指针，原动态 `Major` 是值；外层 `Basic.LikeIcon.Id` 为 `json.Number`，原动态对应字段为 `int`。原动态头像、作者和富文本也有不同字段，不能直接复用外层模块。除头像 `fallback_layers` 渲染树外，更深层的匿名结构已在[第二轮重构](#第二轮重构方法模型拆分与去重)中提取为具名类型。
 
 模型提取本身没有修改 JSON 标签、字段顺序、叶子类型或指针／切片结构，没有新增自定义反序列化；`DecodeError` 仍按既有规则遍历模型并报告 JSON 路径和 Go 字段。随后单独修复了两处 `Following` 类型，见下文。
 
@@ -91,3 +91,72 @@ log.Printf("关注状态原文=%s 数值=%d", rawStatus, status)
 ```
 
 原动态对应字段为 `item.Orig.Modules.ModuleAuthor.Following`，读取方式相同。头像尺寸使用 `float64`，支持小数。
+
+## 第二轮重构：方法/模型拆分与去重
+
+本轮把响应模型从接口文件中拆出，并为原本内联的匿名结构体命名，同时合并了字段完全一致的重复类型。网络方法签名、请求参数位置、JSON 标签、字段顺序与指针／切片层级都没有变化；下列变更只影响嵌套字段的 **Go 类型身份**。
+
+### 文件组织
+
+接口方法与 `*Param` 保留在各业务文件，响应模型移动到同名 `*_model.go`（同包，导入方式不变）：`article_model.go`、`comment_model.go`、`fav_model.go`、`history_model.go`、`login_model.go`、`message_model.go`、`topic_model.go`、`vip_model.go`，以及既有的 `dynamic_model.go`、`live_model.go`、`user_model.go`、`video_model.go`。
+
+### 合并为别名的类型
+
+| 旧类型 | 现状 |
+| --- | --- |
+| `SpaceVip` | `type SpaceVip = CardVip`，字段完全一致 |
+| `LiveMedalWallItemUinfoMedal`、`LiveFansMedalPanelItemUinfoMedal` | `type ... = LiveUinfoMedal`，字段完全一致 |
+
+别名赋值与字段访问无需修改；依赖类型名称的反射代码需要改为新类型名。
+
+### 新增的具名类型
+
+原本内联的匿名结构体现在有了类型名（节选）：
+
+| 位置 | 命名类型 |
+| --- | --- |
+| `DynamicItemBasic.LikeIcon` / `DynamicOriginalBasic.LikeIcon` | `DynamicLikeIcon` / `DynamicOriginalLikeIcon` |
+| `DynamicModuleAuthor.Vip`、原动态同名字段 | `DynamicAuthorVip`（外层与原动态字段一致，合并） |
+| `DynamicModuleAuthor.Pendant` / 原动态 `Pendant` | `DynamicPendant` / `DynamicOriginalPendant`（`pid` 类型不同，保留两个） |
+| 外层与原动态头像 `container_size` | `AvatarContainerSize` |
+| 外层与原动态描述 `rich_text_nodes` | `DynamicRichTextNode` / `DynamicOriginalRichTextNode` |
+| 外层与原动态 `emoji` | `DynamicEmoji`（字段一致，共用） |
+| `DynamicModuleMore.ThreePointItems` | `DynamicThreePointItem` |
+| `DynamicModuleStat` 的评论/转发与点赞 | `DynamicStat` / `DynamicLikeStat` |
+| `DynamicArchive.Badge` / `Stat` | `DynamicArchiveBadge` / `DynamicArchiveStat` |
+| `DynamicDraw.Items` | `DynamicDrawItem` |
+| `DynamicRepostDetail.Items` 及其 `desc`、`origin`、`previous`、`display` | `DynamicRepostItem` / `DynamicRepostDesc` / `DynamicRepostOrigin` / `DynamicRepostPrevious` / `DynamicRepostDisplay` 等 |
+| `DynamicLikeList.ItemLikes[].UserInfo` | `DynamicLikeUserInfo`，其中 `Vip`/`Pendant`/`LevelInfo` 复用 `DynamicUserVip`/`DynamicUserPendant`/`DynamicUserLevelInfo` |
+| `DynamicUpList.Items[].UserProfile` | `DynamicUpUserProfile`、`DynamicUpUserInfo`、`DynamicUpVip`、`DynamicUpVipLabel`、`DynamicUpPendant`、`DynamicUpLevelInfo` |
+| `DynamicPortal.MyInfo` / `UpList` | `DynamicPortalMyInfo`（`LevelInfo` 为 `DynamicPortalLevelInfo`） / `DynamicPortalUp` |
+| `TopicModuleAuthor.OfficialVerify` | 复用共享的 `OfficialVerify` |
+| `TopicModuleAuthor.Pendant` / `Vip` | `TopicPendant` / `TopicVip`（`Label` 复用共享的 `Label`） |
+| `TopicDynamicBasic.LikeIcon` | `TopicLikeIcon` |
+| `TopicArchive.Badge` / `Stat` | `TopicArchiveBadge` / `TopicArchiveStat` |
+| `TopicModuleStat` | `TopicStat` / `TopicLikeStat` |
+| `TopicSortByConf.AllSortBy` | `[]TopicSortByItem` |
+| `AllFavourFolderInfo.List` | `[]AllFavourFolderItem` |
+| `FavourInfo` / `FavourList.Medias` 的 `upper`、`cnt_info`、`ugc` | `FavourUpper` / `FavourResourceCntInfo` / `FavourUgc` |
+| `FavourList.Info` | `FavourFolderDetail`，其 `upper`/`cnt_info` 复用 `Upper`/`CntInfo` |
+| `SelfFavourList.MediaListResponse` | `SelfFavourMediaListResponse`，`list` 为 `[]SelfFavourMediaItem` |
+| `Elec.ShowInfo` | `ElecShowInfo` |
+| `UserSpaceDetail.UserHonourInfo` / `Series` | `UserHonourInfo` / `UserSeries` |
+| `PrivateMessageList.SessionList[].LastMsg` / `AccountInfo` | `PrivateMessageSession` / `PrivateMessageLastMsg` / `PrivateMessageAccountInfo` |
+
+普通字段读取无需迁移；手写匿名结构赋值、嵌套复合字面量、函数或接口声明以及依赖类型名称的反射代码需要检查。
+
+### 刻意保留的差异类型
+
+以下类型字段集或字段命名不同，继续保留为独立类型，不做合并：`VipUserVip`、`MyVip`、`UserCardVip`、`StaffVip`（会员变体）；`VipLabel` 与 `Label`（会员铭牌）；`OfficialVerify` 与 `Official`；`Owner`、`Author` 与各业务作者类型；`DynamicModuleStat` 与 `TopicModuleStat`；`DynamicArchive` 与 `TopicArchive`；各业务分页类型（`CommentsPage`、`UserVideoPage`、`CollectionPage`、`ZoneVideoPage`、`LiveFansMedalPanelPageInfo`）。
+
+### 保留的匿名结构
+
+动态头像 `fallback_layers` 是随接口版本漂移的一次性渲染配置树，层级极深且无复用价值，继续保留为内联匿名结构体。
+
+### 请求框架收敛
+
+本轮复核了仍然直接使用 `newRequest`/`sendRaw` 的接口，确认它们都有正当理由，保持现状：短链解析 `UnwrapShortUrl`（只读 302 `Location`）、`GetWebCookieRefreshCsrf`（返回 HTML）、`RefreshCookie`（CSRF 允许留空并回退到 Cookie 快照）、`StartLive`（签名依赖 Cookie 快照）、`UploadDynamicBfs`（multipart）、`NewAnonymousClient`（初始化匿名 Cookie）。其余接口的参数编码、CSRF 与错误处理都继续走 `execute`/`encodeParams`/`fillCsrf`。
+
+### 文档
+
+仓库根目录的 `AGENTS.md` 已删除，贡献规则以 [CONTRIBUTING.md](../.github/CONTRIBUTING.md) 为准。
