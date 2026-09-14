@@ -9,6 +9,7 @@
 - `response.go`、`decode_diagnostic.go`、`errors.go`：响应解码与错误定位。
 - `number.go`：数值／字符串兼容类型。
 - `dynamic_model.go`：`DynamicItem`、`DynamicInfo` 及主要动态模块；动态请求方法和参数仍在 `dynamic.go`。
+- `topic_model.go`：话题动态列表的完整已声明模型；`GetTopicFeed` 请求方法和参数位于 `dynamic.go`。
 - `tools/`：Markdown 表格转 Go 结构体工具；`video_zone.csv`：视频分区数据。
 - 根目录 `*_test.go`：已有辅助函数测试；被 Git 忽略的 `test/`：本地实用工具，可能操作真实账号。
 
@@ -44,6 +45,8 @@ Go 版本以 `go.mod` 为准。在根目录执行：
 转换失败使用 `ParamError`，通过 `errors.As` 读取根类型、Go 字段（可含切片下标）、参数名及位置。请求层用 `%w` 补充方法和去除查询参数的 URL。错误文本不包含参数值；原始 `Err` 可能包含敏感值，不直接记录。JSON 自定义编码器只执行一次，失败定位到对应顶层参数字段，不承诺完整的嵌套字段路径。
 
 动态模型使用公开命名类型，保留字段顺序、JSON 标签和指针层级。`DynamicOriginalItem` 与外层动态采用独立模型，不合并为递归类型；仅共享完全一致的 `DynamicArchive`、`DynamicDraw`。不要为复用而统一两套作者、富文本或主体类型。嵌套字段的类型身份改变时，应说明复合字面量、赋值和反射代码的迁移方式。
+
+话题模型沿用本地工具的字段定义，不直接替换为 `DynamicItem`；话题与空间动态仅在结构完全一致时复用模块。`test/dynamicItem.txt` 来自 `GetUserSpaceDynamic`，不能作为话题字段改型的证据。`GetTopicFeed` 只获取一页，由调用方显式传入分页和扩展参数。
 
 ## Git 与协作
 

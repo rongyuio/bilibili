@@ -501,6 +501,37 @@ _ = status
 
 原动态对应字段为 `item.Orig.Modules.ModuleAuthor.Following`，读取方式相同。头像尺寸仍保留 `float64`，样本包含小数；原动态 `LikeIcon` 在该样本中全部为 `null`，不能据此判断其内部 `Id` 类型，因此未改动。调试记录不随 Git 提交分发。
 
+## 话题动态列表
+
+`GetTopicFeed(ctx, param)` 封装 `/x/polymer/web-dynamic/v1/feed/topic`，返回一页响应的 `data`，复用统一 Cookie、context、参数编码和错误处理。参数全部位于 query，不额外启用 WBI 签名或 CSRF，也不自动重试或翻页。
+
+```go
+result, err := client.GetTopicFeed(ctx, bilibili.GetTopicFeedParam{
+    TopicId:     topicId,
+    SortBy:      3,
+    PageSize:    20,
+    Features:    "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard",
+    WebLocation: "0.0",
+})
+if err != nil {
+    log.Printf("获取话题动态失败: %v", err)
+    return
+}
+for _, item := range result.TopicCardList.Items {
+    if item.DynamicCardItem.Type == "DYNAMIC_TYPE_AV" {
+        log.Println(item.DynamicCardItem.Modules.ModuleDynamic.Major.Archive.Bvid)
+    }
+}
+```
+
+示例中的 `ctx`、`client`、`topicId` 由调用方提供。库不填入工具专用默认值；`SortBy`、`PageSize`、`Offset`、`Features`、`WebLocation` 为零值时不发送。需要下一页时，根据 `result.TopicCardList.HasMore`，将 `result.TopicCardList.Offset` 传入下一次调用；调用方应检查取消、空 offset 或 offset 未变化，避免无进展循环。示例及本地 `watchVideo` 仍只处理一页。
+
+`topic_model.go` 保留原工具完整的已声明字段，并将卡片、作者、头像、内容和统计提取为命名类型；这不代表已经覆盖服务端所有字段。仅更多操作模块复用 `DynamicModuleMore`。话题的 `Following`、内容描述等仍为 `any`，计数保留 `int`，头像尺寸保留 `float64`，没有按空间动态模型推断改型。
+
+本地 `watchVideo` 已从 `Client.Do` 和 `topicResp.Data` 迁移至此方法及 `GetTopicFeedResult`，移除了被替代的 `topicResp`、`topicData`；抽奖和视频心跳调用不变。`test/` 被 Git 忽略，工具迁移不随提交分发。
+
+验证包含模型静态展开比对、请求参数检查以及 `go build ./...`、`go vet ./...`，未运行测试或访问真实 API。`test/dynamicItem.txt` 是 `GetUserSpaceDynamic` 返回的空间动态记录，对应 `DynamicItem`，不作为话题模型的验证样本；话题字段的全部返回形式尚未确认。
+
 ## Star History
 
 <a href="https://star-history.com/#CuteReimu/bilibili&Date">
