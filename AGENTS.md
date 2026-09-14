@@ -28,6 +28,10 @@ Go 版本以 `go.mod` 为准。在根目录执行：
 
 内置接口复用 `execute`；未封装接口使用 `Client.Do(ctx, Request, out)`，通过 `WBI: true` 启用签名。`out` 接收 `data`，不是完整业务响应。不要重新导出客户端签名器；`Resty()` 仅作底层出口，其请求不会自动获得统一解码。
 
+所有可能联网的公开方法以 `ctx context.Context` 为首参，包括独立 WBI 的取密钥与签名方法；纯计算和配置方法不加 context。不保留无 context 的兼容包装。`execute` 向 HTTP 请求及密钥刷新传递同一 context，准备请求前拒绝 nil 或已取消的 context，不在库内回退到 `context.Background()`。取消和超时错误保持可用 `errors.Is` 判断。
+
+批量工具在入口使用 `signal.NotifyContext`，向辅助函数贯通任务 context；取消后停止翻页及后续账号操作，等待使用 timer/select。先处理查询错误再访问结果，不忽略写操作错误。取消不表示服务端已撤销执行，不自动重试写操作。
+
 客户端请求必须通过 `newRequest` 获取 Cookie 快照，再经 `sendRaw` 合并响应；CSRF 使用同一快照，不直接读写 `resty.Cookies`。Cookie 按名称合并，读写复制；禁止重新启用底层 Jar。`NewWithClient` 接管 Resty，已有 Jar 会话需构造前显式导出。`NewAnonymousClient(ctx)` 返回 `(*Client, error)`，必须处理错误。
 
 普通请求可并发，登录、主动刷新、账号切换和配置变更串行进行；不要复制已使用的 Client。底层 Resty 直接请求不纳入会话管理或并发保证。未做运行或 race 验证时，不得把编译通过表述为已证明并发正确。

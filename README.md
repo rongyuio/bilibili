@@ -52,6 +52,8 @@ import "github.com/CuteReimu/bilibili/v2"
 var client = bilibili.New()
 ```
 
+以下网络调用都需要传入 `ctx`：HTTP 处理函数使用 `r.Context()`，独立任务可使用 `context.WithTimeout` 或 `signal.NotifyContext`。完整示例见下文“Context 迁移与任务取消”。
+
 ### 首次登录
 
 > [!TIP]
@@ -62,7 +64,11 @@ var client = bilibili.New()
 首先获取二维码：
 
 ```go
-qrCode, _ := client.GetQRCode()
+qrCode, err := client.GetQRCode(ctx)
+if err != nil {
+    log.Printf("获取二维码失败: %v", err)
+    return
+}
 buf, _ := qrCode.Encode()
 img, _ := png.Decode(buf) // 或者写入文件 os.WriteFile("qrcode.png", buf, 0644)
 // 也可以调用 qrCode.Print() 将二维码打印在控制台
@@ -71,7 +77,7 @@ img, _ := png.Decode(buf) // 或者写入文件 os.WriteFile("qrcode.png", buf, 
 扫码并确认成功后，发送登录请求：
 
 ```go
-result, err := client.LoginWithQRCode(bilibili.LoginWithQRCodeParam{
+result, err := client.LoginWithQRCode(ctx, bilibili.LoginWithQRCodeParam{
     QrcodeKey: qrCode.QrcodeKey,
 })
 if err == nil && result.Code == 0 {
@@ -84,13 +90,17 @@ if err == nil && result.Code == 0 {
 首先获取人机验证参数：
 
 ```go
-captchaResult, _ := client.Captcha()
+captchaResult, err := client.Captcha(ctx)
+if err != nil {
+    log.Printf("获取验证参数失败: %v", err)
+    return
+}
 ```
 
 将`captchaResult`中的`gt`和`challenge`值保存下来，自行使用 [手动验证器](https://kuresaru.github.io/geetest-validator/) 进行人机验证，并获得`validate`和`seccode`。然后使用账号密码进行登录即可：
 
 ```go
-result, err := client.LoginWithPassword(bilibili.LoginWithPasswordParam{
+result, err := client.LoginWithPassword(ctx, bilibili.LoginWithPasswordParam{
     Username:  userName,
     Password:  password,
     Token:     captchaResult.Token,
@@ -108,7 +118,11 @@ if err == nil && result.Status == 0 {
 首先用上述方法二相同的方式获取人机验证参数并进行人机验证。然后获取国际地区代码：
 
 ```go
-countryCrownResult, _ := client.GetCountryCrown()
+countryCrownResult, err := client.GetCountryCrown(ctx)
+if err != nil {
+    log.Printf("获取地区代码失败: %v", err)
+    return
+}
 ```
 
 当然，如果你已经确定`cid`的值，这一步可以跳过。中国大陆的`cid`就是`86`。
@@ -116,7 +130,7 @@ countryCrownResult, _ := client.GetCountryCrown()
 然后发送短信验证码：*（[这个接口大概率返回86103错误](https://github.com/SocialSisterYi/bilibili-API-collect/issues/756)）*
 
 ```go
-sendSMSResult, _ := client.SendSMS(bilibili.SendSMSParam{
+sendSMSResult, err := client.SendSMS(ctx, bilibili.SendSMSParam{
     Cid:       cid,
     Tel:       tel,
     Source:    "main_web",
@@ -127,10 +141,10 @@ sendSMSResult, _ := client.SendSMS(bilibili.SendSMSParam{
 })
 ```
 
-然后就可以使用手机验证码登录了：
+发送短信后先检查 `err`，失败（包括取消或超时）时结束任务，不访问 `sendSMSResult`。成功后就可以使用手机验证码登录：
 
 ```go
-result, err := client.LoginWithSMS(bilibili.LoginWithSMSParam{
+result, err := client.LoginWithSMS(ctx, bilibili.LoginWithSMSParam{
     Cid:        cid,
     Tel:        tel,
     Code:       123456, // 短信验证码
@@ -168,7 +182,7 @@ client.SetRawCookies("cookie1=xxx; cookie2=xxx")
 你可以很方便的调用其它接口，以下举个例子：
 
 ```go
-videoInfo, err := client.GetVideoInfo(bilibili.VideoParam{
+videoInfo, err := client.GetVideoInfo(ctx, bilibili.VideoParam{
     Aid: 12345678,
 })
 ```
@@ -195,7 +209,7 @@ videoInfo, err := client.GetVideoInfo(bilibili.VideoParam{
 但如果你实在需要`code`和`message`字段，我们也提供了一个办法：
 
 ```go
-videoInfo, err := client.GetVideoInfo(bilibili.VideoParam{
+videoInfo, err := client.GetVideoInfo(ctx, bilibili.VideoParam{
     Aid: 12345678,
 })
 if err != nil {
@@ -215,10 +229,10 @@ if err != nil {
 
 ```go
 // 解析短连接
-typ, id, err := client.UnwrapShortUrl("https://b23.tv/xxxxxx")
+typ, id, err := client.UnwrapShortUrl(ctx, "https://b23.tv/xxxxxx")
 
 // 获取服务器当前时间
-now, err := client.Now()
+now, err := client.Now(ctx)
 
 // av号转bv号
 bvid := bilibili.AvToBv(111298867365120)
@@ -227,10 +241,10 @@ bvid := bilibili.AvToBv(111298867365120)
 aid := bilibili.BvToAv("BV1L9Uoa9EUx")
 
 // 通过ip确定地理位置
-zoneLocation, err := client.GetZoneLocation()
+zoneLocation, err := client.GetZoneLocation(ctx)
 
 // 获取分区当日投稿稿件数
-regionDailyCount, err := client.GetRegionDailyCount()
+regionDailyCount, err := client.GetRegionDailyCount(ctx)
 ```
 
 ### 设置*resty.Client的一些参数
@@ -275,7 +289,7 @@ func loadAccount(ctx context.Context, client *bilibili.Client, mid string) error
 - `out` 接收响应的 `data`，不要再次包裹 `code/message/data`。传 `nil` 只检查 HTTP 状态及业务错误；传 `*json.RawMessage` 保留原始 `data`。
 - `Query` 可与 `Form` 或 `JSON` 并用，但 `Form` 与 `JSON` 互斥。`JSON` 按标准库规则编码，包括字符串值；`Headers` 使用 `http.Header`。
 - URL 自带查询参数会参与请求，同名键以 `Request.Query` 为准。WBI 只签查询参数，不签表单；签名请求的每个查询键必须只有一个值。CSRF 由调用方按接口要求放在查询或表单中。
-- context 会传到 HTTP 请求和 WBI 密钥刷新；旧的内置 API 方法签名保持不变。此入口不额外启用重试；通过 Resty 自行配置的重试策略仍然有效。
+- context 会传到 HTTP 请求和 WBI 密钥刷新；所有内置网络 API 同样以 context 为首参。此入口不额外启用重试；通过 Resty 自行配置的重试策略仍然有效。
 - `Resty()` 保留给特殊请求，但直接调用它不会自动签名、共享 Client 的 Cookie 存储或获得 `DecodeError`。普通 Client 请求支持并发；登录、主动刷新登录态、账号切换、手动修改 Cookie 和配置必须在请求之外串行执行。自定义中间件的并发安全由调用方负责。
 
 ### 定位反序列化失败
@@ -360,7 +374,41 @@ if err != nil {
 
 nil context、取消、网络故障、非 HTTP 200 或没有有效 Cookie 都会返回错误。初始化复用默认配置；短链接仍要求 HTTP 302，刷新口令页面保持 HTML 解析，WBI 保留非零业务码但存在有效密钥的特殊处理。
 
-参数编码另外修复了非空、非结构体指针导致的 panic，并保留标签值中的等号；nil 参数与 nil 指针继续视为未传参。现有内置接口的方法签名、参数位置及请求体编码规则不变。
+参数编码另外修复了非空、非结构体指针导致的 panic，并保留标签值中的等号；nil 参数与 nil 指针继续视为未传参。内置接口的请求参数位置及请求体编码规则不变。
+
+## Context 迁移与任务取消
+
+这是一次破坏性签名变更：所有可能联网的 `Client` 方法统一增加首参 `ctx context.Context`，例如 `client.GetVideoInfo(ctx, param)`、`client.GetMyUserSpaceDetail(ctx)`。本文调用示例中的 `ctx` 均由调用方提供。`Do` 和 `NewAnonymousClient` 已有的 context 签名不变；Cookie 读写、配置和纯计算方法不变。
+
+独立使用 WBI 时，改为 `wbi.GetKeys(ctx)`、`wbi.GetMixinKey(ctx)`、`wbi.SignQuery(ctx, query, ts)`、`wbi.SignMap(ctx, payload, ts)`，因为签名可能触发密钥刷新。没有新增 `XxxContext` 或无 context 的兼容包装；调用方接口声明、方法表达式和回调类型也需同步修改。
+
+批量任务应从入口创建可取消 context，并贯通辅助函数：
+
+```go
+ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+defer stop()
+ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+defer cancel()
+
+for _, param := range params { // params 为调用方的视频参数列表
+    if ctx.Err() != nil {
+        return
+    }
+    info, err := client.GetVideoInfo(ctx, param)
+    if err != nil {
+        if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+            return
+        }
+        log.Printf("获取视频失败: %v", err)
+        continue
+    }
+    log.Println(info.Title)
+}
+```
+
+示例需要 `context`、`os`、`os/signal`、`time`、`errors`、`log`。HTTP 服务中直接使用 `r.Context()`；需要缩短期限时由调用方派生 context。库在准备请求前拒绝 nil 或已结束的 context，并将取消、超时保留在错误链中，不创建后台替代请求或增加重试；已有 Resty 请求超时仍可更早结束请求。
+
+本地批量工具已接入中断信号，取消后停止翻页、后续账号操作及等待；配置加载和独立 HTTP 工具不在本次迁移范围。取消不保证服务端撤销已经收到的写操作，不应据此自动重试。`test/` 被忽略，这些适配不随 Git 提交分发。此次仅通过编译和静态检查，未验证实机取消行为。
 
 ## Star History
 
