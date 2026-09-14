@@ -136,23 +136,23 @@ type Welfare struct {
 	List  []WelfareItem `json:"list"`  // 福利项目列表
 }
 
-type RecommendPendant struct {
-	Id      int    `json:"id"`       // 头像框 id
-	Name    string `json:"name"`     // 头像框名称
-	Image   string `json:"image"`    // 头像框图片 url
-	JumpUrl string `json:"jump_url"` // 头像框页面 url
+// RecommendItem 是推荐位条目，推荐头像框与推荐个性装扮共用同一返回结构。
+type RecommendItem struct {
+	Id      int    `json:"id"`       // 推荐位条目 id
+	Name    string `json:"name"`     // 推荐位条目名称
+	Image   string `json:"image"`    // 推荐位条目图片 url
+	JumpUrl string `json:"jump_url"` // 推荐位条目页面 url
 }
+
+// RecommendPendant 是 RecommendItem 的别名（推荐头像框）。
+type RecommendPendant = RecommendItem
+
+// RecommendCard 是 RecommendItem 的别名（推荐个性装扮）。
+type RecommendCard = RecommendItem
 
 type RecommendPendants struct {
 	JumpUrl string             `json:"jump_url"` // 头像框商城页面跳转 url
 	List    []RecommendPendant `json:"list"`     // 推荐头像框列表
-}
-
-type RecommendCard struct {
-	Id      int    `json:"id"`       // 个性装扮 id
-	Name    string `json:"name"`     // 个性装扮名称
-	Image   string `json:"image"`    // 个性装扮图标 url
-	JumpUrl string `json:"jump_url"` // 个性装扮页面 url
 }
 
 type RecommendCards struct {

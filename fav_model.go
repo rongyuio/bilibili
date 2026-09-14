@@ -45,12 +45,8 @@ type AllFavourFolderItem struct {
 	MediaCount int    `json:"media_count"` // 收藏夹内容数量
 }
 
-// FavourUpper 是收藏夹内容创建者的简要信息（mid/name/face）。
-type FavourUpper struct {
-	Mid  int    `json:"mid"`
-	Name string `json:"name"`
-	Face string `json:"face"`
-}
+// FavourUpper 是 Owner 的别名（收藏夹内容创建者的简要信息）。
+type FavourUpper = Owner
 
 // FavourResourceCntInfo 是收藏内容的计数信息（含弹幕数）。
 type FavourResourceCntInfo struct {

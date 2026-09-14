@@ -4,10 +4,13 @@ package bilibili
 
 // GetTopicFeedResult contains the data payload of one topic feed page.
 type GetTopicFeedResult struct {
-	RelatedTopics struct {
-	} `json:"related_topics"`
-	TopicCardList TopicCardList `json:"topic_card_list"`
+	RelatedTopics TopicRelatedTopics `json:"related_topics"`
+	TopicCardList TopicCardList      `json:"topic_card_list"`
 }
+
+// TopicRelatedTopics 是话题 feed 的关联话题字段。当前接口返回的字段不稳定，
+// 保留为空结构体以维持“忽略未知字段”的既有解码行为。
+type TopicRelatedTopics struct{}
 
 // TopicCardList contains topic cards, a continuation offset and sorting metadata.
 type TopicCardList struct {

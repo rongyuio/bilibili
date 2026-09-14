@@ -326,17 +326,18 @@ type BatchGetUserCardsResult struct {
 	Silence int    `json:"silence"` // 封禁状态。0：正常。1：被封
 }
 
-type GetUserFollowersResult struct {
+// RelationUserPage 是带总数的关系明细列表（粉丝、关注、共同关注、搜索关注）。
+type RelationUserPage struct {
 	List      []RelationUser `json:"list"`       // 明细列表
 	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int            `json:"total"`      // 粉丝总数
+	Total     int            `json:"total"`      // 列表总数
 }
 
-type GetUserFollowingsResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int            `json:"total"`      // 关注总数
-}
+// GetUserFollowersResult 是 RelationUserPage 的别名。
+type GetUserFollowersResult = RelationUserPage
+
+// GetUserFollowingsResult 是 RelationUserPage 的别名。
+type GetUserFollowingsResult = RelationUserPage
 
 type UserFollowingsDetail2 struct {
 	Mid            int            `json:"mid"`             // 用户 mid
@@ -369,32 +370,26 @@ type GetUserFollowings3Result struct {
 	List []UserFollowingsDetail3 `json:"list"` // 明细列表
 }
 
-type SearchUserFollowingsResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int            `json:"total"`      // 关注总数
-}
+// SearchUserFollowingsResult 是 RelationUserPage 的别名。
+type SearchUserFollowingsResult = RelationUserPage
 
-type GetSameFollowingsResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int            `json:"total"`      // 关注总数
-}
+// GetSameFollowingsResult 是 RelationUserPage 的别名。
+type GetSameFollowingsResult = RelationUserPage
 
-type GetWhispersResult struct {
+// RelationUserList 是不带总数的关系名单（悄悄关注、互关、黑名单）。
+type RelationUserList struct {
 	List      []RelationUser `json:"list"`       // 明细列表
 	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
 }
 
-type GetFriendsResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-}
+// GetWhispersResult 是 RelationUserList 的别名。
+type GetWhispersResult = RelationUserList
 
-type GetBlacksResult struct {
-	List      []RelationUser `json:"list"`       // 明细列表
-	ReVersion json.Number    `json:"re_version"` // （？）（可能是number，可能是string）
-}
+// GetFriendsResult 是 RelationUserList 的别名。
+type GetFriendsResult = RelationUserList
+
+// GetBlacksResult 是 RelationUserList 的别名。
+type GetBlacksResult = RelationUserList
 
 type BatchModifyRelationResult struct {
 	FailedFids []int `json:"failed_fids"` // 操作失败的 mid 列表

@@ -217,3 +217,14 @@ type RelationUser struct {
 	RecReason      string         `json:"rec_reason"`      // （？）
 	TrackId        string         `json:"track_id"`        // （？）
 }
+
+// Notice 是通用公告/提示信息，被评论区的 CommentsDetail 与直播的
+// StartLiveResult 共同引用，因此放在共享模型中。
+type Notice struct {
+	Type       int    `json:"type"`        // 1。作用尚不明确
+	Status     int    `json:"status"`      // 0。作用尚不明确
+	Title      string `json:"title"`       // 空。作用尚不明确
+	Msg        string `json:"msg"`         // 空。作用尚不明确
+	ButtonText string `json:"button_text"` // 空。作用尚不明确
+	ButtonUrl  string `json:"button_url"`  // 空。作用尚不明确
+}

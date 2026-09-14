@@ -2,7 +2,8 @@ package bilibili
 
 // 视频相关响应模型。
 //
-// Owner 等作者模型保留独立定义，不与其他业务的作者类型合并。
+// Owner 是视频与收藏夹共用的作者简要信息（mid/name/face），FavourUpper 为其别名；
+// Author、DynamicUpUserInfo 等其余作者类型字段集不同，保留独立定义。
 
 type DescV2 struct {
 	RawText string `json:"raw_text"` // 简介内容。type=1时显示原文。type=2时显示'@'+raw_text+' '并链接至biz_id的主页
@@ -31,6 +32,9 @@ type VideoRights struct {
 	FreeWatch     int `json:"free_watch"`      // 0。作用尚不明确
 }
 
+// Owner 是视频稿件与收藏夹内容共用的作者简要信息。
+//
+// FavourUpper 为本类型的别名；其余业务的作者类型字段集不同，保留独立定义。
 type Owner struct {
 	Mid  int    `json:"mid"`  // UP主mid
 	Name string `json:"name"` // UP主昵称
@@ -456,26 +460,31 @@ type Flac struct {
 	Audio   AudioOrVideo `json:"audio"`   // 音频流信息。同上文 DASH 流中video及audio数组中的对象
 }
 
+// AudioOrVideo 描述一条 DASH 音视频流。
+//
+// 该接口对同一份数据会同时返回 camelCase 与 snake_case 两种键（例如 baseUrl
+// 与 base_url），因此每种键各保留一个字段：规范化命名对应 camelCase 键，
+// 以 Snake 结尾的字段对应 snake_case 键。
 type AudioOrVideo struct {
-	Id           int         `json:"id"`             // 音视频清晰度代码。参考上表。[qn视频清晰度标识](#qn视频清晰度标识)。[视频伴音音质代码](#视 频伴音音质代码)
-	Baseurl      string      `json:"baseUrl"`        // 默认流 URL。注意 unicode 转义符。有效时间为 120min
-	BaseUrl      string      `json:"base_url"`       // 同上
-	Backupurl    []string    `json:"backupUrl"`      // 备用流 URL
-	BackupUrl    []string    `json:"backup_url"`     // 同上
-	Bandwidth    int         `json:"bandwidth"`      // 所需最低带宽。单位为 Byte
-	Mimetype     string      `json:"mimeType"`       // 格式 mimetype 类型
-	MimeType     string      `json:"mime_type"`      // 同上
-	Codecs       string      `json:"codecs"`         // 编码/音频类型。eg：avc1.640032
-	Width        int         `json:"width"`          // 视频宽度。单位为像素。仅视频流存在该字段
-	Height       int         `json:"height"`         // 视频高度。单位为像素。仅视频流存在该字段
-	Framerate    string      `json:"frameRate"`      // 视频帧率。仅视频流存在该字段
-	FrameRate    string      `json:"frame_rate"`     // 同上
-	Sar          string      `json:"sar"`            // Sample Aspect Ratio（单个像素的宽高比）。音频流该值恒为空
-	Startwithsap int         `json:"startWithSap"`   // Stream Access Point（流媒体访问位点）。音频流该值恒为空
-	StartWithSap int         `json:"start_with_sap"` // 同上
-	Segmentbase  SegmentBase `json:"SegmentBase"`    // 见下表。url 对应 m4s 文件中，头部的位置。音频流该值恒为空
-	SegmentBase  SegmentBase `json:"segment_base"`   // 同上
-	Codecid      int         `json:"codecid"`        // 码流编码标识代码。含义见 [上表](#视频编码代码)。音频流该值恒为0
+	Id                int         `json:"id"`             // 音视频清晰度代码。参考上表。[qn视频清晰度标识](#qn视频清晰度标识)。[视频伴音音质代码](#视 频伴音音质代码)
+	BaseURL           string      `json:"baseUrl"`        // 默认流 URL。注意 unicode 转义符。有效时间为 120min
+	BaseURLSnake      string      `json:"base_url"`       // 同上（snake_case 键）
+	BackupURL         []string    `json:"backupUrl"`      // 备用流 URL
+	BackupURLSnake    []string    `json:"backup_url"`     // 同上（snake_case 键）
+	Bandwidth         int         `json:"bandwidth"`      // 所需最低带宽。单位为 Byte
+	MimeType          string      `json:"mimeType"`       // 格式 mimetype 类型
+	MimeTypeSnake     string      `json:"mime_type"`      // 同上（snake_case 键）
+	Codecs            string      `json:"codecs"`         // 编码/音频类型。eg：avc1.640032
+	Width             int         `json:"width"`          // 视频宽度。单位为像素。仅视频流存在该字段
+	Height            int         `json:"height"`         // 视频高度。单位为像素。仅视频流存在该字段
+	FrameRate         string      `json:"frameRate"`      // 视频帧率。仅视频流存在该字段
+	FrameRateSnake    string      `json:"frame_rate"`     // 同上（snake_case 键）
+	Sar               string      `json:"sar"`            // Sample Aspect Ratio（单个像素的宽高比）。音频流该值恒为空
+	StartWithSap      int         `json:"startWithSap"`   // Stream Access Point（流媒体访问位点）。音频流该值恒为空
+	StartWithSapSnake int         `json:"start_with_sap"` // 同上（snake_case 键）
+	SegmentBase       SegmentBase `json:"SegmentBase"`    // 见下表。url 对应 m4s 文件中，头部的位置。音频流该值恒为空
+	SegmentBaseSnake  SegmentBase `json:"segment_base"`   // 同上（snake_case 键）
+	Codecid           int         `json:"codecid"`        // 码流编码标识代码。含义见 [上表](#视频编码代码)。音频流该值恒为0
 }
 
 type SegmentBase struct {
