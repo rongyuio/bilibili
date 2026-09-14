@@ -2,12 +2,13 @@ package bilibili
 
 import (
 	"context"
-	"github.com/go-resty/resty/v2"
-	"github.com/pkg/errors"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/pkg/errors"
 )
 
 var (
