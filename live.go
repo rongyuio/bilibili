@@ -9,6 +9,35 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// ReportLiveLikeParam 指定直播点赞上报参数，所有字段进入 URL 编码的表单。
+type ReportLiveLikeParam struct {
+	ClickTime int   `json:"click_time"` // 上报数量，由调用方指定
+	RoomId    int   `json:"room_id"`    // 直播间号
+	AnchorId  int64 `json:"anchor_id"`  // 主播 UID
+	Uid       int   `json:"uid"`        // 当前账号 UID
+}
+
+// ReportLiveLike 上报直播点赞，CSRF 自动从请求 Cookie 快照填入表单，不自动重试。
+func (c *Client) ReportLiveLike(ctx context.Context, param ReportLiveLikeParam) error {
+	_, err := execute[any](ctx, c, resty.MethodPost,
+		"https://api.live.bilibili.com/xlive/app-ucenter/v1/like_info_v3/like/likeReportV3", param,
+		func(r *resty.Request) error {
+			csrf := cookieValue(r.Cookies, "bili_jct")
+			if csrf == "" {
+				return errors.New("B站登录过期")
+			}
+			// encodeParams 已完成字段编码；仅将本接口字段移入表单，保留客户端默认 query。
+			for _, key := range []string{"click_time", "room_id", "anchor_id", "uid"} {
+				r.FormData[key] = append([]string(nil), r.QueryParam[key]...)
+				r.QueryParam.Del(key)
+			}
+			r.SetFormData(map[string]string{"csrf": csrf})
+			r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
+			return nil
+		})
+	return err
+}
+
 // GetLiveMedalWallParam 指定需要查询勋章墙的用户。
 type GetLiveMedalWallParam struct {
 	TargetId int `json:"target_id"` // 用户 UID
