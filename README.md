@@ -532,6 +532,36 @@ for _, item := range result.TopicCardList.Items {
 
 验证包含模型静态展开比对、请求参数检查以及 `go build ./...`、`go vet ./...`，未运行测试或访问真实 API。`test/dynamicItem.txt` 是 `GetUserSpaceDynamic` 返回的空间动态记录，对应 `DynamicItem`，不作为话题模型的验证样本；话题字段的全部返回形式尚未确认。
 
+## 请求错误分类与迁移
+
+HTTP 状态不符合接口要求时，库返回可通过 `errors.As` 提取的 `*HTTPError`，包含 `Method`、`Endpoint` 和 `StatusCode`。库生成的 Endpoint 去掉查询参数、用户信息和片段；该错误不保存请求头、Cookie 或响应体。
+
+```go
+if err != nil {
+    var he *bilibili.HTTPError
+    var be bilibili.Error
+    switch {
+    case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+        return
+    case errors.As(err, &he):
+        log.Printf("接口=%s %s HTTP状态=%d", he.Method, he.Endpoint, he.StatusCode)
+    case errors.As(err, &be):
+        log.Printf("业务错误码=%d", be.Code)
+    default:
+        // 参数与解码失败仍可继续用 errors.As 提取 ParamError、DecodeError。
+        log.Print("请求失败")
+    }
+}
+```
+
+示例需要导入 `bilibili`、`context`、`errors`、`log`。HTTP 错误按各接口原有规则判定：普通请求、游客初始化和 WBI 要求 200；短链接要求 302；Cookie 刷新页面接受 2xx。HTTP 状态错误不自动触发重试。网络故障、取消和超时保留原始错误链，不转换成 HTTPError；HTML 解析失败、缺少有效 Cookie、无效密钥等也保持独立错误。
+
+普通业务失败在原有 `Error{Code, Message}` 外补充 HTTP 方法和安全接口地址。WBI 非零业务码且缺少密钥时也采用此包装；非零码但存在密钥时仍沿用原有流程并继续检查密钥合法性。`Error` 的字段和自身错误文本不变，但请求返回错误的最外层类型及整体文本发生变化。将 `err.(bilibili.Error)` 或错误字符串匹配迁移为示例中的 `var be bilibili.Error; errors.As(err, &be)`，不要改为指针类型目标。
+
+`Message` 仍保留服务端消息，接口地址的清理不代表任意底层错误或服务端消息都经过脱敏。结构化记录优先选择接口、状态码和业务码；不要额外输出凭证、请求头或完整响应。
+
+此次通过 `go build ./...`、`go vet ./...` 并静态核对成功状态规则、调用方及错误包装，未运行测试或访问真实 API，不代表已经验证线上所有错误场景。
+
 ## Star History
 
 <a href="https://star-history.com/#CuteReimu/bilibili&Date">

@@ -40,6 +40,8 @@ Go 版本以 `go.mod` 为准。在根目录执行：
 
 业务错误使用 `Error`，解码失败使用可解包的 `DecodeError`。禁止静默吞错或将无效值转换为零；日志不要输出 Cookie、凭证或完整响应。不要批量将字段改成 `json.Number`：数字字符串与任意字符串应按实际语义区分，缺少响应依据的字段先记录疑点。
 
+HTTP 状态不符合接口要求时使用 `*HTTPError`；保留各接口的成功状态规则，不将网络故障、取消或解析失败归类为 HTTP 状态错误。业务错误在原有值类型 `Error` 外包装方法和安全接口地址，通过 `errors.As` 提取；取消和超时通过 `errors.Is` 判断，不直接断言最外层类型或匹配错误字符串。WBI 非零业务码但存在可用密钥的特殊流程保持不变。
+
 参数先由 `encodeParams` 编码完成，再统一应用到请求。默认进入 query；`request` 标签决定省略、默认值及位置，不将 `json:",omitempty"` 当作请求省略规则。query 可与 JSON 或 multipart 并存，JSON 与 multipart 互斥；不得由字段顺序决定 Content-Type。multipart 交给 Resty 生成 boundary，不手工伪造请求体。
 
 转换失败使用 `ParamError`，通过 `errors.As` 读取根类型、Go 字段（可含切片下标）、参数名及位置。请求层用 `%w` 补充方法和去除查询参数的 URL。错误文本不包含参数值；原始 `Err` 可能包含敏感值，不直接记录。JSON 自定义编码器只执行一次，失败定位到对应顶层参数字段，不承诺完整的嵌套字段路径。
