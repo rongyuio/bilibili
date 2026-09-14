@@ -276,3 +276,64 @@ log.Printf("关注状态原文=%s 数值=%d", rawStatus, status)
 ### 版本影响
 
 导出标识符与字段改名、以及删除导出类型，按语义化版本约定都属于**破坏性变更**。本模块目前只有 `v0.1.0`，处于 **v0 阶段**：v0 允许在次版本号内引入破坏性变更，因此上述改动随 **v0.2.0** 发布即可，**不需要**升主版本，也**不需要**改模块路径。只有发布 `v1.0.0` 之后再出现破坏性变更，才需要升主版本并把模块路径改为 `github.com/rongyuio/bilibili/v2` 这类形式。
+
+## 第五轮重构：模型去重、头像渲染树具名化与文件细分
+
+### 字段命名修正（破坏性，JSON 标签不变）
+
+把被压平成「首字母大写 + 其余全小写」的字段名恢复词边界，共 45 处：
+
+| 结构体 | 改名 |
+| --- | --- |
+| `Vip` / `UserCardVip` | `Viptype`→`VipType`、`Vipduedate`→`VipDueDate`、`Dueremark`→`DueRemark`、`Accessstatus`→`AccessStatus`、`Vipstatus`→`VipStatus`、`Vipstatuswarn`→`VipStatusWarn` |
+| `Member` / `UserCardInfo` / `VideoCard` | `Displayrank`→`DisplayRank` |
+| `LiveRoom` | `Roomstatus`→`RoomStatus`、`Livestatus`→`LiveStatus`、`Roundstatus`→`RoundStatus`、`Roomid`→`RoomID` |
+| `Dash` | `Minbuffertime`→`MinBufferTime`；对应 snake_case 键的字段定为 `MinBufferTimeSnake` |
+| `ZoneVideoRankInfo` | `Numpages`→`NumPages`、`Numresults`→`NumResults`、`Pagesize`→`PageSize` |
+| `CheckNickNameParam` | `Nickname`→`NickName` |
+| `comment_model` | `Showadmin/Showentry/Showfloor/Showtopic`→`ShowAdmin/ShowEntry/ShowFloor/ShowTopic`、`Fansgrade`→`FansGrade` |
+| 其它 | `Pubdate`→`PubDate`、`Codecid`→`CodecID`、`Timelength`→`TimeLength`、`Badgepay`→`BadgePay`、`Senddate`→`SendDate`、`Arcrank`→`ArcRank` |
+
+### 模型合并（非破坏性，旧名保留为别名）
+
+全仓扫描出 9 组字段签名（字段名、类型、JSON 标签、request 标签）完全一致的结构体，
+合并为类型别名，调用方无需修改：
+
+- `DynamicOriginalMajor` → `DynamicMajor`
+- `TopicArchiveBadge` / `TopicArchiveStat` → `DynamicArchiveBadge` / `DynamicArchiveStat`
+- `FavourFolderDetail` → `FavourFolderInfo`
+- `CoinArticleResult` → `CoinVideoResult`
+- `GetDynamicDetailParam` → `RemoveDynamicParam`
+- `GetArticleInfoParam`、`FavoritesArticleParam` → `GetArticlesInfoParam`
+- `GetUserRelation2Param` → `GetUserSpaceDetailParam`
+- `GetUserFollowings3Param`、`GetSameFollowingsParam` → `GetUserFollowersParam`
+
+会员 / 铭牌 / 认证 / 分页 / 计数类型逐字段复核后确认字段集或键名不同（如 `UserCardVip`
+是 `Vip` 的真子集、`VipUserVip` 键名带 `vip_` 前缀、`DynamicAuthorVip.DueDate` 为
+`json.Number`），保持独立，差异记录在 `type.go` 注释中。
+
+### 头像渲染树具名化（破坏性，JSON 标签不变）
+
+- 新建 `avatar_model.go`：三处头像（整体动态 / 原动态 / 话题）字节级一致的
+  `general_spec` 子树提为 `AvatarLayerPosSpec` / `AvatarLayerRenderSpec` /
+  `AvatarLayerSizeSpec` / `AvatarLayerGeneralSpec`；整体动态与原动态共用的四字段
+  `web_css_style` 提为 `AvatarLayerWebCssStyle`。
+- 统一残留全大写字段名：`AVATARLAYER`→`AvatarLayer`、`GENERALCFG`→`GeneralCfg`、
+  `PENDENTLAYER`→`PendantLayer`、`ICONLAYER`→`IconLayer`、`WebCSSStyle`→`WebCssStyle`。
+- `wbi.go` 取密钥的内联响应具名化为 `wbiNavResult` / `wbiImg`。
+
+### 文件组织
+
+- `video_model.go` 拆出 `video_stream_model.go`（`Durl`/`Dash`/`Dolby`/`Flac`/
+  `AudioOrVideo`/`SegmentBase`/`SupportFormat`/`GetVideoStreamResult`）与
+  `video_collection_model.go`（合集相关）。
+- `user_model.go` 拆出 `user_relation_model.go`（关注 / 粉丝 / 黑名单等关系模型）。
+- `live_model.go` 拆出 `live_room_model.go`（直播间信息 / 开播 / 分区）。
+- 方法文件中的残留响应模型下沉到模型文件：`login.go` 的 `QRCode`、`video_zone.go`
+  的 `ZoneInfo`、`cookie.go` 的结果类型、`misc.go` 的 `ZoneLocation`/`RegionDailyCount`；
+  方法文件只保留接口方法与请求参数。
+
+### 版本影响
+
+按 v0 阶段规则，上述破坏性变更（导出字段改名、头像渲染树嵌套字段改名）随下一版本
+发布即可，无需升主版本或改模块路径。
