@@ -150,7 +150,7 @@ if err != nil {
 log.Printf("本页普通勋章数: %d，总页数: %d", len(panel.List), panel.PageInfo.TotalPage)
 ```
 
-勋章面板按 `PageInfo.TotalPage` 控制分页，不单独依赖 `HasMore`。`ReportLiveLike` 上报直播点赞；账号、房间和数量由调用方指定，CSRF 由库填入。方法、参数与响应模型见 [live.go](live.go)。
+勋章面板按 `PageInfo.TotalPage` 控制分页，不单独依赖 `HasMore`。`ReportLiveLike` 上报直播点赞；账号、房间和数量由调用方指定，CSRF 由库填入。方法、参数见 [live.go](live.go)，响应模型见 [live_model.go](live_model.go)。
 
 ### 活动抽奖与动态抽奖信息
 
@@ -179,7 +179,7 @@ log.Printf("剩余抽奖次数: %d", result.Times)
 | `client.GetRegionDailyCount(ctx)` | 获取分区当日投稿数 |
 | `bilibili.Av2Bv(aid)` / `bilibili.Bv2Av(bvid)` | 纯计算转换，不需要 context |
 
-其它接口按业务位于 `video.go`、`user.go`、`live.go` 等文件，可通过方法和参数注释查阅。内置请求是否省略参数由 `request` 标签决定，不能只根据 JSON 标签判断。
+其它接口按业务位于 `video.go`、`user.go`、`live.go` 等文件，响应模型单独放在对应的 `*_model.go`（如 `video_model.go`、`user_model.go`），可通过方法和参数注释查阅。内置请求是否省略参数由 `request` 标签决定，不能只根据 JSON 标签判断。
 
 ## 自定义请求
 
@@ -262,7 +262,7 @@ replace github.com/rongyuio/bilibili => ../bilibili
 
 默认以编译和静态检查验证，不运行真实 API 或本地账号工具；已有测试使用标准库 `testing`，按任务要求执行。编译通过不等于实机或并发行为已验证。
 
-贡献规则见 [AGENTS.md](AGENTS.md) 和 [CONTRIBUTING.md](.github/CONTRIBUTING.md)。反馈问题请说明方法、错误类型和必要的脱敏信息，不提交凭证。被忽略的 `test/` 为本地工具，不随仓库分发。
+贡献规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)。反馈问题请说明方法、错误类型和必要的脱敏信息，不提交凭证。被忽略的 `test/` 为本地工具，不随仓库分发。
 
 ## 声明
 

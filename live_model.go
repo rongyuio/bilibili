@@ -1,7 +1,7 @@
 package bilibili
 
 // 直播勋章相关响应模型。字段定义沿用本地工具，未与线上返回逐字段核对；
-// 勋章墙与面板各自保留独立字段类型，不按名称相似合并。
+// 勋章墙与面板的用户勋章字段完全一致，合并为 LiveUinfoMedal 并保留别名。
 
 // GetLiveMedalWallResult contains the corresponding live medal response fields.
 type GetLiveMedalWallResult struct {
@@ -45,8 +45,11 @@ type LiveMedalWallItemMedalInfo struct {
 	HonorIcon        string `json:"honor_icon"`
 }
 
-// LiveMedalWallItemUinfoMedal contains the corresponding live medal response fields.
-type LiveMedalWallItemUinfoMedal struct {
+// LiveUinfoMedal 是直播勋章墙与勋章面板共用的用户勋章信息。
+//
+// 勋章墙的 LiveMedalWallItemUinfoMedal 与面板的
+// LiveFansMedalPanelItemUinfoMedal 字段完全一致，合并到本类型并保留原名别名。
+type LiveUinfoMedal struct {
 	Name               string `json:"name"`
 	Level              int    `json:"level"`
 	ColorStart         int    `json:"color_start"`
@@ -68,6 +71,9 @@ type LiveMedalWallItemUinfoMedal struct {
 	V2MedalColorLevel  string `json:"v2_medal_color_level"`
 	UserReceiveCount   int    `json:"user_receive_count"`
 }
+
+// LiveMedalWallItemUinfoMedal 是 LiveUinfoMedal 的别名。
+type LiveMedalWallItemUinfoMedal = LiveUinfoMedal
 
 // GetLiveActivatedMedalInfoResult contains the corresponding live medal response fields.
 type GetLiveActivatedMedalInfoResult struct {
@@ -190,26 +196,5 @@ type LiveFansMedalPanelItemRoomInfo struct {
 	Url          string `json:"url"`
 }
 
-// LiveFansMedalPanelItemUinfoMedal contains the corresponding live medal response fields.
-type LiveFansMedalPanelItemUinfoMedal struct {
-	Name               string `json:"name"`
-	Level              int    `json:"level"`
-	ColorStart         int    `json:"color_start"`
-	ColorEnd           int    `json:"color_end"`
-	ColorBorder        int    `json:"color_border"`
-	Color              int    `json:"color"`
-	Id                 int    `json:"id"`
-	Typ                int    `json:"typ"`
-	IsLight            int    `json:"is_light"`
-	Ruid               int64  `json:"ruid"`
-	GuardLevel         int    `json:"guard_level"`
-	Score              int    `json:"score"`
-	GuardIcon          string `json:"guard_icon"`
-	HonorIcon          string `json:"honor_icon"`
-	V2MedalColorStart  string `json:"v2_medal_color_start"`
-	V2MedalColorEnd    string `json:"v2_medal_color_end"`
-	V2MedalColorBorder string `json:"v2_medal_color_border"`
-	V2MedalColorText   string `json:"v2_medal_color_text"`
-	V2MedalColorLevel  string `json:"v2_medal_color_level"`
-	UserReceiveCount   int    `json:"user_receive_count"`
-}
+// LiveFansMedalPanelItemUinfoMedal 是 LiveUinfoMedal 的别名。
+type LiveFansMedalPanelItemUinfoMedal = LiveUinfoMedal
