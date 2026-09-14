@@ -320,7 +320,7 @@ if errors.As(err, &de) {
 
 `NumberOrString` 保留数字、字符串（包括 `"--"`）与 `null`，`Kind()` 返回 `number`、`string` 或 `null`。数值转换会显式返回错误，JSON 再编码保留原始类别；零值表示 `null`。原有直接赋值 `json.Number` 或强制转换为字符串的代码需要迁移到这些方法；需要构造值时可使用 `json.Unmarshal`。
 
-其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。动态数据中的 `Following` 在历史提交和本地修改之间存在 `bool/json.Number` 差异；消息参数 `SendPrivateMessageParam.Content` 也包含多种语义，后续应结合实际响应／请求证据定点处理，本次不推测改型。
+其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。动态数据中的两处 `Following` 已根据实际响应改为 `json.Number`，迁移方式见下文。消息参数 `SendPrivateMessageParam.Content` 也包含多种语义，后续应结合实际响应／请求证据定点处理，本次不推测改型。
 
 ### 维护与验证
 
@@ -477,9 +477,29 @@ item.Orig.Modules.ModuleDynamic.Major = bilibili.DynamicOriginalMajor{
 
 两套模型的差异完整保留：外层 `Major` 是指针，原动态 `Major` 是值；外层 `Basic.LikeIcon.Id` 为 `json.Number`，原动态对应字段为 `int`。原动态头像、作者和富文本也有不同字段，不能直接复用外层模块。更深层的小型匿名结构暂不提取。
 
-没有修改 JSON 标签、字段顺序、叶子类型或指针／切片结构，没有新增自定义反序列化；`DecodeError` 仍按既有规则遍历模型并报告 JSON 路径和 Go 字段。本地两处 `Following` 的 `json.Number` 改动随模型搬迁保留，但不属于此次提交，提交中的字段仍为 `bool`。
+模型提取本身没有修改 JSON 标签、字段顺序、叶子类型或指针／切片结构，没有新增自定义反序列化；`DecodeError` 仍按既有规则遍历模型并报告 JSON 路径和 Go 字段。随后单独修复了两处 `Following` 类型，见下文。
 
 静态展开命名类型后，已分别确认提交版本和本地版本与各自重构前结构一致，并通过 `go build ./...`、`go vet ./...`。未新增或运行测试、未访问真实 API；这些检查不能替代真实响应兼容性验证。动态模型阶段不新增话题接口，也不修改 `watchVideo` 的独立话题响应结构。
+
+### Following 数值状态修复
+
+`DynamicModuleAuthor.Following` 和 `DynamicOriginalModuleAuthor.Following` 从 `bool` 改为 `json.Number`。一份成功响应包含 12 条动态，外层作者该字段均为数字 `2`，原动态作者均为数字 `1`，原来的布尔类型会导致解码失败。这份样本尚不能确定全部状态含义或所有可能返回形式，因此暂不定义状态常量，也不将非零值解释为“已关注”。
+
+字段不能再直接用于布尔条件；显示原始状态使用 `String()`，需要数值时调用 `Int64()` 并处理错误。不要忽略转换失败，也不要把失败转换成零：
+
+```go
+rawStatus := item.Modules.ModuleAuthor.Following.String()
+status, err := item.Modules.ModuleAuthor.Following.Int64()
+if err != nil {
+    log.Print("关注状态无法转换为整数")
+    return
+}
+// 按调用方已确认的状态定义处理 status。
+_ = rawStatus
+_ = status
+```
+
+原动态对应字段为 `item.Orig.Modules.ModuleAuthor.Following`，读取方式相同。头像尺寸仍保留 `float64`，样本包含小数；原动态 `LikeIcon` 在该样本中全部为 `null`，不能据此判断其内部 `Id` 类型，因此未改动。调试记录不随 Git 提交分发。
 
 ## Star History
 

@@ -47,7 +47,7 @@ type DynamicModuleAuthor struct {
 	Avatar         DynamicAuthorAvatar `json:"avatar"`
 	Face           string              `json:"face"`
 	FaceNft        bool                `json:"face_nft"`
-	Following      bool                `json:"following"`
+	Following      json.Number         `json:"following"` // 关注状态；调试样本返回数字 2，不能按布尔值处理，完整状态含义待确认。
 	JumpUrl        string              `json:"jump_url"`
 	Label          string              `json:"label"`
 	Mid            json.Number         `json:"mid"`
@@ -267,7 +267,7 @@ type DynamicOriginalModuleAuthor struct {
 	} `json:"decorate,omitempty"`
 	Face           string      `json:"face"`
 	FaceNft        bool        `json:"face_nft"`
-	Following      bool        `json:"following"`
+	Following      json.Number `json:"following"` // 关注状态；调试样本返回数字 1，不能按布尔值处理，完整状态含义待确认。
 	JumpUrl        string      `json:"jump_url"`
 	Label          string      `json:"label"`
 	Mid            json.Number `json:"mid"`
