@@ -185,20 +185,60 @@ func parseTag(tag string) map[string]string {
 	return pMap
 }
 
-func toSnakeCase(s string) string {
-	var result strings.Builder
-	result.Grow(len(s) * 2)
+// snakeCaseInitialisms 是推导请求参数名时需要整体视作一个词的初始缩写，
+// 与导出标识符的命名约定保持一致。复数形式排在单数前面，匹配时长的优先。
+var snakeCaseInitialisms = []string{
+	"UUIDs", "UUID", "UIDs", "UID", "URLs", "URL", "URIs", "URI",
+	"JSON", "HTTP", "APIs", "API", "IDs", "ID",
+}
 
-	for i, r := range s {
-		if unicode.IsUpper(r) {
-			if i > 0 {
-				result.WriteRune('_')
-			}
-			result.WriteRune(unicode.ToLower(r))
-		} else {
-			result.WriteRune(r)
+// toSnakeCase 把导出字段名转成请求参数名，仅在字段既没有 field 标签也没有 json 标签时使用。
+//
+// 初始缩写整体作为一个词，因此 IDs 转为 ids、IDsA 转为 ids_a、UIDType 转为 uid_type、
+// DynamicID 转为 dynamic_id、BaseURL 转为 base_url。按 Go 惯例写成 ID/URL/UID 的字段，
+// 推导出的参数名与旧写法（Ids/Url/Uid）保持一致。
+func toSnakeCase(s string) string {
+	runes := []rune(s)
+
+	var words []string
+	for i := 0; i < len(runes); {
+		if initialism, next, ok := matchInitialism(runes, i); ok {
+			words = append(words, initialism)
+			i = next
+			continue
+		}
+
+		// 普通单词：从当前位置收到底，遇到下一个大写字母另起一词。
+		j := i + 1
+		for j < len(runes) && !unicode.IsUpper(runes[j]) {
+			j++
+		}
+		words = append(words, string(runes[i:j]))
+		i = j
+	}
+
+	for i, word := range words {
+		words[i] = strings.ToLower(word)
+	}
+
+	return strings.Join(words, "_")
+}
+
+// matchInitialism 尝试在 runes[i] 处匹配一个初始缩写。只有缩写后面是字符串结尾、
+// 大写字母或非字母字符时才成立，避免把 Initialization 这样的普通单词误当成缩写。
+func matchInitialism(runes []rune, i int) (string, int, bool) {
+	for _, initialism := range snakeCaseInitialisms {
+		letters := []rune(initialism)
+
+		next := i + len(letters)
+		if next > len(runes) || string(runes[i:next]) != initialism {
+			continue
+		}
+
+		if next == len(runes) || unicode.IsUpper(runes[next]) || !unicode.IsLetter(runes[next]) {
+			return initialism, next, true
 		}
 	}
 
-	return result.String()
+	return "", 0, false
 }
