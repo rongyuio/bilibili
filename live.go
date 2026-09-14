@@ -2,11 +2,57 @@ package bilibili
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
 )
+
+// GetLiveMedalWallParam 指定需要查询勋章墙的用户。
+type GetLiveMedalWallParam struct {
+	TargetId int `json:"target_id"` // 用户 UID
+}
+
+// GetLiveMedalWall 获取用户的直播勋章墙。
+func (c *Client) GetLiveMedalWall(ctx context.Context, param GetLiveMedalWallParam) (*GetLiveMedalWallResult, error) {
+	return execute[*GetLiveMedalWallResult](ctx, c, resty.MethodGet,
+		"https://api.live.bilibili.com/xlive/web-ucenter/user/MedalWall", param)
+}
+
+// GetLiveFansMedalPanelParam 指定勋章面板的页码与每页数量。
+type GetLiveFansMedalPanelParam struct {
+	Page     int `json:"page"`      // 页码，从 1 开始
+	PageSize int `json:"page_size"` // 每页数量
+}
+
+// GetLiveFansMedalPanel 获取当前账号的一页直播勋章面板，不自动翻页。
+func (c *Client) GetLiveFansMedalPanel(ctx context.Context, param GetLiveFansMedalPanelParam) (*GetLiveFansMedalPanelResult, error) {
+	return execute[*GetLiveFansMedalPanelResult](ctx, c, resty.MethodGet,
+		"https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/panel", param)
+}
+
+// GetLiveActivatedMedalInfoParam 指定直播间及主播。
+type GetLiveActivatedMedalInfoParam struct {
+	Platform    string `json:"platform"`     // 平台，例如 pc
+	RoomId      int    `json:"room_id"`      // 直播间号
+	TargetId    int64  `json:"target_id"`    // 主播 UID
+	WebLocation string `json:"web_location"` // 页面位置，例如 0.0
+}
+
+// GetLiveActivatedMedalInfo 获取已激活勋章及任务信息，CSRF 自动从请求 Cookie 快照填入 query。
+func (c *Client) GetLiveActivatedMedalInfo(ctx context.Context, param GetLiveActivatedMedalInfoParam) (*GetLiveActivatedMedalInfoResult, error) {
+	return execute[*GetLiveActivatedMedalInfoResult](ctx, c, resty.MethodGet,
+		"https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/GetActivatedMedalInfo", param,
+		func(r *resty.Request) error {
+			csrf := cookieValue(r.Cookies, "bili_jct")
+			if csrf == "" {
+				return errors.New("B站登录过期")
+			}
+			r.SetQueryParam("csrf", csrf)
+			return nil
+		})
+}
 
 type GetLiveRoomInfoParam struct {
 	RoomId int `json:"room_id"` // 直播间号。可以为短号
