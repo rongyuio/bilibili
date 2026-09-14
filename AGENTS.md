@@ -9,9 +9,9 @@
 - `response.go`、`decode_diagnostic.go`、`errors.go`：响应解码与错误定位。
 - `number.go`：数值／字符串兼容类型。
 - `lottery.go`：活动抽奖次数、活动抽奖操作和用户抽奖动态信息查询，参数与响应模型同文件维护；批量调度和动态删除决策留在调用方。
-- `dynamic_model.go`：`DynamicItem`、`DynamicInfo` 及主要动态模块；动态请求方法和参数仍在 `dynamic.go`。
+- `dynamic.go`：动态请求方法、参数以及 `DynamicItem`、`DynamicInfo` 和主要动态模块。
 - `live.go`：直播接口及响应模型，包括勋章墙、勋章面板、已激活勋章任务和点赞上报。勋章墙与面板保留独立字段类型，不按名称相似合并。
-- `topic_model.go`：话题动态列表的完整已声明模型；`GetTopicFeed` 请求方法和参数位于 `dynamic.go`。
+- `topic.go`：`GetTopicFeed` 话题接口、参数和话题动态列表的完整已声明模型。
 - `tools/`：Markdown 表格转 Go 结构体工具；`video_zone.csv`：视频分区数据。
 - 根目录 `*_test.go`：已有辅助函数测试；被 Git 忽略的 `test/`：本地实用工具，可能操作真实账号。
 

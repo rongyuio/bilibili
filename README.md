@@ -498,7 +498,7 @@ if errors.As(err, &de) {
 
 ### 动态命名类型
 
-`DynamicItem`、`DynamicInfo` 和主要模块定义移至同包的 `dynamic_model.go`，接口调用与参数仍在 `dynamic.go`。导入路径、网络方法签名、返回根类型以及 `item.Modules.ModuleAuthor.Name` 等字段访问路径不变。
+`DynamicItem`、`DynamicInfo` 和主要模块定义与动态接口、参数统一放在 `dynamic.go`；话题接口 `GetTopicFeed`、参数和模型统一放在 `topic.go`。导入路径、网络方法签名、返回根类型以及 `item.Modules.ModuleAuthor.Name` 等字段访问路径不变。
 
 | 字段 | 命名类型 |
 | --- | --- |
