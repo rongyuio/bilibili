@@ -104,18 +104,6 @@ func Bv2Av(bvid string) int {
 	return (tmp & maskCode) ^ xorCode
 }
 
-type ZoneLocation struct {
-	Addr        string `json:"addr"`         // 公网IP地址
-	Country     string `json:"country"`      // 国家/地区名
-	Province    string `json:"province"`     // 省/州。非必须存在项
-	City        string `json:"city"`         // 城市。非必须存在项
-	Isp         string `json:"isp"`          // 运营商名
-	Latitude    int    `json:"latitude"`     // 纬度
-	Longitude   int    `json:"longitude"`    // 经度
-	ZoneID      int    `json:"zone_id"`      // ip数据库id
-	CountryCode int    `json:"country_code"` // 国家/地区代码
-}
-
 // GetZoneLocation 通过ip确定地理位置
 func (c *Client) GetZoneLocation(ctx context.Context) (*ZoneLocation, error) {
 	const (
@@ -123,10 +111,6 @@ func (c *Client) GetZoneLocation(ctx context.Context) (*ZoneLocation, error) {
 		url    = "https://api.bilibili.com/x/web-interface/zone"
 	)
 	return execute[*ZoneLocation](ctx, c, method, url, nil)
-}
-
-type RegionDailyCount struct {
-	RegionCount map[int]int `json:"region_count"` // 分区当日投稿稿件数信息
 }
 
 // GetRegionDailyCount 获取分区当日投稿稿件数
