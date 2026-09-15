@@ -28,7 +28,8 @@ func TestReportVideoWatchTimeAid(t *testing.T) {
 		{name: "cid 非法", mutate: func(p *ReportVideoWatchTimeParam) { p.Aid = 1; p.Cid = 0 }, wantErr: true},
 		{name: "realtime 非法", mutate: func(p *ReportVideoWatchTimeParam) { p.Aid = 1; p.Realtime = 0 }, wantErr: true},
 		{name: "video_duration 非法", mutate: func(p *ReportVideoWatchTimeParam) { p.Aid = 1; p.VideoDuration = 0 }, wantErr: true},
-		{name: "played_time 为负", mutate: func(p *ReportVideoWatchTimeParam) { p.Aid = 1; p.PlayedTime = -1 }, wantErr: true},
+		{name: "played_time 为 -1 表示播放完成", mutate: func(p *ReportVideoWatchTimeParam) { p.Aid = 1; p.PlayedTime = VideoPlayedComplete }, wantAid: 1},
+		{name: "played_time 为其他负数", mutate: func(p *ReportVideoWatchTimeParam) { p.Aid = 1; p.PlayedTime = -2 }, wantErr: true},
 	}
 
 	for _, tc := range cases {

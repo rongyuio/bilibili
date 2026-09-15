@@ -273,7 +273,11 @@ func (c *Client) GetVideoStream(ctx context.Context, param GetVideoStreamParam) 
 }
 
 // videoHeartbeatWebLocation 是 web 端播放心跳固定的来源标识。
+// 该值对应「视频详情页播放器」，接口文档给出的示例取值同为 1315873，不随页面计算。
 const videoHeartbeatWebLocation = "1315873"
+
+// VideoPlayedComplete 是 played_time 的特殊取值，表示视频已播放完成。
+const VideoPlayedComplete = -1
 
 // ReportVideoWatchTimeParam 指定视频观看时长上报参数。
 // 字段默认编码进 query，再由内部 handler 移入 URL 编码表单。
@@ -282,7 +286,7 @@ type ReportVideoWatchTimeParam struct {
 	Bvid          string `json:"bvid,omitempty" request:"query,omitempty"` // 稿件 bvid。avid 与 bvid 任选一个
 	Cid           int    `json:"cid"`                                      // 视频 cid，即当前分P，可用 GetVideoInfo 或 GetVideoPageList 获取
 	Realtime      int    `json:"realtime"`                                 // 本次上报的观看时长，单位秒，必须大于 0
-	PlayedTime    int    `json:"played_time"`                              // 播放进度，单位秒，不应超过视频总时长
+	PlayedTime    int    `json:"played_time"`                              // 播放进度，单位秒；不应超过视频总时长，VideoPlayedComplete（-1）表示已看完
 	VideoDuration int    `json:"video_duration"`                           // 视频总时长，单位秒，可用 GetVideoInfo 的 Duration 获取
 }
 
@@ -317,8 +321,8 @@ func reportVideoWatchTimeAid(param ReportVideoWatchTimeParam) (int, error) {
 	if param.VideoDuration <= 0 {
 		return 0, parameterError(root, "VideoDuration", "video_duration", "form", "video_duration 必须大于 0", nil)
 	}
-	if param.PlayedTime < 0 {
-		return 0, parameterError(root, "PlayedTime", "played_time", "form", "played_time 不能为负数", nil)
+	if param.PlayedTime < 0 && param.PlayedTime != VideoPlayedComplete {
+		return 0, parameterError(root, "PlayedTime", "played_time", "form", "played_time 不能为负数，仅允许 -1 表示播放完成", nil)
 	}
 	if param.Aid > 0 {
 		return param.Aid, nil
@@ -371,7 +375,7 @@ func reportVideoWatchTimeHandler(param ReportVideoWatchTimeParam, aid int) param
 			"played_time":             played,
 			"real_played_time":        realtime,
 			"refer_url":               "https://www.bilibili.com/",
-			"quality":                 "64",
+			"quality":                 strconv.Itoa(VideoQuality720P),
 			"is_auto_qn":              "0",
 			"video_duration":          duration,
 			"last_play_progress_time": played,

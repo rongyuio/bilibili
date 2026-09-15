@@ -138,7 +138,7 @@ if err != nil {
 }
 ```
 
-参数校验在发出请求前完成：`cid`、`realtime`、`video_duration` 必须大于 0，`played_time` 不能为负，`aid` 与 `bvid` 任选一个（`bvid` 需为 12 位）。
+参数校验在发出请求前完成：`cid`、`realtime`、`video_duration` 必须大于 0，`aid` 与 `bvid` 任选一个（`bvid` 需为 12 位）；`played_time` 传 `VideoPlayedComplete`（-1）表示已看完。清晰度由库固定为 `VideoQuality720P`，如需其他清晰度见 [video_stream_model.go](video_stream_model.go) 中的 `VideoQuality*` 常量。
 
 ### 话题动态列表
 
