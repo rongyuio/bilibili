@@ -20,6 +20,26 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Verify tag is on master
+        run: |
+          git fetch --no-tags origin master
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+            echo "::error::标签 $GITHUB_REF_NAME 指向的提交不在 master 上，拒绝发布。"
+            exit 1
+          fi
+          echo "标签 $GITHUB_REF_NAME 指向 master 上的提交 $GITHUB_SHA"
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Build
+        run: go build ./...
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
