@@ -54,6 +54,33 @@ type Article struct {
 - 如果是纯粹的接口调用函数，请参考现有的函数写法。
 - 如果是其它函数，不限制编码风格，在提交 pull request 时会带有 golangci-lint 检测，请确保通过即可。
 
+## 分支与提交流程
+
+`master` 已开启分支保护：禁止强推与删除，改动必须经 Pull Request 合入。**不要直接向 `master` 提交或推送**，即使当前账号有权限绕过保护。
+
+1. 从最新的 `master` 切分支，命名为 `<type>/<简短描述>`，`type` 与提交消息的 type 保持一致（如 `ci/race-and-release-guard`、`docs/contributing-and-contacts`）：
+
+   ```bash
+   git switch master && git pull
+   git switch -c ci/release-guard
+   ```
+
+2. 在分支上提交，消息按下一节的规范书写。
+3. 推送并开 PR，等 CI 通过后合并：
+
+   ```bash
+   git push -u origin ci/release-guard
+   gh pr create --fill
+   ```
+
+若不慎已在本地 `master` 提交、且尚未推送，按下面方式补救，**不要强推**：
+
+```bash
+git branch <type>/<描述>        # 在当前位置建分支，保住提交
+git reset --hard origin/master  # 本地 master 回退到远端状态
+git switch <type>/<描述>        # 切到分支继续
+```
+
 ## 关于提交消息
 
 格式为 [Conventional Commits](https://www.conventionalcommits.org/) 加中文描述：
