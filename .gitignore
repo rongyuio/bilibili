@@ -15,3 +15,6 @@
 # vendor/
 test/
 .idea/
+
+# CodeBuddy 计划模式生成的计划稿，不入库（保留 settings.json、rules/、skills/ 等可共享配置）
+.codebuddy/plans/
