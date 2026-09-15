@@ -1,14 +1,9 @@
 # 生成工具的使用方法
 
+在仓库根目录执行：
+
 ```bash
-# go 用这个
-go run gen_struct.go
-
-# python3用这个
-python3 gen_struct.py
-
-# python2用这个
-python2 gen_struct2.py
+go run tools/gen_struct.go
 ```
 
 会得到这样的提示：

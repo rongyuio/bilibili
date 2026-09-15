@@ -1,0 +1,29 @@
+# GitHub 自动生成 Release Notes 的分类配置，release.yml 的 --generate-notes 会读取本文件。
+changelog:
+  exclude:
+    authors:
+      - dependabot
+  categories:
+    - title: 破坏性变更
+      labels:
+        - breaking
+        - breaking-change
+    - title: 新功能
+      labels:
+        - feat
+        - feature
+        - enhancement
+    - title: 缺陷修复
+      labels:
+        - fix
+        - bug
+    - title: 文档与内部改动
+      labels:
+        - docs
+        - chore
+        - ci
+        - refactor
+        - test
+    - title: 其它变更
+      labels:
+        - '*'

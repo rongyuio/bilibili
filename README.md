@@ -2,7 +2,7 @@
 
 基于 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 继续维护的 Go 客户端，封装 Bilibili API，提供 Cookie 管理、WBI 签名、context 取消和结构化错误定位。
 
-模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.27 或更新版本，依赖以 [go.mod](go.mod) 为准。接口可能随服务端变化。
+模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.26 或更新版本，依赖以 [go.mod](go.mod) 为准。接口可能随服务端变化。
 
 - [维护状态](#维护状态)
 - [快速开始](#快速开始)
@@ -246,6 +246,7 @@ if err != nil {
 | [认证与会话](docs/authentication.md) | 游客、扫码、密码与短信登录，Cookie 保存及 Resty 接管 |
 | [请求与错误处理](docs/request.md) | 自定义请求、参数标签、错误分类与解码定位 |
 | [迁移指南](docs/migration.md) | 模块路径、context 签名、会话规则和模型类型变更 |
+| [版本策略](docs/versioning.md) | 版本号格式与禁用形式、递增规则、v0 与 v1 之后的兼容性约定 |
 
 ## 开发与贡献
 
@@ -271,6 +272,22 @@ replace github.com/rongyuio/bilibili => ../bilibili
 默认以编译和静态检查验证，不运行真实 API 或本地账号工具；已有测试使用标准库 `testing`，按任务要求执行。编译通过不等于实机或并发行为已验证。
 
 贡献规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)。反馈问题请说明方法、错误类型和必要的脱敏信息，不提交凭证。被忽略的 `test/` 为本地工具，不随仓库分发。
+
+### 发版
+
+维护者推送合法的语义化版本 tag（形如 `v<major>.<minor>.<patch>`）即触发 [release.yml](.github/workflows/release.yml)，无需手动创建 Release：
+
+```bash
+git switch master && git pull
+git tag v0.4.0
+git push origin v0.4.0
+```
+
+工作流依次执行：校验 tag 名符合语义化版本格式，并校验该 tag 指向的提交位于 `master`（任一不满足即拒绝发布）；运行 `go test -race ./...` 与 `go build ./...`；最后用 `gh release create --generate-notes` 创建 GitHub Release，发布说明的分类规则见 [.github/release.yml](.github/release.yml)。
+
+tag 名含 `-` 后缀（如 `v0.4.0-rc.1`）时发布为 Pre-release，否则标记为 Latest。重复推送同一 tag 会先删除已有 Release 再重建。
+
+版本号格式、递增规则与 v0 阶段的兼容性约定见[版本策略](docs/versioning.md)。
 
 ## 声明
 

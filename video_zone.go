@@ -12,7 +12,8 @@ import (
 //go:embed video_zone.csv
 var embeddedCSV []byte
 
-// readCSV 从文件中读取CSV数据并转换为ZoneInfo切片,内部的一个工具函数。
+// readCSV 解析内嵌的 video_zone.csv，跳过表头并转换为 ZoneInfo 切片，
+// 内部的一个工具函数。每行只读取前 5 列，第 6 列「备注」不参与解析。
 func readCSV() ([]ZoneInfo, error) {
 	// 打开文件
 
@@ -62,7 +63,23 @@ func GetAllZoneInfos() ([]ZoneInfo, error) {
 	return zoneInfos, nil
 }
 
-// GetDescription 获取ZoneInfo对象的描述信息,描述信息分为四个部分。当前分区，主分区，描述和备注。
+// GetDescription 返回该分区的描述文本，依次由四个部分组成：
+//
+//	【分区】   当前分区的名称
+//	【主分区】 主分区的名称，由 MasterTid 查得
+//	【描述】   当前分区的简介，为空时整行省略；非空时同一条简介会被连续拼接两次
+//	【备注】   主分区的简介，为空时整行省略
+//
+// 以下两处写法看着像缺陷，但都是自 3a9bf4b 引入以来从未改动过的既有行为，
+// 修改会直接改变本方法的输出，不要顺手“修正”，需改动请先走迁移流程：
+//
+//   - 【描述】把简介拼接了两次，输出形如「【描述】正文正文」；
+//   - 【备注】取的是主分区行的简介，而不是当前分区自己的：本结构体没有独立的备注字段，
+//     主分区行里写的提示（例如时尚主分区的「注：该分区无排名功能」）就是其子分区要
+//     展示的备注内容。
+//
+// 当前分区与主分区的名称都只做拼接，不保证存在；MasterTid 在数据中查不到时，
+// GetZoneInfoByTid 的错误被忽略，主分区名称会退化为空字符串。
 func (info ZoneInfo) GetDescription() string {
 	var description string
 	var masterInfo, _ = GetZoneInfoByTid(info.MasterTid)
@@ -74,7 +91,7 @@ func (info ZoneInfo) GetDescription() string {
 		description += "\n【描述】" + info.Overview
 		description += info.Overview
 	}
-	// 备注写到主分区的备注中了
+	// 【备注】取自主分区行的简介，而不是当前分区自己的
 	if masterInfo.Overview != "" {
 		description += "\n【备注】" + masterInfo.Overview
 	}

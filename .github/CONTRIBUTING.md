@@ -91,3 +91,11 @@ docs: 补充第五轮重构迁移说明
 ```
 
 破坏性变更在 `type` 后加 `!`（如 `refactor(api)!: ...`），并在提交正文中说明影响与迁移方式，同时必须在[迁移指南](../docs/migration.md)中补充对应条目。
+
+## 关于发版
+
+发布由推送 `v*` tag 触发。`release.yml` 会先校验 tag 名符合语义化版本格式、且指向的提交位于 `master`，否则拒绝发布；随后运行 `go test -race ./...` 与 `go build ./...`，最后自动创建 GitHub Release。打 tag 的完整流程见 README 的「发版」一节，版本号格式与递增规则见[版本策略](../docs/versioning.md)。
+
+- tag 必须是 `v<major>.<minor>.<patch>` 形式的合法语义化版本，`v1`、`v0.3` 这类会被拒绝。
+- 不要给未合入 `master` 的提交打 tag，工作流会直接失败。
+- 破坏性变更随次版本号一并发布，不需要升主版本或改模块路径（v0 阶段）。
