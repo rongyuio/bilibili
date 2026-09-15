@@ -118,6 +118,28 @@ for _, item := range page.Items {
 
 `mid` 是调用方提供的 UID 字符串。需要继续读取时，根据 `page.HasMore` 将 `page.Offset` 传入下一次调用。调用方应检查取消及分页进度，避免空 offset 或重复 offset 导致循环。
 
+上报观看时长使用 `ReportVideoWatchTime`，封装 `/x/click-interface/web/heartbeat`。它需要登录态：`mid` 取自 Cookie `DedeUserID`，CSRF 取自 `bili_jct`，两者缺失都会返回错误；请求启用 WBI 签名。观看时长与播放进度完全由调用方指定，库不设默认值、不自动重试、也不限制调用间隔。`Cid` 与 `VideoDuration` 可先用 `GetVideoInfo` 取得：
+
+```go
+info, err := client.GetVideoInfo(ctx, bilibili.VideoParam{Bvid: bvid})
+if err != nil {
+    log.Printf("获取视频信息失败: %v", err)
+    return
+}
+err = client.ReportVideoWatchTime(ctx, bilibili.ReportVideoWatchTimeParam{
+    Bvid:          bvid,
+    Cid:           info.Cid,
+    Realtime:      600,           // 本次上报的观看时长（秒）
+    PlayedTime:    info.Duration, // 播放进度（秒）
+    VideoDuration: info.Duration, // 视频总时长（秒）
+})
+if err != nil {
+    log.Printf("上报观看时长失败: %v", err)
+}
+```
+
+参数校验在发出请求前完成：`cid`、`realtime`、`video_duration` 必须大于 0，`played_time` 不能为负，`aid` 与 `bvid` 任选一个（`bvid` 需为 12 位）。
+
 ### 话题动态列表
 
 `GetTopicFeed(ctx, param)` 封装 `/x/polymer/web-dynamic/v1/feed/topic`，返回一页响应的 `data`，复用统一 Cookie、context、参数编码和错误处理。参数全部位于 query，不额外启用 WBI 签名或 CSRF，也不自动重试或翻页。
