@@ -1,12 +1,16 @@
 # AGENTS.md
 
-本文件为 CodeBuddy Code 在此仓库中工作时提供指引。
+本文件为在此仓库中工作的编码助手提供指引。
 
 ## 概述
 
-封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`（导入路径与目录名不一致），要求 Go 1.27+。本仓库是已归档的 `CuteReimu/bilibili` 的持续维护 fork；上游与接口文档仓库 `SocialSisterYi/bilibili-API-collect` 均已归档。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
+封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`（导入路径与目录名不一致），要求 Go 1.26+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是已归档的 `CuteReimu/bilibili` 的持续维护 fork；上游与接口文档仓库 `SocialSisterYi/bilibili-API-collect` 均已归档。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
 
 所有代码都位于仓库根目录的 `bilibili` 包中（扁平包结构，除被忽略的 `test/` 和 `tools/` 生成器外没有子包）。文档与代码注释使用中文；修改既有文档和注释时请保持这一风格。
+
+## 分支与提交
+
+`master` 已开启分支保护（禁止强推与删除，要求走 PR），**不要直接向 `master` 提交或推送**，即使当前账号有权限绕过保护。改动一律从最新 `master` 切分支、在分支上提交、推送后开 PR 合入，分支名用 `<type>/<简短描述>`。若不慎已在本地 `master` 提交且尚未推送，先 `git branch <新分支>` 保住提交，再 `git reset --hard origin/master`，**不要强推**。细节见 `.github/CONTRIBUTING.md` 的「分支与提交流程」。
 
 ## 常用命令
 
@@ -17,17 +21,17 @@ gofmt -s -w <file.go>             # 格式化（CI 要求 gofmt -s -l . 输出�
 golangci-lint run                 # 使用 .golangci.yml（v2 schema，lint 版本 v2.13.2）
 go test ./...                     # 运行全部测试
 go test -run TestName ./...       # 运行单个测试
-go test -run 'TestCookie|TestWBI' ./...   # 按正则运行一组测试
-go test -v ./...                  # 输出详细结果（CI 使用的形式）
+go test -run 'TestCookie|TestSignMap' ./...   # 按正则运行一组测试
+go test -race -v ./...            # 输出详细结果（CI 使用的形式）
 ```
 
-`go run tools/gen_struct.go`（或 `python3 tools/gen_struct.py` / `python2 tools/gen_struct2.py`）可将粘贴的 Markdown 字段表格转换成 Go 结构体定义。详见 `tools/README.md`。
+`go run tools/gen_struct.go` 可将粘贴的 Markdown 字段表格转换成 Go 结构体定义。详见 `tools/README.md`。
 
-测试均为纯逻辑单元测试（根目录下的 `*_test.go`），**不会**访问真实 API，也不需要凭证。多数只依赖标准库 `testing`；`util_test.go` 额外用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，但从不发出请求。`test/` 存放本地账号相关脚本，已被 gitignore，且被 golangci-lint 排除。
+测试均为纯逻辑单元测试（根目录下的 `*_test.go`），**不会**访问真实 API，也不需要凭证。多数只依赖标准库 `testing`；`util_test.go` 额外用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，但从不发出请求。`test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 同时排除了 `test/` 与 `tools/`。
 
-CI（`.github/workflows/`）在向 `master` 的 push / PR 时运行：gofmt 检查、golangci-lint、`go test -v ./...`、`go build -v ./...`。`master` 已开启分支保护，改动通过 PR 合入。
+CI（`.github/workflows/`）在向 `master` 的 push / PR 时运行两个 workflow：`gofmt.yml` 要求 `gofmt -s -l .` 输出为空；`golangci-lint.yml`（workflow 名为 `Go`）依次运行 golangci-lint、`go test -race -v ./...`、`go build -v ./...`。三个 workflow 的 Go 版本均由 `go-version-file: go.mod` 决定，因此改 `go.mod` 的 `go` 指令即可切换验证环境；该指令表示最低支持版本（当前 1.26），提升需在 PR 中说明理由。`master` 已开启分支保护，改动通过 PR 合入。
 
-发版由 `release.yml` 处理：推送 `v*` 标签即自动执行 `gh release create --generate-notes` 创建 GitHub Release，无需手动操作。
+发版由 `release.yml` 处理：推送 `v*` 标签后，先校验标签名符合语义化版本（`v<major>.<minor>.<patch>`）且该标签指向的提交位于 `master`（任一不满足即拒绝发布），再运行 `go test -race ./...` 与 `go build ./...`，最后执行 `gh release create --generate-notes` 创建 GitHub Release，无需手动操作。
 
 ## 文件组织约定
 
@@ -61,7 +65,7 @@ Client.<Method>(ctx, param)
 
 - **context 永远作为首参。** 所有网络方法都以 `ctx context.Context` 为第一个参数。`checkContext` 在任何工作开始前拒绝 nil / 已结束的 context。context 也会传入 WBI 密钥刷新。
 - **每次请求只取一次 Cookie 快照。** `newRequest` 通过 `GetCookies()` 深拷贝一次快照；CSRF 和各接口签名都读取这份快照。响应 Cookie 在 `sendRaw` 中合并回客户端（HTTP / 业务错误时同样合并）。`Client` 首次使用后不可复制；普通请求可并发，但登录 / 会话切换 / 配置变更必须在请求之外串行进行。
-- **解码到全新的值。** `decodeResponse`（response.go）先检查 `code` 信封，非零时返回 `Error`，再把 `data` 反序列化到一个全新值，因此 `out` 绝不会被部分写入。`out == nil` 表示"只检查状态码与业务码"。
+- **解码到全新的值。** `decodeResponse`（response.go）先检查 `code` 信封，非零时返回 `Error`，再把 `data` 反序列化到一个全新值，因此 `out` 绝不会被部分写入。WBI 密钥请求是例外：它走 `decodeWBIResponse`，忽略非零业务码，因为 nav 可能在返回可用签名密钥的同时给出非零 `code`。`out == nil` 表示"只检查状态码与业务码"。
 - **`execute[Out]` 对返回类型泛型**；`Out` 通常是 `*SomeResult` 或 `any`。
 
 ### 参数编码（`params.go`）
@@ -121,11 +125,12 @@ CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它
 
 ## 被忽略的目录
 
-`.gitignore` 忽略了 `test/`、`.idea/`，以及 `.codebuddy/plans/`。`plans/` 是计划模式自动生成的计划稿，不要提交；`.codebuddy/` 下的其余内容（`settings.json`、`rules/`、`skills/` 等）仍可入库供团队共享。
+`.gitignore` 忽略了 `test/`、`.idea/`，以及编码助手在本地生成的计划稿目录（具体路径见 `.gitignore`）。该目录下自动生成的内容不要提交；其余可共享的助手配置（如 `settings.json`、`rules/` 等）仍可入库供团队共享。
 
 ## 文档
 
-- `README.md` —— 概览、快速开始、各业务域用法示例、贡献与验证命令。
+- `README.md` —— 概览、快速开始、各业务域用法示例、贡献、验证与发版。
 - `docs/authentication.md` —— 游客初始化、扫码 / 密码 / 短信登录、Cookie 保存与恢复、Resty 接管。
 - `docs/request.md` —— `Client.Do` 逃生通道、`request` 标签规则、错误分类、解码诊断。
 - `docs/migration.md` —— 模块路径、context 签名、会话规则，以及 v0 各轮重构中的模型与字段重命名。
+- `docs/versioning.md` —— tag 与模块版本的格式约束（含禁止 build metadata）、递增规则、v0 与 v1 之后的兼容性约定。

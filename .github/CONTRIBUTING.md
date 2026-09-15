@@ -54,6 +54,33 @@ type Article struct {
 - 如果是纯粹的接口调用函数，请参考现有的函数写法。
 - 如果是其它函数，不限制编码风格，在提交 pull request 时会带有 golangci-lint 检测，请确保通过即可。
 
+## 分支与提交流程
+
+`master` 已开启分支保护：禁止强推与删除，改动必须经 Pull Request 合入。**不要直接向 `master` 提交或推送**，即使当前账号有权限绕过保护。
+
+1. 从最新的 `master` 切分支，命名为 `<type>/<简短描述>`，`type` 与提交消息的 type 保持一致（如 `ci/race-and-release-guard`、`docs/contributing-and-contacts`）：
+
+   ```bash
+   git switch master && git pull
+   git switch -c ci/release-guard
+   ```
+
+2. 在分支上提交，消息按下一节的规范书写。
+3. 推送并开 PR，等 CI 通过后合并：
+
+   ```bash
+   git push -u origin ci/release-guard
+   gh pr create --fill
+   ```
+
+若不慎已在本地 `master` 提交、且尚未推送，按下面方式补救，**不要强推**：
+
+```bash
+git branch <type>/<描述>        # 在当前位置建分支，保住提交
+git reset --hard origin/master  # 本地 master 回退到远端状态
+git switch <type>/<描述>        # 切到分支继续
+```
+
 ## 关于提交消息
 
 格式为 [Conventional Commits](https://www.conventionalcommits.org/) 加中文描述：
@@ -91,3 +118,11 @@ docs: 补充第五轮重构迁移说明
 ```
 
 破坏性变更在 `type` 后加 `!`（如 `refactor(api)!: ...`），并在提交正文中说明影响与迁移方式，同时必须在[迁移指南](../docs/migration.md)中补充对应条目。
+
+## 关于发版
+
+发布由推送 `v*` tag 触发。`release.yml` 会先校验 tag 名符合语义化版本格式、且指向的提交位于 `master`，否则拒绝发布；随后运行 `go test -race ./...` 与 `go build ./...`，最后自动创建 GitHub Release。打 tag 的完整流程见 README 的「发版」一节，版本号格式与递增规则见[版本策略](../docs/versioning.md)。
+
+- tag 必须是 `v<major>.<minor>.<patch>` 形式的合法语义化版本，`v1`、`v0.3` 这类会被拒绝。
+- 不要给未合入 `master` 的提交打 tag，工作流会直接失败。
+- 破坏性变更随次版本号一并发布，不需要升主版本或改模块路径（v0 阶段）。
