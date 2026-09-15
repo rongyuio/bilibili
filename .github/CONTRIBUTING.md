@@ -52,4 +52,42 @@ type Article struct {
 本项目不做太多的编码风格限制，就提这样一个建议吧：
 
 - 如果是纯粹的接口调用函数，请参考现有的函数写法。
-- 如果是其它函数，不限制编码风格，在提交pull request时会带有golangci-lint检测，请确保通过即可。
+- 如果是其它函数，不限制编码风格，在提交 pull request 时会带有 golangci-lint 检测，请确保通过即可。
+
+## 关于提交消息
+
+格式为 [Conventional Commits](https://www.conventionalcommits.org/) 加中文描述：
+
+```text
+<type>(<scope>): <中文描述>
+```
+
+- `type` 必填，`scope` 可选，冒号后必须有一个空格，描述使用中文。
+- 一个提交只做一件事，描述用祈使句说清"做了什么"，避免"修改"、"更新"这类无信息量的表述。
+- 标题不写句号，长度尽量控制在 72 字符以内。
+
+常用 `type`：
+
+| type | 用途 |
+| --- | --- |
+| `feat` | 新增接口或功能 |
+| `fix` | 修复缺陷 |
+| `refactor` | 重构，不改变对外行为 |
+| `docs` | 文档、注释、示例 |
+| `test` | 测试 |
+| `chore` | 构建、依赖、工具链等杂项 |
+| `ci` | CI 配置 |
+| `style` | 仅格式调整 |
+| `perf` | 性能优化 |
+
+`scope` 使用受影响的模块或文件名，例如：
+
+```text
+refactor(api): 细分模型文件并下沉剩余响应模型
+fix(params): 修正参数名推导，初始缩写字段的键名与旧写法保持一致
+chore(lint): 清零 golangci-lint 告警并让门禁转为阻断
+ci: 推送 v* 标签时自动创建 GitHub Release
+docs: 补充第五轮重构迁移说明
+```
+
+破坏性变更在 `type` 后加 `!`（如 `refactor(api)!: ...`），并在提交正文中说明影响与迁移方式，同时必须在[迁移指南](../docs/migration.md)中补充对应条目。
