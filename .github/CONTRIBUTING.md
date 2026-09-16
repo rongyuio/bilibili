@@ -107,6 +107,8 @@ git switch <type>/<描述>        # 切到分支继续
 | `style` | 仅格式调整 |
 | `perf` | 性能优化 |
 
+PR 标题同样使用上述格式：`.github/workflows/label.yml` 会根据前缀自动打上 `feat`、`fix`、`docs` 等 label（标题含 `!` 时追加 `breaking`），Release Notes 依据这些 label 分类——所以 PR 标题的 `type` 不要省略，也不要使用上表之外的 `type`，否则会落到兜底的「其它变更」。
+
 `scope` 使用受影响的模块或文件名，例如：
 
 ```text
