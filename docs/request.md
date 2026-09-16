@@ -57,7 +57,7 @@ query 可以与一种请求体并存，Content-Type 由请求体类型决定。�
 
 ## 分类与判断
 
-标准业务响应先判断 `code`，非零时返回业务错误；成功后再解码 `data`，失败时不写入部分结果。
+标准业务响应先判断 `code`，非零时返回业务错误；成功后再解码 `data`，解码失败时不写入部分结果。单个字段的 JSON 类型与模型不符属于例外：该字段被丢弃并上报，其余字段照常写入，见[单个字段类型不符时的容错](#单个字段类型不符时的容错)。
 
 HTTP 状态不符合接口要求时，库返回可通过 `errors.As` 提取的 `*HTTPError`，包含 `Method`、`Endpoint` 和 `StatusCode`。库生成的 Endpoint 去掉查询参数、用户信息和片段；该错误不保存请求头、Cookie 或响应体。
 
@@ -110,6 +110,30 @@ if errors.As(err, &de) {
 
 `JSONPath` 包含数组下标，例如 `$.data.items[3].modules.module_author.mid`；匿名结构通过根类型与 Go 字段链定位。`Offset` 从响应体第一个字节起按 1 计数，零表示不可用。原始错误保留在错误链中，包括可通过 `errors.As` 提取的 `*json.UnmarshalTypeError`。
 
-正常响应只使用标准库解码；失败时才额外扫描 JSON。自定义解码器不重复执行，最多定位到其字段边界，多个不确定边界退回共同父级并标记 `Exact=false`；语法错误只报告可用偏移量。诊断记录首个能确认的不匹配，不保证枚举所有问题。错误文本不包含字段值、完整响应或查询参数；JSON 路径中的 map 键仍来自响应，分享日志前请注意这一点。
+正常响应只使用标准库解码，不额外遍历 JSON；解码失败后才会扫描：先尝试剪掉类型不兼容的字段重试，重试仍失败才生成诊断。诊断基于**未剪枝的原始响应体**，路径与偏移因此始终对应原始字节。自定义解码器不重复执行，最多定位到其字段边界，多个不确定边界退回共同父级并标记 `Exact=false`；语法错误只报告可用偏移量。诊断记录首个能确认的不匹配，不保证枚举所有问题。错误文本不包含字段值、完整响应或查询参数；JSON 路径中的 map 键仍来自响应，分享日志前请注意这一点。
 
-先判断业务 `code`，再解码 `data`，避免业务错误被结果类型不匹配掩盖。失败时不向 `out` 写入部分结果，不自动将无效值转成零。`out=nil` 时不会检查 `data` 的字段类型。
+先判断业务 `code`，再解码 `data`，避免业务错误被结果类型不匹配掩盖。解码失败时不向 `out` 写入部分结果。容错丢弃的字段保持零值，但会显式上报，不是静默转零。`out=nil` 时不会检查 `data` 的字段类型。
+
+## 单个字段类型不符时的容错
+
+服务端偶尔会改变某个字段的 JSON 类型（例如动态的 `following` 在未登录时返回 `null`、登录态返回布尔、更早的样本返回数字）。这类漂移只会丢弃该字段，不会作废整条响应：
+
+- 严格解码失败后，库把 JSON 类型与 Go 类型不兼容的叶子替换为 `null` 再解码一次。
+- 根节点（`data` 本身）不参与容错，接口整体形态变化仍然返回 `DecodeError`。
+- 实现了自定义 `UnmarshalJSON` / `UnmarshalText` 的类型是不透明边界，其内部失败不被容错。
+- map 键无法转换、JSON 语法错误等无法靠丢弃字段修复的情况仍然报错。
+- 容错成功时调用返回 `nil`，被丢弃的字段保持零值。
+
+需要感知漂移时注册回调：
+
+```go
+client.SetDroppedFieldHandler(func(field bilibili.DroppedField) {
+    log.Printf("接口=%s 类型=%s JSON路径=%s 预期=%s 实际=%s 偏移=%d",
+        field.Endpoint, field.RootType, field.JSONPath,
+        field.Expected, field.Actual, field.Offset)
+})
+```
+
+`DroppedField` 的字段与 `DecodeError` 对齐（`Method`、`Endpoint`、`RootType`、`GoField`、`JSONPath`、`Expected`、`Actual`、`Offset`），不含字段值。同一条响应可能触发多次调用，回调在请求的 goroutine 中执行，必须并发安全；不同请求之间也可能并发。传入 `nil` 只关闭上报，容错仍然开启。该设置与 Cookie、会话切换一样，必须在请求之外调用。
+
+此前依赖「漂移字段会返回 `DecodeError`」做告警的代码，请改为在回调中记录。

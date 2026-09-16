@@ -34,6 +34,7 @@
 - **WBI 签名**：按需对 query 参数签名，密钥自动缓存并按周期刷新
 - **统一请求链路**：全部内置接口共用同一套 Cookie 快照、参数编码、context 取消与错误处理
 - **结构化错误诊断**：`HTTPError` / `Error` / `ParamError` / `DecodeError` 均支持 `errors.As`，解码失败时给出 JSON 路径与偏移
+- **容错解码**：单个字段的 JSON 类型与模型不符时只丢弃该字段并经 `SetDroppedFieldHandler` 上报，不连累整条响应
 - **逃生通道**：尚未封装的接口可通过 `Client.Do` 复用同一套能力
 
 ## 快速开始
@@ -224,6 +225,17 @@ default:
 ```
 
 `ParamError` 提供参数类型、字段与位置；`DecodeError` 提供 JSON 路径、Go 字段及预期类型。完整示例见 [请求与错误处理](docs/request.md)；记录错误时不要输出 Cookie、凭证或完整响应。
+
+单个字段的 JSON 类型与模型不符时，该字段被丢弃（保持零值）并上报，其余字段照常解码；`DecodeError` 只在这类容错也失败时返回。需要感知漂移时注册回调：
+
+```go
+client.SetDroppedFieldHandler(func(field bilibili.DroppedField) {
+    log.Printf("接口=%s JSON路径=%s 预期=%s 实际=%s",
+        field.Endpoint, field.JSONPath, field.Expected, field.Actual)
+})
+```
+
+回调在同一条响应内可能被多次调用，且可能在并发请求中执行。规则边界见 [请求与错误处理](docs/request.md#单个字段类型不符时的容错)。
 
 ## 详细文档
 

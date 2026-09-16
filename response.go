@@ -21,7 +21,7 @@ func decodeWBIResponse(body []byte, out any) error {
 	return nil
 }
 
-func decodeResponse(method, endpoint string, body []byte, out any) error {
+func decodeResponse(method, endpoint string, body []byte, out any, onDrop DroppedFieldHandler) error {
 	if err := validateOutput(out); err != nil {
 		return err
 	}
@@ -41,16 +41,38 @@ func decodeResponse(method, endpoint string, body []byte, out any) error {
 	if len(envelope.Data) == 0 {
 		envelope.Data = json.RawMessage("null")
 	}
-	if err := json.Unmarshal(envelope.Data, value.Interface()); err != nil {
-		var offset int64
-		// Only failures need to locate data within the original response.
-		for _, child := range jsonChildren(body) {
-			if strings.EqualFold(child.key, "data") {
-				offset = child.offset
-			}
-		}
-		return newDecodeError(method, endpoint, envelope.Data, target.Type(), "$.data", offset, err)
+	err := json.Unmarshal(envelope.Data, value.Interface())
+	if err == nil {
+		target.Set(value.Elem())
+		return nil
 	}
-	target.Set(value.Elem())
-	return nil
+	// Only failures need to locate data within the original response.
+	offset, found := dataOffset(body)
+	// 单个字段的类型漂移不应作废整条响应：剪掉不兼容的叶子后重试。
+	// 诊断始终基于未剪枝的字节，偏移量才能指向原始响应体。
+	if pruned, dropped, changed := tolerateDecode(envelope.Data, target.Type(), offset, found, onDrop != nil); changed {
+		retry := reflect.New(target.Type())
+		if json.Unmarshal(pruned, retry.Interface()) == nil {
+			target.Set(retry.Elem())
+			endpoint, root := safeEndpoint(endpoint), diagnosticTypeName(target.Type())
+			for _, field := range dropped {
+				field.Method, field.Endpoint, field.RootType = method, endpoint, root
+				onDrop(field)
+			}
+			return nil
+		}
+	}
+	return newDecodeError(method, endpoint, envelope.Data, target.Type(), "$.data", offset, err)
+}
+
+// dataOffset 返回 data 值在响应体中的 0 起始偏移；响应缺少 data 时 found 为 false。
+func dataOffset(body []byte) (int64, bool) {
+	var offset int64
+	found := false
+	for _, child := range jsonChildren(body) {
+		if strings.EqualFold(child.key, "data") {
+			offset, found = child.offset, true
+		}
+	}
+	return offset, found
 }

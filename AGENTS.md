@@ -65,7 +65,7 @@ Client.<Method>(ctx, param)
 
 - **context 永远作为首参。** 所有网络方法都以 `ctx context.Context` 为第一个参数。`checkContext` 在任何工作开始前拒绝 nil / 已结束的 context。context 也会传入 WBI 密钥刷新。
 - **每次请求只取一次 Cookie 快照。** `newRequest` 通过 `GetCookies()` 深拷贝一次快照；CSRF 和各接口签名都读取这份快照。响应 Cookie 在 `sendRaw` 中合并回客户端（HTTP / 业务错误时同样合并）。`Client` 首次使用后不可复制；普通请求可并发，但登录 / 会话切换 / 配置变更必须在请求之外串行进行。
-- **解码到全新的值。** `decodeResponse`（response.go）先检查 `code` 信封，非零时返回 `Error`，再把 `data` 反序列化到一个全新值，因此 `out` 绝不会被部分写入。WBI 密钥请求是例外：它走 `decodeWBIResponse`，忽略非零业务码，因为 nav 可能在返回可用签名密钥的同时给出非零 `code`。`out == nil` 表示"只检查状态码与业务码"。
+- **解码到全新的值。** `decodeResponse`（response.go）先检查 `code` 信封，非零时返回 `Error`，再把 `data` 严格反序列化到一个全新值，因此 `out` 绝不会被部分写入。严格解码失败时，`decode_tolerate.go` 会把 JSON kind 与 Go 类型不兼容的叶子替换成 `null`，再解码到**另一个全新值**重试；重试成功则写入 `out`，并通过 `DroppedFieldHandler` 上报被丢弃的字段。根节点不参与剪枝（`data` 整体形态变化仍然报错），实现了自定义 unmarshaler 的类型是不透明边界。容错重试仍失败时才用**未剪枝的原始字节**生成诊断。WBI 密钥请求是例外：它走 `decodeWBIResponse`，忽略非零业务码且不容错，因为 nav 可能在返回可用签名密钥的同时给出非零 `code`。`out == nil` 表示"只检查状态码与业务码"。
 - **`execute[Out]` 对返回类型泛型**；`Out` 通常是 `*SomeResult` 或 `any`。
 
 ### 参数编码（`params.go`）
@@ -100,7 +100,7 @@ CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它
 - `*ParamError` —— `RootType`、`GoField`（可能含切片下标，如 `IDs[2]`）、`Parameter`、`Location`，以及包装的 `Err`（`Unwrap`）。`Error()` 刻意不输出参数值和原始错误文本。
 - `*DecodeError` —— `Method`、`Endpoint`、`RootType`、`GoField`、`JSONPath`（例如 `$.data.items[3].modules.module_author.mid`）、`Expected`、`Actual`、从 1 开始计数的 `Offset`、`Exact`，以及包装的 `Err`。
 
-网络故障、取消和超时保留原始错误链（不会转换成 `HTTPError`）。`decode_diagnostic.go` / `decode_fields.go` 实现失败后的 JSON 路径 / 偏移定位；它**仅在**解码失败后运行，绝不重复执行自定义 unmarshaler，当只能定位到边界时标记 `Exact=false`。不要把 `ParamError.Err`、响应值、Cookie 或凭证泄漏到日志中。
+网络故障、取消和超时保留原始错误链（不会转换成 `HTTPError`）。`decode_diagnostic.go` / `decode_fields.go` 实现失败后的 JSON 路径 / 偏移定位；它**仅在**解码失败后运行，绝不重复执行自定义 unmarshaler，当只能定位到边界时标记 `Exact=false`，且始终基于未剪枝的原始字节，因此 `JSONPath` 与 `Offset` 不受容错影响。`DecodeError` 只在容错也失败时返回；被容错丢弃的字段不是错误，改用 `DroppedField` 上报（`decode_tolerate.go`，经 `SetDroppedFieldHandler` 注册），同样不含字段值。不要把 `ParamError.Err`、响应值、Cookie 或凭证泄漏到日志中。
 
 ## 客户端构造与会话
 

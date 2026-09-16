@@ -54,11 +54,45 @@ func TestNumberOrStringNull(t *testing.T) {
 	}
 }
 
+func TestNumberOrStringBool(t *testing.T) {
+	for in, want := range map[string]string{"true": "true", "false": "false"} {
+		var n NumberOrString
+		if err := json.Unmarshal([]byte(in), &n); err != nil {
+			t.Fatal(err)
+		}
+		if n.Kind() != "boolean" {
+			t.Errorf("Kind = %q, want boolean", n.Kind())
+		}
+		if n.String() != want {
+			t.Errorf("String = %q, want %s", n.String(), want)
+		}
+		if _, err := n.Int64(); err == nil {
+			t.Errorf("Int64 should fail for %s", in)
+		}
+		if _, err := n.Float64(); err == nil {
+			t.Errorf("Float64 should fail for %s", in)
+		}
+	}
+}
+
 func TestNumberOrStringInvalid(t *testing.T) {
-	for _, in := range []string{`{"a":1}`, `[1]`, `true`} {
+	// 语法非法的输入由 encoding/json 在调用 UnmarshalJSON 之前拒绝，不会返回本错误。
+	for _, in := range []string{`{"a":1}`, `[1]`} {
 		var n NumberOrString
 		if err := json.Unmarshal([]byte(in), &n); !errors.Is(err, errInvalidNumberOrString) {
 			t.Errorf("Unmarshal(%s) err = %v, want errInvalidNumberOrString", in, err)
+		}
+	}
+}
+
+// TestNumberOrStringKindAgreement 锁住 UnmarshalJSON 与共享判定的一致性，
+// 避免解码层与诊断/容错层对同一个 kind 得出不同结论。
+func TestNumberOrStringKindAgreement(t *testing.T) {
+	for _, in := range []string{"null", "123", `"x"`, "true", "{}", "[]"} {
+		var n NumberOrString
+		err := json.Unmarshal([]byte(in), &n)
+		if accepted := numberOrStringAcceptsKind(jsonKind([]byte(in))); accepted == (err != nil) {
+			t.Errorf("kind %q: acceptsKind = %t, err = %v; want 两者一致", in, accepted, err)
 		}
 	}
 }
@@ -71,6 +105,8 @@ func TestNumberOrStringMarshalRoundTrip(t *testing.T) {
 		{"123", "123"},
 		{`"hello"`, `"hello"`},
 		{`"--"`, `"--"`},
+		{"true", "true"},
+		{"false", "false"},
 		{"null", "null"},
 	}
 	for _, c := range cases {
