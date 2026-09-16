@@ -129,7 +129,7 @@ CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它
 
 ## 文档
 
-- `README.md` —— 概览、快速开始、各业务域用法示例、贡献、验证与发版。
+- `README.md` —— 概览、特性、快速开始、各业务域用法示例、贡献、验证与发版。
 - `docs/authentication.md` —— 游客初始化、扫码 / 密码 / 短信登录、Cookie 保存与恢复、Resty 接管。
 - `docs/request.md` —— `Client.Do` 逃生通道、`request` 标签规则、错误分类、解码诊断。
 - `docs/migration.md` —— 模块路径、context 签名、会话规则，以及 v0 各轮重构中的模型与字段重命名。

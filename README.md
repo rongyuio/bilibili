@@ -1,16 +1,23 @@
 # 哔哩哔哩 API Go 客户端
 
+[![Go](https://github.com/rongyuio/bilibili/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/rongyuio/bilibili/actions/workflows/golangci-lint.yml)
+[![GoFmt](https://github.com/rongyuio/bilibili/actions/workflows/gofmt.yml/badge.svg)](https://github.com/rongyuio/bilibili/actions/workflows/gofmt.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/rongyuio/bilibili.svg)](https://pkg.go.dev/github.com/rongyuio/bilibili)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+
 基于 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 继续维护的 Go 客户端，封装 Bilibili API，提供 Cookie 管理、WBI 签名、context 取消和结构化错误定位。
 
 模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.26 或更新版本，依赖以 [go.mod](go.mod) 为准。接口可能随服务端变化。
 
 - [维护状态](#维护状态)
+- [特性](#特性)
 - [快速开始](#快速开始)
 - [常用接口](#常用接口)
 - [自定义请求](#自定义请求)
 - [错误处理](#错误处理)
 - [详细文档](#详细文档)
 - [开发与贡献](#开发与贡献)
+- [License](#license)
 - [声明](#声明)
 
 ## 维护状态
@@ -19,6 +26,14 @@
 - 本 fork **继续维护**：跟进新增接口，已实现接口在发现问题时修复。以自用为主，不承诺固定的支持范围与响应时间。
 - 本仓库保留 fork 关联；`master` 已开启分支保护（改动须经 PR 合入，禁止强制推送与删除）。
 - 版本处于 **v0 阶段**，允许在次版本号内引入破坏性变更。升级前请阅读[迁移指南](docs/migration.md)。
+
+## 特性
+
+- **Cookie 管理**：浏览器 Cookie 导入、游客初始化、扫码 / 密码 / 短信登录，以及 Cookie 的保存与恢复
+- **WBI 签名**：按需对 query 参数签名，密钥自动缓存并按周期刷新
+- **统一请求链路**：全部内置接口共用同一套 Cookie 快照、参数编码、context 取消与错误处理
+- **结构化错误诊断**：`HTTPError` / `Error` / `ParamError` / `DecodeError` 均支持 `errors.As`，解码失败时给出 JSON 路径与偏移
+- **逃生通道**：尚未封装的接口可通过 `Client.Do` 复用同一套能力
 
 ## 快速开始
 
@@ -30,7 +45,7 @@
 go get github.com/rongyuio/bilibili@v0.3.0
 ```
 
-`v0.3.0` 相对 `v0.2.0` 包含第五轮重构：字段命名修正（45 处，JSON 标签不变）、重复模型合并为别名、头像渲染树具名化与文件进一步细分，并把 golangci-lint 告警清零、CI 门禁转为阻断。更早的 `v0.2.0` 已含第三、四轮重构（初始缩写规范化 `Id`→`ID`、`Url`→`URL` 等、字段命名缺陷修正、参数名推导兼容修复）。v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
+v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)与[版本策略](docs/versioning.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
 
 ### 创建客户端并调用接口
 
@@ -289,10 +304,11 @@ replace github.com/rongyuio/bilibili => ../bilibili
 - `go vet ./...`：静态检查。
 - `gofmt -s -w <文件.go>`：格式化修改的文件。
 - `golangci-lint run`：使用仓库 v2 配置。
+- `go test ./...`：运行单元测试；CI 使用 `go test -race -v ./...`。
 
-默认以编译和静态检查验证，不运行真实 API 或本地账号工具；已有测试使用标准库 `testing`，按任务要求执行。编译通过不等于实机或并发行为已验证。
+测试均为纯逻辑单元测试，**不会**访问真实 API，也不需要凭证；CI 在向 `master` 的 push 与 PR 上运行上述全部检查。编译与测试通过不等于实机或并发行为已验证——`test/` 下的账号工具需自行运行。
 
-贡献规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)。反馈问题请说明方法、错误类型和必要的脱敏信息，不提交凭证。被忽略的 `test/` 为本地工具，不随仓库分发。
+贡献规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)；安全问题请按 [SECURITY.md](.github/SECURITY.md) 私下报告，参与讨论请遵守 [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md)。反馈问题请说明方法、错误类型和必要的脱敏信息，不提交凭证。被忽略的 `test/` 为本地工具，不随仓库分发。
 
 ### 发版
 
@@ -310,13 +326,16 @@ tag 名含 `-` 后缀（如 `v0.4.0-rc.1`）时发布为 Pre-release，否则标
 
 版本号格式、递增规则与 v0 阶段的兼容性约定见[版本策略](docs/versioning.md)。
 
+## License
+
+本项目以 **AGPL-3.0** 授权，详见 [LICENSE](LICENSE)。作为 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 的衍生作品，需继续以 AGPL 授权并保留原作者署名；以网络服务方式对外提供时，需按要求向使用者提供源代码。
+
 ## 声明
 
-1. 本项目遵守 **AGPL-3.0** 开源协议，fork 自 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili)。衍生作品需继续以 AGPL 授权并保留原作者署名；以网络服务方式对外提供时，需按要求向使用者提供源代码。
-2. 本项目基于 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
+1. 本项目基于 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
    中描述的接口编写。请尊重该项目作者的努力，遵循该项目的开源要求，禁止一切商业使用。
-3. **请勿滥用，本项目仅用于学习和测试！利用本项目提供的接口、文档等造成不良影响及后果与本人无关。**
-4. 由于本项目的特殊性，可能随时停止开发或删档
-5. 本项目为开源项目，不接受任何形式的催单和索取行为，更不容许存在付费内容
+2. **请勿滥用，本项目仅用于学习和测试！利用本项目提供的接口、文档等造成不良影响及后果与本人无关。**
+3. 由于本项目的特殊性，可能随时停止开发或删档
+4. 本项目为开源项目，不接受任何形式的催单和索取行为，更不容许存在付费内容
 
 PS：目前，B站调用接口时强制使用 `https` 协议
