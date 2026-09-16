@@ -19,10 +19,12 @@ var errNoCookies = errors.New("initialize anonymous client: response contains no
 // Login, session replacement and configuration changes must happen between requests.
 // A Client must not be copied after first use.
 type Client struct {
-	wbi      *WBI
-	resty    *resty.Client
-	cookieMu sync.Mutex
-	cookies  []*http.Cookie
+	wbi         *WBI
+	resty       *resty.Client
+	cookieMu    sync.Mutex
+	cookies     []*http.Cookie
+	dropMu      sync.RWMutex
+	dropHandler DroppedFieldHandler
 }
 
 // New 返回一个默认的 bilibili.Client

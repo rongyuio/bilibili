@@ -15,11 +15,12 @@
 | `client.Wbi`、`FillWbiHandler(...)` | `Client.Do(ctx, Request{WBI: true, ...}, &data)`；签名器由客户端管理 |
 | 自定义接口 `SetResult(&response)` | `Do(..., &response.Data)`，并处理返回的业务错误 |
 | `VideoStatusNumber.View` 为 `json.Number` | 改为 `NumberOrString`，仍提供 `String()`、`Int64()`、`Float64()` |
+| 动态的两处 `Following` 为 `json.Number` | 改为 `NumberOrString`，读取改用 `Kind()`、`String()` |
 | 根据错误字符串或堆栈定位 | `errors.As(err, &decodeError)` 获取结构化位置 |
 
-`NumberOrString` 保留数字、字符串（包括 `"--"`）与 `null`，`Kind()` 返回 `number`、`string` 或 `null`。数值转换会显式返回错误，JSON 再编码保留原始类别；零值表示 `null`。原有直接赋值 `json.Number` 或强制转换为字符串的代码需要迁移到这些方法；需要构造值时可使用 `json.Unmarshal`。
+`NumberOrString` 保留数字、字符串（包括 `"--"`）、布尔值与 `null`，`Kind()` 返回 `number`、`string`、`boolean` 或 `null`。数值转换会显式返回错误，布尔与 `"--"` 都会失败；JSON 再编码保留原始类别；零值表示 `null`。原有直接赋值 `json.Number` 或强制转换为字符串的代码需要迁移到这些方法；需要构造值时可使用 `json.Unmarshal`。
 
-其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。动态数据中的两处 `Following` 已根据实际响应改为 `json.Number`，迁移方式见下文。
+其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。动态数据中的两处 `Following` 的类型经历过多次调整，见下文。
 
 ## Context 签名
 
@@ -71,26 +72,50 @@ item.Orig.Modules.ModuleDynamic.Major = bilibili.DynamicOriginalMajor{
 
 两套模型的差异完整保留：外层 `Major` 是指针，原动态 `Major` 是值；外层 `Basic.LikeIcon.Id` 为 `json.Number`，原动态对应字段为 `int`。原动态头像、作者和富文本也有不同字段，不能直接复用外层模块。除头像 `fallback_layers` 渲染树外，更深层的匿名结构已在[第二轮重构](#第二轮重构方法模型拆分与去重)中提取为具名类型。
 
-模型提取本身没有修改 JSON 标签、字段顺序、叶子类型或指针／切片结构，没有新增自定义反序列化；`DecodeError` 仍按既有规则遍历模型并报告 JSON 路径和 Go 字段。随后单独修复了两处 `Following` 类型，见下文。
+模型提取本身没有修改 JSON 标签、字段顺序、叶子类型或指针／切片结构，没有新增自定义反序列化；`DecodeError` 仍按既有规则遍历模型并报告 JSON 路径和 Go 字段。随后单独修复了两处 `Following` 类型，见下文；解码语义也在之后的〈解码容错〉一节中变更，本节描述的是当时的状态。
 
-## Following 数值状态修复
+## Following 类型漂移修复
 
-`DynamicModuleAuthor.Following` 和 `DynamicOriginalModuleAuthor.Following` 从 `bool` 改为 `json.Number`。该字段返回数值状态，暂不定义未经确认的状态常量，也不将非零值解释为“已关注”。
+`DynamicModuleAuthor.Following` 和 `DynamicOriginalModuleAuthor.Following` 经历过两次调整：先由 `bool` 改为 `json.Number`，随后发现线上返回的 JSON 类型并不固定——未登录为 `null`，登录态为布尔，早期调试样本为数字 `1`/`2`。两处现已改为 `NumberOrString`。`topic_model.go` 中同一字段一直沿用 `any`，可作为「该字段在上游文档中没有固定类型」的旁证。
 
-字段不能再直接用于布尔条件；显示原始状态使用 `String()`，需要数值时调用 `Int64()` 并处理错误。不要忽略转换失败，也不要把失败转换成零：
+字段的完整状态含义仍未确认，本库不定义状态常量，也不把非零值解释为“已关注”。判断原始类别用 `Kind()`，取值用 `String()`；只有确认是数字时才调用 `Int64()` 并处理错误，不要忽略转换失败，也不要把失败转换成零：
 
 ```go
-rawStatus := item.Modules.ModuleAuthor.Following.String()
-status, err := item.Modules.ModuleAuthor.Following.Int64()
-if err != nil {
-    log.Print("关注状态无法转换为整数")
-    return
+switch following := item.Modules.ModuleAuthor.Following; following.Kind() {
+case "boolean":
+    log.Printf("关注状态=%s", following.String())
+case "number":
+    status, err := following.Int64()
+    if err != nil {
+        log.Print("关注状态无法转换为整数")
+        return
+    }
+    // 按调用方已确认的状态定义处理 status。
+    log.Printf("关注状态数值=%d", status)
+default:
+    log.Printf("关注状态缺失，原文=%q", following.String())
 }
-// 按调用方已确认的状态定义处理 status。
-log.Printf("关注状态原文=%s 数值=%d", rawStatus, status)
 ```
 
 原动态对应字段为 `item.Orig.Modules.ModuleAuthor.Following`，读取方式相同。头像尺寸使用 `float64`，支持小数。
+
+## 解码容错（破坏性）
+
+单个字段的 JSON 类型与模型不符时，库不再让整条响应解码失败：该字段被丢弃（保持零值）并上报，其余字段照常解码，调用返回成功。此前这类漂移会返回 `*DecodeError`。
+
+**迁移**：依赖 `DecodeError` 感知服务端字段漂移的代码，改为注册回调：
+
+```go
+client.SetDroppedFieldHandler(func(field bilibili.DroppedField) {
+    log.Printf("接口=%s 类型=%s JSON路径=%s 预期=%s 实际=%s 偏移=%d",
+        field.Endpoint, field.RootType, field.JSONPath,
+        field.Expected, field.Actual, field.Offset)
+})
+```
+
+边界：`data` 根节点的类型不匹配仍然返回 `DecodeError`；实现自定义 `UnmarshalJSON` / `UnmarshalText` 的类型是不透明边界，其内部失败不被容错；map 键无法转换与 JSON 语法错误同样仍然报错。`DecodeError` 的 `JSONPath` 与 `Offset` 始终基于原始响应体，不受容错影响。完整说明见[请求与错误处理](request.md#单个字段类型不符时的容错)。
+
+按 v0 阶段规则，上述破坏性变更随下一个次版本发布即可，无需升主版本或改模块路径。
 
 ## 第二轮重构：方法/模型拆分与去重
 
@@ -219,7 +244,7 @@ log.Printf("关注状态原文=%s 数值=%d", rawStatus, status)
 - 职责拆分：`wbi.go` 拆出 `wbi_storage.go`（`Storage` 接口与 `MemoryStorage`）；`decode_diagnostic.go` 拆出 `decode_fields.go`（字段匹配与诊断类型名）。
 - `cookie.go` 的 `type ( ... )` 分组声明改为逐个声明，与其它文件保持一致。
 
-同包内的文件搬移不影响导入方式；`wbi.go` 与 `decode_diagnostic.go` 拆分后对外签名、错误语义与 `DecodeError` 可解包性均未变化。
+同包内的文件搬移不影响导入方式；`wbi.go` 与 `decode_diagnostic.go` 拆分后对外签名、错误语义与 `DecodeError` 可解包性均未变化（错误语义此后在〈解码容错〉一节中变更）。
 
 ## 第四轮重构：初始缩写规范化、清理与模型文件细分
 

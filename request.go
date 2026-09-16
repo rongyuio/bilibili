@@ -141,7 +141,7 @@ func (c *Client) send(r *resty.Request, method, endpoint string, out any) error 
 	if resp.StatusCode() != http.StatusOK {
 		return newHTTPError(method, endpoint, resp.StatusCode())
 	}
-	return decodeResponse(method, endpoint, resp.Body(), out)
+	return decodeResponse(method, endpoint, resp.Body(), out, c.droppedFieldHandler())
 }
 
 type paramHandler func(*resty.Request) error
