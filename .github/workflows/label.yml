@@ -1,0 +1,59 @@
+name: Label
+
+# 按 PR 标题的 Conventional Commits 前缀自动打 label，供 .github/release.yml
+# 生成分类的 Release Notes 使用。标题含 `!` 时额外打 breaking。
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply labels from Conventional Commits prefix
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          # 匹配 feat(video): ... / fix!: ... / docs: ... 三种写法，取出 type 与破坏性标记。
+          type=$(printf '%s' "$TITLE" | sed -nE 's/^([a-z]+)(\([^)]*\))?(!)?:.*/\1/p')
+          bang=$(printf '%s' "$TITLE" | sed -nE 's/^([a-z]+)(\([^)]*\))?(!)?:.*/\3/p')
+
+          if [ -z "$type" ]; then
+            echo "标题不符合 Conventional Commits 格式，跳过：$TITLE"
+            exit 0
+          fi
+
+          labels=()
+          case "$type" in
+            feat | feature) labels+=(feat) ;;
+            fix) labels+=(fix) ;;
+            docs) labels+=(docs) ;;
+            chore | build | style | perf) labels+=(chore) ;;
+            ci) labels+=(ci) ;;
+            refactor) labels+=(refactor) ;;
+            test) labels+=(test) ;;
+            *) echo "type 未配置映射，仅按需应用 breaking：$type" ;;
+          esac
+
+          # 标题带 ! 视为破坏性变更，对应 .github/release.yml 的「破坏性变更」类别。
+          if [ -n "$bang" ]; then
+            labels+=(breaking)
+          fi
+
+          if [ ${#labels[@]} -eq 0 ]; then
+            echo "没有需要应用的 label：$TITLE"
+            exit 0
+          fi
+
+          echo "标题：$TITLE"
+          echo "应用 label：${labels[*]}"
+          gh pr edit "$PR" --repo "$REPO" --add-label "$(IFS=,; echo "${labels[*]}")"
