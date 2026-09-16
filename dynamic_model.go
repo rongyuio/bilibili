@@ -58,7 +58,7 @@ type DynamicModuleAuthor struct {
 	Avatar          DynamicAuthorAvatar `json:"avatar"`
 	Face            string              `json:"face"`
 	FaceNft         bool                `json:"face_nft"`
-	Following       json.Number         `json:"following"` // 关注状态；调试样本返回数字 2，不能按布尔值处理，完整状态含义待确认。
+	Following       NumberOrString      `json:"following"` // 关注状态漂移：未登录返回 null、登录态返回布尔、早期调试样本返回数字 1/2；完整状态含义待确认，不定义状态常量。
 	JumpURL         string              `json:"jump_url"`
 	Label           string              `json:"label"`
 	Mid             json.Number         `json:"mid"`

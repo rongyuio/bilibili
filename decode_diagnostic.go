@@ -102,6 +102,35 @@ func hasDecoder(t reflect.Type) bool {
 		t.Implements(textDecoderType) || reflect.PointerTo(t).Implements(textDecoderType)
 }
 
+// scalarTarget 判断该类型应当作为叶子交给 encoding/json 试探，而不是继续向下遍历。
+// 带 ,string 的字段、json.Number、除 []byte 外的标量都属于这一类。
+func scalarTarget(t reflect.Type, quoted bool) bool {
+	if quoted || t == numberType {
+		return true
+	}
+	if t.Kind() == reflect.Struct || t.Kind() == reflect.Map || t.Kind() == reflect.Array || t.Kind() == reflect.Slice {
+		return t.Kind() == reflect.Slice && t.Elem().Kind() == reflect.Uint8 && !hasDecoder(t.Elem())
+	}
+	return true
+}
+
+// probeDecode 用 encoding/json 自身校验叶子值，覆盖 ,string 与数值溢出。
+// 它只解码到一个临时值，不会写入调用方的目标。
+func probeDecode(raw []byte, t reflect.Type, quoted bool) error {
+	if quoted {
+		wrapper := reflect.StructOf([]reflect.StructField{{Name: "Value", Type: t, Tag: `json:"value,string"`}})
+		return json.Unmarshal(append(append([]byte(`{"value":`), raw...), '}'), reflect.New(wrapper).Interface())
+	}
+	return json.Unmarshal(raw, reflect.New(t).Interface())
+}
+
+// mapKeyMismatch 探测字符串键能否转换为 map 的键类型。
+func mapKeyMismatch(key reflect.Type, member string) bool {
+	keyJSON, _ := json.Marshal(member) //nolint:errchkjson // 键为字符串，Marshal 不会失败
+	probe := append(append([]byte{'{'}, keyJSON...), []byte(":null}")...)
+	return json.Unmarshal(probe, reflect.New(reflect.MapOf(key, rawMessageType)).Interface()) != nil
+}
+
 // diagnoseValue never invokes user-defined decoders. A custom decoder is an
 // opaque boundary; if multiple boundaries could fail, retain their common parent.
 func diagnoseValue(raw []byte, t reflect.Type, path, field string, offset int64, quoted bool) (*DecodeError, bool) {
@@ -113,7 +142,7 @@ func diagnoseValue(raw []byte, t reflect.Type, path, field string, offset int64,
 		return nil, false
 	}
 	if t == numberOrStringType {
-		if kind := jsonKind(raw); kind == "number" || kind == "string" || kind == "null" {
+		if numberOrStringAcceptsKind(jsonKind(raw)) {
 			return nil, false
 		}
 		return location, true
@@ -124,20 +153,11 @@ func diagnoseValue(raw []byte, t reflect.Type, path, field string, offset int64,
 	if jsonKind(raw) == "null" {
 		return nil, false
 	}
-	// Validate leaves through encoding/json itself, including ,string and overflow.
-	if quoted || t == numberType || (t.Kind() != reflect.Struct && t.Kind() != reflect.Map && t.Kind() != reflect.Array && t.Kind() != reflect.Slice) ||
-		(t.Kind() == reflect.Slice && t.Elem().Kind() == reflect.Uint8 && !hasDecoder(t.Elem())) {
+	if scalarTarget(t, quoted) {
 		if t.Kind() == reflect.Interface {
 			return nil, false
 		}
-		var err error
-		if quoted {
-			wrapper := reflect.StructOf([]reflect.StructField{{Name: "Value", Type: t, Tag: `json:"value,string"`}})
-			err = json.Unmarshal(append(append([]byte(`{"value":`), raw...), '}'), reflect.New(wrapper).Interface())
-		} else {
-			err = json.Unmarshal(raw, reflect.New(t).Interface())
-		}
-		if err != nil {
+		if probeDecode(raw, t, quoted) != nil {
 			return location, true
 		}
 		return nil, false
@@ -171,9 +191,7 @@ func diagnoseValue(raw []byte, t reflect.Type, path, field string, offset int64,
 				return location, false
 			}
 			// Map-key conversion errors are located at their JSON member.
-			keyJSON, _ := json.Marshal(child.key) //nolint:errchkjson // 键为字符串，Marshal 不会失败
-			probe := append(append([]byte{'{'}, keyJSON...), []byte(":null}")...)
-			if err := json.Unmarshal(probe, reflect.New(reflect.MapOf(t.Key(), rawMessageType)).Interface()); err != nil {
+			if mapKeyMismatch(t.Key(), child.key) {
 				location.JSONPath = appendJSONKey(path, child.key)
 				location.Expected = diagnosticTypeName(t.Key())
 				location.Actual = "object key"
