@@ -62,16 +62,20 @@ func (c *Client) GetLiveFansMedalPanel(ctx context.Context, param GetLiveFansMed
 		"https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/panel", param)
 }
 
+// liveMedalWebLocation 是已激活勋章接口默认的页面位置标识。
+const liveMedalWebLocation = "0.0"
+
 // GetLiveActivatedMedalInfoParam 指定直播间及主播。
 type GetLiveActivatedMedalInfoParam struct {
-	Platform    string `json:"platform"`     // 平台，例如 pc
-	RoomID      int    `json:"room_id"`      // 直播间号
-	TargetID    int64  `json:"target_id"`    // 主播 UID
-	WebLocation string `json:"web_location"` // 页面位置，例如 0.0
+	Platform    string `json:"platform"`                               // 平台，例如 pc
+	RoomID      int    `json:"room_id"`                                // 直播间号
+	TargetID    int64  `json:"target_id"`                              // 主播 UID
+	WebLocation string `json:"web_location" request:"query,omitempty"` // 页面位置；留空时由库填入 liveMedalWebLocation
 }
 
 // GetLiveActivatedMedalInfo 获取已激活勋章及任务信息，CSRF 自动从请求 Cookie 快照填入 query。
 func (c *Client) GetLiveActivatedMedalInfo(ctx context.Context, param GetLiveActivatedMedalInfoParam) (*GetLiveActivatedMedalInfoResult, error) {
+	param.WebLocation = webLocationOrDefault(param.WebLocation, liveMedalWebLocation)
 	return execute[*GetLiveActivatedMedalInfoResult](ctx, c, resty.MethodGet,
 		"https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/GetActivatedMedalInfo", param,
 		func(r *resty.Request) error {
