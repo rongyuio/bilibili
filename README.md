@@ -2,6 +2,7 @@
 
 [![Go](https://github.com/rongyuio/bilibili/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/rongyuio/bilibili/actions/workflows/golangci-lint.yml)
 [![GoFmt](https://github.com/rongyuio/bilibili/actions/workflows/gofmt.yml/badge.svg)](https://github.com/rongyuio/bilibili/actions/workflows/gofmt.yml)
+[![Latest tag](https://img.shields.io/github/v/tag/rongyuio/bilibili?label=latest&sort=semver)](https://github.com/rongyuio/bilibili/tags)
 [![Go Reference](https://pkg.go.dev/badge/github.com/rongyuio/bilibili.svg)](https://pkg.go.dev/github.com/rongyuio/bilibili)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
@@ -22,7 +23,7 @@
 
 ## 维护状态
 
-- 本仓库是 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 的 fork。上游**已归档**：README 标注 Deprecated、默认分支改名为 `deprecated`、issues/discussions/wiki 全部关闭，不再接受改动与合并。其停止维护的原因是所依据的接口文档仓库 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect) 也已归档。
+- 本仓库是 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 的 fork。上游**已归档**：README 标注 Deprecated、默认分支改名为 `deprecated`、issues/discussions/wiki 全部关闭，不再接受改动与合并。其所依据的接口文档仓库 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect) 也已归档。
 - 本 fork **继续维护**：跟进新增接口，已实现接口在发现问题时修复。以自用为主，不承诺固定的支持范围与响应时间。
 - 本仓库保留 fork 关联；`master` 已开启分支保护（改动须经 PR 合入，禁止强制推送与删除）。
 - 版本处于 **v0 阶段**，允许在次版本号内引入破坏性变更。升级前请阅读[迁移指南](docs/migration.md)。
@@ -42,7 +43,7 @@
 在已有 Go 项目的目录中执行：
 
 ```bash
-go get github.com/rongyuio/bilibili@v0.3.0
+go get github.com/rongyuio/bilibili@latest
 ```
 
 v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)与[版本策略](docs/versioning.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
@@ -87,30 +88,11 @@ client := bilibili.New()
 client.SetRawCookies(cookieHeader) // cookieHeader 由调用方读取，不写入代码或日志。
 ```
 
-`New()` 不联网。需要游客 Cookie 时使用 `NewAnonymousClient(ctx)` 并处理返回错误。扫码登录流程如下，`ctx` 应预留人工确认所需时间：
-
-```go
-qr, err := client.GetQRCode(ctx)
-if err != nil {
-    log.Printf("获取二维码失败: %v", err)
-    return
-}
-qr.Print()
-result, err := client.LoginWithQRCode(ctx, bilibili.LoginWithQRCodeParam{QrcodeKey: qr.QrcodeKey})
-if err != nil {
-    log.Printf("扫码登录失败: %v", err)
-    return
-}
-if result.Code != 0 {
-    log.Printf("扫码登录未完成，状态码: %d", result.Code)
-    return
-}
-log.Println("登录成功")
-```
-
-登录成功后客户端自动保存 Cookie。保存与恢复、密码和短信登录、Resty 接管见 [认证与会话](docs/authentication.md)。
+`New()` 不联网；需要游客 Cookie 时用 `NewAnonymousClient(ctx)`。扫码登录用 `GetQRCode` 取码、`qr.Print()` 展示、再用 `LoginWithQRCode` 轮询结果，登录成功后客户端自动保存 Cookie；`ctx` 应预留人工确认所需时间。密码与短信登录、Cookie 的保存与恢复、Resty 接管见 [认证与会话](docs/authentication.md)。
 
 ## 常用接口
+
+以下示例聚焦调用方式，省略了错误判断；完整写法见上文的「创建客户端并调用接口」。
 
 ### 视频与空间动态
 
@@ -122,10 +104,6 @@ page, err := client.GetUserSpaceDynamic(ctx, bilibili.GetUserSpaceDynamicParam{
     TimezoneOffset: -480,
     Features:       "itemOpusStyle",
 })
-if err != nil {
-    log.Printf("获取空间动态失败: %v", err)
-    return
-}
 for _, item := range page.Items {
     log.Println(item.IDStr.String(), item.Modules.ModuleAuthor.Name)
 }
@@ -137,10 +115,6 @@ for _, item := range page.Items {
 
 ```go
 info, err := client.GetVideoInfo(ctx, bilibili.VideoParam{Bvid: bvid})
-if err != nil {
-    log.Printf("获取视频信息失败: %v", err)
-    return
-}
 err = client.ReportVideoWatchTime(ctx, bilibili.ReportVideoWatchTimeParam{
     Bvid:          bvid,
     Cid:           info.Cid,
@@ -148,9 +122,6 @@ err = client.ReportVideoWatchTime(ctx, bilibili.ReportVideoWatchTimeParam{
     PlayedTime:    info.Duration, // 播放进度（秒）
     VideoDuration: info.Duration, // 视频总时长（秒）
 })
-if err != nil {
-    log.Printf("上报观看时长失败: %v", err)
-}
 ```
 
 参数校验在发出请求前完成：`cid`、`realtime`、`video_duration` 必须大于 0，`aid` 与 `bvid` 任选一个（`bvid` 需为 12 位）；`played_time` 传 `VideoPlayedComplete`（-1）表示已看完。清晰度由库固定为 `VideoQuality720P`，如需其他清晰度见 [video_stream_model.go](video_stream_model.go) 中的 `VideoQuality*` 常量。
@@ -166,10 +137,6 @@ result, err := client.GetTopicFeed(ctx, bilibili.GetTopicFeedParam{
     PageSize:    20,
     Features:    "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard",
 })
-if err != nil {
-    log.Printf("获取话题动态失败: %v", err)
-    return
-}
 for _, item := range result.TopicCardList.Items {
     if item.DynamicCardItem.Type == "DYNAMIC_TYPE_AV" {
         log.Println(item.DynamicCardItem.Modules.ModuleDynamic.Major.Archive.Bvid)
@@ -187,10 +154,6 @@ for _, item := range result.TopicCardList.Items {
 panel, err := client.GetLiveFansMedalPanel(ctx, bilibili.GetLiveFansMedalPanelParam{
     Page: 1, PageSize: 10,
 })
-if err != nil {
-    log.Printf("获取勋章面板失败: %v", err)
-    return
-}
 log.Printf("本页普通勋章数: %d，总页数: %d", len(panel.List), panel.PageInfo.TotalPage)
 ```
 
@@ -202,10 +165,6 @@ log.Printf("本页普通勋章数: %d，总页数: %d", len(panel.List), panel.P
 
 ```go
 result, err := client.GetActivityLotteryTimes(ctx, bilibili.GetActivityLotteryTimesParam{Sid: sid})
-if err != nil {
-    log.Printf("查询活动抽奖次数失败: %v", err)
-    return
-}
 log.Printf("剩余抽奖次数: %d", result.Times)
 ```
 
@@ -227,53 +186,44 @@ log.Printf("剩余抽奖次数: %d", result.Times)
 
 ## 自定义请求
 
-使用 `Client.Do` 复用客户端的 Cookie、网络配置、签名和解码流程。以下函数只演示调用方式，需由调用方提供 context 和客户端：
+尚未封装的接口可以用 `Client.Do`，复用客户端的 Cookie、网络配置、签名与解码流程：
 
 ```go
-func loadAccount(ctx context.Context, client *bilibili.Client, mid string) error {
-    var result struct {
-        Mid  int64  `json:"mid"`
-        Name string `json:"name"`
-    }
-    err := client.Do(ctx, bilibili.Request{
-        Method: http.MethodGet,
-        URL:    "https://api.bilibili.com/x/space/wbi/acc/info",
-        Query:  url.Values{"mid": {mid}},
-        WBI:    true,
-    }, &result)
-    if err != nil {
-        return err
-    }
-    fmt.Println(result.Name)
-    return nil
+var result struct {
+    Mid  int64  `json:"mid"`
+    Name string `json:"name"`
 }
+err := client.Do(ctx, bilibili.Request{
+    Method: http.MethodGet,
+    URL:    "https://api.bilibili.com/x/space/wbi/acc/info",
+    Query:  url.Values{"mid": {mid}},
+    WBI:    true,
+}, &result)
 ```
 
-示例需导入 `github.com/rongyuio/bilibili`、`context`、`fmt`、`net/http`、`net/url`。`out` 接收 `data`，传 `nil` 只检查状态及业务错误；WBI 只签 query，CSRF 由调用方按接口要求提供。`Form` 与 `JSON` 互斥。参数规则与边界见 [请求与错误处理](docs/request.md)。
+示例需导入 `github.com/rongyuio/bilibili`、`context`、`net/http`、`net/url`。`out` 接收 `data`，传 `nil` 只检查状态及业务错误；WBI 只签 query，CSRF 由调用方按接口要求提供；`Form` 与 `JSON` 互斥。参数规则与边界见 [请求与错误处理](docs/request.md)。
 
 ## 错误处理
 
-通过标准库 `errors.Is` 判断取消和超时，通过 `errors.As` 提取错误类型：
+错误类型按 `errors.Is` / `errors.As` 设计：网络故障、取消与超时保留原始错误链，`*HTTPError`、`Error`、`*ParamError`、`*DecodeError` 可依次提取。
 
 ```go
-if err != nil {
-    var he *bilibili.HTTPError
-    var be bilibili.Error
-    switch {
-    case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
-        return
-    case errors.As(err, &he):
-        log.Printf("接口=%s %s HTTP状态=%d", he.Method, he.Endpoint, he.StatusCode)
-    case errors.As(err, &be):
-        log.Printf("业务错误码=%d", be.Code)
-    default:
-        // 参数与解码失败仍可继续用 errors.As 提取 ParamError、DecodeError。
-        log.Print("请求失败")
-    }
+var he *bilibili.HTTPError
+var be bilibili.Error
+switch {
+case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+    return
+case errors.As(err, &he):
+    log.Printf("接口=%s %s HTTP状态=%d", he.Method, he.Endpoint, he.StatusCode)
+case errors.As(err, &be):
+    log.Printf("业务错误码=%d", be.Code)
+default:
+    // 参数与解码失败仍可继续用 errors.As 提取 ParamError、DecodeError。
+    log.Print("请求失败")
 }
 ```
 
-`ParamError` 提供参数类型、字段和位置；`DecodeError` 提供 JSON 路径、Go 字段及预期类型。完整示例见 [请求与错误处理](docs/request.md)。记录错误时不要输出 Cookie、凭证或完整响应。
+`ParamError` 提供参数类型、字段与位置；`DecodeError` 提供 JSON 路径、Go 字段及预期类型。完整示例见 [请求与错误处理](docs/request.md)；记录错误时不要输出 Cookie、凭证或完整响应。
 
 ## 详细文档
 
@@ -296,7 +246,7 @@ require github.com/rongyuio/bilibili v0.0.0
 replace github.com/rongyuio/bilibili => ../bilibili
 ```
 
-相对路径以调用项目的 `go.mod` 为基准，请替换为实际路径。`v0.0.0` 是本地替换占位版本；已有依赖可以保留原版本，仅添加 `replace`。导入仍使用完整模块路径。
+相对路径以调用项目的 `go.mod` 为基准，请替换为实际路径。`replace` 生效后实际使用的是本地代码，`require` 里的版本号不会被解析；`v0.0.0` 只是简化的占位写法（`go mod tidy` 写成的是等价形式的伪版本 `v0.0.0-00010101000000-000000000000`）。若该依赖本就存在于 `go.mod`，保留原版本号、只添加 `replace` 即可。导入仍使用完整模块路径。
 
 ### 验证与贡献
 
