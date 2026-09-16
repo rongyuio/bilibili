@@ -246,7 +246,7 @@ require github.com/rongyuio/bilibili v0.0.0
 replace github.com/rongyuio/bilibili => ../bilibili
 ```
 
-相对路径以调用项目的 `go.mod` 为基准，请替换为实际路径。`v0.0.0` 是本地替换占位版本；已有依赖可以保留原版本，仅添加 `replace`。导入仍使用完整模块路径。
+相对路径以调用项目的 `go.mod` 为基准，请替换为实际路径。`replace` 生效后实际使用的是本地代码，`require` 里的版本号不会被解析；`v0.0.0` 只是简化的占位写法（`go mod tidy` 写成的是等价形式的伪版本 `v0.0.0-00010101000000-000000000000`）。若该依赖本就存在于 `go.mod`，保留原版本号、只添加 `replace` 即可。导入仍使用完整模块路径。
 
 ### 验证与贡献
 
