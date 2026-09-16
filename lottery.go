@@ -2,6 +2,7 @@ package bilibili
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -54,16 +55,43 @@ func (c *Client) GetActivityLotteryTimes(ctx context.Context, param GetActivityL
 		})
 }
 
+// dynamicLotteryWebLocation 是动态抽奖接口默认的页面位置标识。
+const dynamicLotteryWebLocation = "333.1330"
+
 // GetDynamicLotteryInfoParam 指定用户抽奖动态及请求来源。
 type GetDynamicLotteryInfoParam struct {
-	BusinessID    string `json:"business_id"`            // 抽奖动态 ID
-	BusinessType  int    `json:"business_type"`          // 业务类型，动态使用 1
-	WebLocation   string `json:"web_location"`           // 页面位置，例如 333.1330
-	DeviceReqJSON string `json:"x-bili-device-req-json"` // 设备请求信息 JSON 字符串，进入 query
+	BusinessID   string `json:"business_id"`                            // 抽奖动态 ID
+	BusinessType int    `json:"business_type"`                          // 业务类型，动态使用 1
+	WebLocation  string `json:"web_location" request:"query,omitempty"` // 页面位置；留空时由库填入 dynamicLotteryWebLocation
 }
 
-// GetDynamicLotteryInfo 查询用户抽奖动态的抽奖信息
+// deviceReqJSON 按 webLocation 生成 x-bili-device-req-json，platform 与 device 固定为 web/pc。
+// webLocation 经 JSON 转义后再拼接，避免引号或反斜杠破坏结构。
+func deviceReqJSON(webLocation string) (string, error) {
+	spmid, err := json.Marshal(webLocation)
+	if err != nil {
+		return "", err
+	}
+	return `{"platform":"web","device":"pc","spmid":` + string(spmid) + `}`, nil
+}
+
+// dynamicLotteryDeviceHandler 注入按 WebLocation 生成的设备信息 JSON。
+func dynamicLotteryDeviceHandler(webLocation string) paramHandler {
+	return func(r *resty.Request) error {
+		body, err := deviceReqJSON(webLocation)
+		if err != nil {
+			return err
+		}
+		r.SetQueryParam("x-bili-device-req-json", body)
+		return nil
+	}
+}
+
+// GetDynamicLotteryInfo 查询用户抽奖动态的抽奖信息。
+// x-bili-device-req-json 由库按 WebLocation 生成，调用方无需手写 JSON。
 func (c *Client) GetDynamicLotteryInfo(ctx context.Context, param GetDynamicLotteryInfoParam) (*GetDynamicLotteryInfoResult, error) {
+	param.WebLocation = webLocationOrDefault(param.WebLocation, dynamicLotteryWebLocation)
 	return execute[*GetDynamicLotteryInfoResult](ctx, c, resty.MethodGet,
-		"https://api.vc.bilibili.com/lottery_svr/v1/lottery_svr/lottery_notice", param)
+		"https://api.vc.bilibili.com/lottery_svr/v1/lottery_svr/lottery_notice", param,
+		dynamicLotteryDeviceHandler(param.WebLocation))
 }

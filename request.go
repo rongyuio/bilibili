@@ -176,6 +176,14 @@ func fillParam(key, value string) paramHandler {
 	}
 }
 
+// webLocationOrDefault 在调用方未指定页面标识时返回接口默认值。
+func webLocationOrDefault(webLocation, fallback string) string {
+	if webLocation == "" {
+		return fallback
+	}
+	return webLocation
+}
+
 // newRequest snapshots cookies once. Configuration is immutable while requests run.
 func (c *Client) newRequest(ctx context.Context) *resty.Request {
 	return c.resty.R().SetContext(ctx).SetCookies(c.GetCookies())

@@ -142,15 +142,14 @@ if err != nil {
 
 ### 话题动态列表
 
-`GetTopicFeed(ctx, param)` 封装 `/x/polymer/web-dynamic/v1/feed/topic`，返回一页响应的 `data`，复用统一 Cookie、context、参数编码和错误处理。参数全部位于 query，不额外启用 WBI 签名或 CSRF，也不自动重试或翻页。
+`GetTopicFeed(ctx, param)` 封装 `/x/polymer/web-dynamic/v1/feed/topic`，返回一页响应的 `data`，复用统一 Cookie、context、参数编码和错误处理。参数全部位于 query，不额外启用 WBI 签名或 CSRF，也不自动重试或翻页；`WebLocation` 留空时由库填入默认值。
 
 ```go
 result, err := client.GetTopicFeed(ctx, bilibili.GetTopicFeedParam{
     TopicID:     topicId,
-    SortBy:      3,
+    SortBy:      bilibili.TopicFeedSortByLatest,
     PageSize:    20,
     Features:    "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard",
-    WebLocation: "0.0",
 })
 if err != nil {
     log.Printf("获取话题动态失败: %v", err)
@@ -184,7 +183,7 @@ log.Printf("本页普通勋章数: %d，总页数: %d", len(panel.List), panel.P
 
 ### 活动抽奖与动态抽奖信息
 
-`GetActivityLotteryTimes` 获取当前账号的活动剩余抽奖次数；`DoActivityLottery` 执行活动抽奖；`GetDynamicLotteryInfo` 查询用户抽奖动态的抽奖信息。参数与响应模型均位于 [lottery.go](lottery.go)，查询结果直接对应 `data`。
+`GetActivityLotteryTimes` 获取当前账号的活动剩余抽奖次数；`DoActivityLottery` 执行活动抽奖；`GetDynamicLotteryInfo` 查询用户抽奖动态的抽奖信息。参数与响应模型均位于 [lottery.go](lottery.go)，查询结果直接对应 `data`；`x-bili-device-req-json` 由库按 `WebLocation` 生成，无需调用方传入。
 
 ```go
 result, err := client.GetActivityLotteryTimes(ctx, bilibili.GetActivityLotteryTimesParam{Sid: sid})

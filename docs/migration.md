@@ -337,3 +337,18 @@ log.Printf("关注状态原文=%s 数值=%d", rawStatus, status)
 
 按 v0 阶段规则，上述破坏性变更（导出字段改名、头像渲染树嵌套字段改名）随下一版本
 发布即可，无需升主版本或改模块路径。
+
+## 第六轮重构：抽奖与话题接口的 web_location 收敛
+
+### 破坏性变更
+
+| 项 | 说明 |
+| --- | --- |
+| `GetDynamicLotteryInfoParam.DeviceReqJSON` | **删除**。`x-bili-device-req-json` 改由库按 `WebLocation` 生成，`platform`/`device` 固定为 `web`/`pc`，不提供兼容包装。 |
+| `GetDynamicLotteryInfoParam.WebLocation`、`GetLiveActivatedMedalInfoParam.WebLocation`、`GetTopicFeedParam.WebLocation` | 改为可选。留空时由库填入接口默认值（动态抽奖 `333.1330`，直播勋章与话题动态 `0.0`）；**无法再发送空的 `web_location`**。其中 `GetTopicFeedParam` 此前默认省略该参数，现在默认发送 `0.0`。 |
+
+改为可选后，调用方不再需要手写这串设备信息 JSON；如果你此前传过自己的 `DeviceReqJSON`，其中的 `spmid` 应迁移为 `WebLocation` 的值，`platform`/`device` 则固定为 `web`/`pc`。
+
+### 版本影响
+
+按 v0 阶段规则，上述破坏性变更随下一版本发布即可，无需升主版本或改模块路径。
