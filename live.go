@@ -241,13 +241,19 @@ type GetLiveAreaRoomListParam struct {
 }
 
 // GetLiveAreaRoomList 获取直播二级分区的房间列表，WBI 签名。
-// 注意：WBI 请求按库约定不携带 Referer。
+// 注意：WBI 签名后按库约定会清空 Referer，但本接口实测在不携带直播域 Referer 时
+// 会被风控拦截（-352），因此签名后重新补回直播域 Referer/Origin。
 func (c *Client) GetLiveAreaRoomList(ctx context.Context, param GetLiveAreaRoomListParam) (*LiveAreaRoomList, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://api.live.bilibili.com/xlive/web-interface/v1/second/getList"
 	)
-	return execute[*LiveAreaRoomList](ctx, c, method, url, param, c.fillWbi())
+	return execute[*LiveAreaRoomList](ctx, c, method, url, param, c.fillWbi(),
+		func(r *resty.Request) error {
+			r.SetHeader("Referer", "https://live.bilibili.com/")
+			r.SetHeader("Origin", "https://live.bilibili.com")
+			return nil
+		})
 }
 
 // CheckLiveAnchorLotteryParam 指定要查询天选时刻的直播间。
