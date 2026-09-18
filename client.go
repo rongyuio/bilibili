@@ -15,6 +15,9 @@ import (
 // errNoCookies 表示匿名客户端初始化未取得任何 Cookie。
 var errNoCookies = errors.New("initialize anonymous client: response contains no valid cookies")
 
+// defaultUserAgent 是默认的桌面端 User-Agent。直播心跳等接口的 ua 表单字段留空时也使用它。
+const defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
+
 // Client supports concurrent ordinary requests after configuration.
 // Login, session replacement and configuration changes must happen between requests.
 // A Client must not be copied after first use.
@@ -36,7 +39,7 @@ func New() *Client {
 		SetHeader("Accept-Language", "zh-CN,zh;q=0.9").
 		SetHeader("Origin", "https://www.bilibili.com").
 		SetHeader("Referer", "https://www.bilibili.com/").
-		SetHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
+		SetHeader("User-Agent", defaultUserAgent)
 	return NewWithClient(restyClient)
 }
 

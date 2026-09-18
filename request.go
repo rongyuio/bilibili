@@ -176,6 +176,30 @@ func fillParam(key, value string) paramHandler {
 	}
 }
 
+// moveFormParams 把 encodeParams 编码到 query 的指定字段移入 URL 编码表单，保留客户端默认 query。
+// 适用于请求体为 x-www-form-urlencoded 的接口。
+func moveFormParams(keys ...string) paramHandler {
+	return func(r *resty.Request) error {
+		for _, key := range keys {
+			r.FormData[key] = append([]string(nil), r.QueryParam[key]...)
+			r.QueryParam.Del(key)
+		}
+		return nil
+	}
+}
+
+// fillFormCsrf 把 CSRF 双键写入 URL 编码表单（fillCsrf 的表单版）。
+func fillFormCsrf(_ *Client) paramHandler {
+	return func(r *resty.Request) error {
+		csrf, err := csrfValue(r)
+		if err != nil {
+			return err
+		}
+		r.SetFormData(map[string]string{"csrf": csrf, "csrf_token": csrf})
+		return nil
+	}
+}
+
 // webLocationOrDefault 在调用方未指定页面标识时返回接口默认值。
 func webLocationOrDefault(webLocation, fallback string) string {
 	if webLocation == "" {

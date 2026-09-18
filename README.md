@@ -89,6 +89,8 @@ client := bilibili.New()
 client.SetRawCookies(cookieHeader) // cookieHeader 由调用方读取，不写入代码或日志。
 ```
 
+`GetHomePage` 访问一次 B 站首页，可补全 `buvid3` 等设备字段；`RefreshWebCookie(ctx, refreshToken)` 一条龙完成官方 Cookie 刷新（不需要刷新时返回 nil），刷新成功后务必持久化返回值中的新 `RefreshToken`，否则之后无法再次刷新。
+
 `New()` 不联网；需要游客 Cookie 时用 `NewAnonymousClient(ctx)`。扫码登录用 `GetQRCode` 取码、`qr.Print()` 展示、再用 `LoginWithQRCode` 轮询结果，登录成功后客户端自动保存 Cookie；`ctx` 应预留人工确认所需时间。密码与短信登录、Cookie 的保存与恢复、Resty 接管见 [认证与会话](docs/authentication.md)。
 
 ## 常用接口
@@ -170,6 +172,31 @@ log.Printf("剩余抽奖次数: %d", result.Times)
 ```
 
 `DoActivityLottery` 返回 `error`，不解析中奖明细；需要明细可使用 `Client.Do`。活动循环和动态删除决策由调用方实现。
+
+### 直播间列表与天选时刻
+
+`GetLiveWebRoomList` 获取直播间列表（网页端新接口，WBI 签名）。旧的 second/getList 接口已被风控拦截（-352），请勿再使用。天选时刻的房间集中在互动玩法下的天选分区：
+
+```go
+list, err := client.GetLiveWebRoomList(ctx, bilibili.GetLiveWebRoomListParam{
+    ParentAreaID: 15, AreaID: 1457, Page: 1, // 1457 为天选聚集分区
+})
+for _, module := range list.RoomList {
+    for _, room := range module.List {
+        check, err := client.CheckLiveAnchorLottery(ctx, bilibili.CheckLiveAnchorLotteryParam{RoomID: room.RoomID})
+        // check.Status==1 且 GiftPrice==0 且 RequireType 为 0/1 时可免消耗参与：
+        // client.JoinLiveAnchorLottery(ctx, bilibili.JoinLiveAnchorLotteryParam{...})
+    }
+}
+```
+
+`GetLiveHotRankList` 获取首页人气榜，条目中的 `LotStatus`/`RedPocketStatus` 可低成本初筛有抽奖或红包活动的房间。
+
+### Web 端观看时长上报
+
+当前网页播放器已把观看时长上报迁移至 `data.bilivideo.com` 域的新端点，对应本库的 `ReportWebWatchEnter`（进房）与 `ReportWebWatchHeartBeat`（心跳）。流程：进房响应下发 `STKY`（心跳密钥，每跳轮换）、`SID`（会话 id）与 `HBIL`（间隔秒数）；之后按间隔循环发送心跳，每跳使用上一响应轮换出的 `STKY`。
+
+心跳表单中的 `Csn` 字段由官方 skynet wasm 对其余字段的 JSON 计算签名，本库不内置该算法，也不打包 wasm 文件：调用方需自行下载 wasm（地址随页面版本变化，可从直播间页面资源中解析）并用 wasm 运行时（如 wazero）调用其 `skynet` 导出函数，输入为表单 JSON 字符串，输出为签名串。同一账号可同时向多个直播间发送心跳，每个直播间的会话状态（STKY/SID/QID 序号）互相独立。
 
 ### 工具方法
 

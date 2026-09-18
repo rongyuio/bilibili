@@ -224,3 +224,102 @@ type NewPendants struct {
 	Badge       *Badge `json:"badge"`        // 大v
 	MobileBadge *Badge `json:"mobile_badge"` // 同上。手机版, 结构一致, 可能null
 }
+
+// 天选时刻相关响应模型。
+
+// LiveWebAreaList 是 Web 端直播间分区列表的响应（官方在 data 内又嵌套了一层 data）。
+type LiveWebAreaList struct {
+	Data []LiveWebArea `json:"data"` // 一级分区列表
+}
+
+// LiveWebArea 是 Web 端直播间分区列表中的一级分区。
+type LiveWebArea struct {
+	ID   int    `json:"id"`   // 分区 id
+	Name string `json:"name"` // 分区名称
+}
+
+// CheckLiveAnchorLotteryResult 是直播间天选时刻的查询结果。
+type CheckLiveAnchorLotteryResult struct {
+	ID             int64  `json:"id"`               // 天选抽奖 id，参与时原样传入 JoinLiveAnchorLottery
+	RoomID         int64  `json:"room_id"`          // 直播间号
+	Status         int    `json:"status"`           // 状态。1-进行中，2-已结束
+	AwardName      string `json:"award_name"`       // 奖品名称
+	AwardNum       int    `json:"award_num"`        // 奖品数量
+	Danmu          string `json:"danmu"`            // 参与弹幕口令
+	JoinType       int    `json:"join_type"`        // 参与方式
+	RequireType    int    `json:"require_type"`     // 参与条件类型。0-无条件，1-关注主播，2-粉丝勋章等级，3-提督/舰长
+	RequireValue   int    `json:"require_value"`    // 参与条件数值
+	RequireText    string `json:"require_text"`     // 参与条件文案
+	GiftID         int64  `json:"gift_id"`          // 需要赠送的礼物 id
+	GiftName       string `json:"gift_name"`        // 礼物名称
+	GiftNum        int    `json:"gift_num"`         // 礼物数量
+	GiftPrice      int    `json:"gift_price"`       // 礼物单价。大于 0 表示参与需要付费赠礼
+	CurGiftNum     int    `json:"cur_gift_num"`     // 当前已送数量
+	SendGiftEnsure int    `json:"send_gift_ensure"` // 是否确认送出礼物
+}
+
+// JoinLiveAnchorLotteryResult 是参与天选时刻抽奖的响应。
+type JoinLiveAnchorLotteryResult struct {
+	DiscountID int64  `json:"discount_id"`  // (?)。作用尚不明确
+	Gold       int64  `json:"gold"`         // 金瓜子余额
+	Silver     int64  `json:"silver"`       // 银瓜子余额
+	CurGiftNum int64  `json:"cur_gift_num"` // 本次消耗的礼物数量
+	GoodsID    int64  `json:"goods_id"`     // (?)。作用尚不明确
+	NewOrderID string `json:"new_order_id"` // (?)。订单号
+}
+
+// LiveWebRoomList 是 Web 端直播间列表（新接口）的响应。
+type LiveWebRoomList struct {
+	RoomList          []LiveWebRoomModule `json:"room_list"`           // 房间模块列表
+	RecommendRoomList []LiveWebRoom       `json:"recommend_room_list"` // 推荐房间列表
+}
+
+// LiveWebRoomModule 是直播间列表中的一个模块。
+type LiveWebRoomModule struct {
+	ModuleInfo struct {
+		ID    int    `json:"id"`    // 模块 id
+		Title string `json:"title"` // 模块标题
+		Count int    `json:"count"` // 房间总数
+	} `json:"module_info"`
+	List []LiveWebRoom `json:"list"` // 房间列表
+}
+
+// LiveWebRoom 是直播间列表中的房间。
+type LiveWebRoom struct {
+	RoomID     int64  `json:"roomid"`              // 直播间号。注意字段名没有下划线
+	UID        int64  `json:"uid"`                 // 主播 UID
+	Uname      string `json:"uname"`               // 主播昵称
+	Title      string `json:"title"`               // 直播间标题
+	AreaV2Name string `json:"area_v2_name"`        // 子分区名
+	ParentName string `json:"area_v2_parent_name"` // 父分区名
+	Online     int    `json:"online"`              // 人气值
+	Cover      string `json:"cover"`               // 封面
+}
+
+// LiveHotRankList 是首页人气榜直播间列表的响应。
+type LiveHotRankList struct {
+	List []LiveHotRankItem `json:"list"` // 榜单房间列表
+}
+
+// LiveHotRankItem 是人气榜中的一个直播间。
+type LiveHotRankItem struct {
+	RoomID          int64  `json:"roomid"`              // 直播间号。注意字段名没有下划线
+	UID             int64  `json:"uid"`                 // 主播 UID
+	Uname           string `json:"uname"`               // 主播昵称
+	Face            string `json:"face"`                // 主播头像
+	Title           string `json:"title"`               // 直播间标题
+	AreaV2ID        int    `json:"area_v2_id"`          // 子分区 id
+	AreaV2Name      string `json:"area_v2_name"`        // 子分区名
+	ParentID        int    `json:"area_v2_parent_id"`   // 父分区 id
+	ParentName      string `json:"area_v2_parent_name"` // 父分区名
+	Online          int    `json:"online"`              // 人气值
+	OfficialVerify  int    `json:"official_verify"`     // 官方认证。-1：无
+	LotStatus       int    `json:"lot_status"`          // 抽奖活动状态。0：无
+	RedPocketStatus int    `json:"red_pocket_status"`   // 红包状态。0：无
+	UserNum         int    `json:"user_num"`            // 助力人数
+	UserNumText     string `json:"user_num_text"`       // 助力人数文案
+	Score           int    `json:"score"`               // 榜单分数
+	ScoreText       string `json:"score_text"`          // 榜单分数文案
+	LiveStatus      int    `json:"live_status"`         // 开播状态。1：直播中
+	Rank            int    `json:"rank"`                // 榜单排名
+}
