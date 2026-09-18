@@ -2,10 +2,12 @@ package bilibili
 
 import (
 	"context"
+	"crypto/rand"
 	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/pkg/errors"
 )
 
 // 直播相关接口。响应模型见 live_model.go。
@@ -218,4 +220,122 @@ func (c *Client) GetHomePageLiveVersion(ctx context.Context, param GetHomePageLi
 		url    = "https://api.live.bilibili.com/xlive/app-blink/v1/liveVersionInfo/getHomePageLiveVersion"
 	)
 	return execute[*HomePageLiveVersion](ctx, c, method, url, param)
+}
+
+// GetLiveWebAreaList 获取 Web 端直播间分区列表（与 GetLiveAreaList 不同源）。
+func (c *Client) GetLiveWebAreaList(ctx context.Context) (*LiveWebAreaList, error) {
+	const (
+		method = resty.MethodGet
+		url    = "https://api.live.bilibili.com/xlive/web-interface/v1/index/getWebAreaList"
+	)
+	return execute[*LiveWebAreaList](ctx, c, method, url, nil, fillParam("source_id", "2"))
+}
+
+// GetLiveAreaRoomListParam 指定获取分区房间列表的条件。
+type GetLiveAreaRoomListParam struct {
+	Platform     string `json:"platform" request:"default=web"` // 平台，一般为 web。留空时自动填 web
+	ParentAreaID int64  `json:"parent_area_id"`                 // 父分区 id，来自 GetLiveWebAreaList
+	AreaID       int64  `json:"area_id"`                        // 子分区 id。0 表示全部
+	SortType     string `json:"sort_type"`                      // 排序方式；可为空，空值也会发送
+	Page         int    `json:"page" request:"default=1"`       // 页码，从 1 开始。留空时自动填 1
+}
+
+// GetLiveAreaRoomList 获取直播二级分区的房间列表，WBI 签名。
+// 注意：WBI 请求按库约定不携带 Referer。
+func (c *Client) GetLiveAreaRoomList(ctx context.Context, param GetLiveAreaRoomListParam) (*LiveAreaRoomList, error) {
+	const (
+		method = resty.MethodGet
+		url    = "https://api.live.bilibili.com/xlive/web-interface/v1/second/getList"
+	)
+	return execute[*LiveAreaRoomList](ctx, c, method, url, param, c.fillWbi())
+}
+
+// CheckLiveAnchorLotteryParam 指定要查询天选时刻的直播间。
+type CheckLiveAnchorLotteryParam struct {
+	RoomID int64 `json:"room_id" request:"field=roomid"` // 直播间号。接口参数名是 roomid（无下划线）
+}
+
+// CheckLiveAnchorLottery 查询直播间当前的天选时刻。
+func (c *Client) CheckLiveAnchorLottery(ctx context.Context, param CheckLiveAnchorLotteryParam) (*CheckLiveAnchorLotteryResult, error) {
+	const (
+		method = resty.MethodGet
+		url    = "https://api.live.bilibili.com/xlive/lottery-interface/v1/Anchor/Check"
+	)
+	return execute[*CheckLiveAnchorLotteryResult](ctx, c, method, url, param,
+		func(r *resty.Request) error {
+			r.SetHeader("Referer", "https://live.bilibili.com/")
+			r.SetHeader("Origin", "https://live.bilibili.com")
+			return nil
+		})
+}
+
+// JoinLiveAnchorLotteryParam 指定参与天选时刻的抽奖信息，字段来自 CheckLiveAnchorLottery 的结果。
+type JoinLiveAnchorLotteryParam struct {
+	ID      int64  // 天选抽奖 id
+	GiftID  int64  // 礼物 id
+	GiftNum int    // 礼物数量
+	VisitID string // 访问标识；留空时由库自动生成
+}
+
+// liveAnchorJoinForm 是参与天选时刻的表单字段。
+type liveAnchorJoinForm struct {
+	ID       int64  `json:"id"`
+	GiftID   int64  `json:"gift_id"`
+	GiftNum  int    `json:"gift_num"`
+	VisitID  string `json:"visit_id"`
+	Platform string `json:"platform"` // 固定为 pc
+}
+
+// JoinLiveAnchorLottery 参与天选时刻抽奖，CSRF 自动填入表单。
+// 注意：要求赠礼的天选会消耗瓜子，参与前请自行检查 CheckLiveAnchorLotteryResult.GiftPrice。
+func (c *Client) JoinLiveAnchorLottery(ctx context.Context, param JoinLiveAnchorLotteryParam) (*JoinLiveAnchorLotteryResult, error) {
+	if err := checkContext(ctx); err != nil {
+		return nil, err
+	}
+	if param.VisitID == "" {
+		visitID, err := randomVisitID()
+		if err != nil {
+			return nil, err
+		}
+		param.VisitID = visitID
+	}
+	const (
+		method = resty.MethodPost
+		url    = "https://api.live.bilibili.com/xlive/lottery-interface/v1/Anchor/Join"
+	)
+	// withParams 的默认分支已将 Content-Type 设为 application/x-www-form-urlencoded。
+	return execute[*JoinLiveAnchorLotteryResult](ctx, c, method, url, liveAnchorJoinForm{
+		ID:       param.ID,
+		GiftID:   param.GiftID,
+		GiftNum:  param.GiftNum,
+		VisitID:  param.VisitID,
+		Platform: "pc",
+	}, moveFormParams("id", "gift_id", "gift_num", "visit_id", "platform"), fillFormCsrf(c))
+}
+
+// GetLiveNotice 获取直播公告。B 站会通过本接口的 Set-Cookie 下发 LIVE_BUVID，
+// 响应 Cookie 已由请求链路自动合并进客户端，因此调用本方法即可完成补全。
+func (c *Client) GetLiveNotice(ctx context.Context) error {
+	const (
+		method = resty.MethodGet
+		url    = "https://api.live.bilibili.com/news/v1/notice/recom"
+	)
+	_, err := execute[any](ctx, c, method, url, nil, fillParam("product", "live"))
+	return err
+}
+
+// randomVisitID 生成 12 位随机访问标识：首位 1-9、中间 10 位随机小写字母数字、末尾固定 0。
+func randomVisitID() (string, error) {
+	const charset = "0123456789abcdefghijklmnopqrstuvwxyz"
+	b := make([]byte, 11)
+	if _, err := rand.Read(b); err != nil {
+		return "", errors.WithStack(err)
+	}
+	visitID := make([]byte, 12)
+	visitID[0] = '1' + b[0]%9
+	for i := range 10 {
+		visitID[i+1] = charset[int(b[i+1])%len(charset)]
+	}
+	visitID[11] = '0'
+	return string(visitID), nil
 }
