@@ -85,6 +85,58 @@ func (c *Client) RefreshCookie(ctx context.Context, param RefreshCookieParam) (*
 	return execute[*RefreshCookieResult](ctx, c, method, url, param)
 }
 
+// RefreshWebCookie 一条龙完成 web 端 Cookie 刷新：依次获取刷新信息、获取刷新口令、刷新 Cookie。
+//
+// refreshToken 为登录成功或上次刷新得到的持久化刷新口令（localStorage 中的 ac_time_value）。
+// 不需要刷新（刷新信息接口返回 refresh=false）时返回 (nil, nil)。
+//
+// 刷新成功后，返回值中的 RefreshToken 是新的持久化刷新口令，调用方必须自行持久化，
+// 否则之后将无法再次刷新。刷新产生的新 Cookie（含新的 bili_jct）已自动合并进客户端。
+func (c *Client) RefreshWebCookie(ctx context.Context, refreshToken string) (*RefreshCookieResult, error) {
+	info, err := c.GetWebCookieRefreshInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil || !info.Refresh {
+		return nil, nil //nolint:nilnil // 不需要刷新是正常分支，文档已说明返回 (nil, nil)
+	}
+	csrf, err := c.GetWebCookieRefreshCsrf(ctx, GetWebCookieRefreshCsrfParam{Timestamp: info.Timestamp})
+	if err != nil {
+		return nil, err
+	}
+	return c.RefreshCookie(ctx, RefreshCookieParam{
+		RefreshCsrf:  csrf.RefreshCsrf,
+		RefreshToken: refreshToken,
+	})
+}
+
+// GetHomePage 访问 B 站首页。响应中的 Set-Cookie 已由请求链路自动合并进客户端，
+// 可用于补全或更新 Cookie（例如 buvid3 等设备字段）。页面内容为 HTML，本方法不解析，仅校验 HTTP 状态码。
+func (c *Client) GetHomePage(ctx context.Context) error {
+	if err := checkContext(ctx); err != nil {
+		return err
+	}
+	r := c.newRequest(ctx).
+		SetHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7").
+		SetHeader("Sec-Fetch-Dest", "document").
+		SetHeader("Sec-Fetch-Mode", "navigate").
+		SetHeader("Sec-Fetch-Site", "none").
+		SetHeader("Sec-Fetch-User", "?1").
+		SetHeader("Upgrade-Insecure-Requests", "1")
+	const (
+		method = resty.MethodGet
+		url    = "https://www.bilibili.com/"
+	)
+	response, err := c.sendRaw(r, method, url)
+	if err != nil {
+		return err
+	}
+	if !response.IsSuccess() {
+		return newHTTPError(method, url, response.StatusCode())
+	}
+	return nil
+}
+
 func init() {
 	const publicKeyPEM = `
 -----BEGIN PUBLIC KEY-----
