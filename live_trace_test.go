@@ -13,14 +13,14 @@ func TestSypderSign(t *testing.T) {
 	const (
 		payload    = "hello world"
 		secretKey  = "secret_key"
-		md5Vec     = "61c95854c1cd8179128b54c19ac01c28"
+		md5Vec     = "3c8ec7006b88eed15b387ab1f0d4dbd7"
 		sha1Vec    = "15272f929f45d7f15e2bbfd7237741538847de8a"
 		sha256Vec  = "cf1a418afaafc798df48fd804a2abf6970283afd8c40b41f818ad9b6ca4f8ca8"
 		sha224Vec  = "84ec4f01a2e1a183a372856e28783a72ce64df7adbe42876e615b2aa"
 		sha512Vec  = "bd6afeb7b0814f35093386b649c7f5065ad3e802ee22b5370ad379dc03532e613bf96e8778bc6a95ec4a550b8b2dee45615390b1788aa1610e116f83f013c458"
 		sha384Vec  = "a5e1c5ab19af6f809c5d7a57b18144388497f9d41881461f8ae61370d993877f14029ebbf668e0470caf6695eedada87"
-		cascadeVec = "f2dd8373dad611978f350343a10686e9f6355e2a78440674790a60e567305ae3"
-		skipVec    = "41738fb460678a2c0c7ad54115010afc08b67032"
+		cascadeVec = "245e4adaacf6f107570b97f12300d522a92126e77efa0bedb4b1f42625cfc1ae"
+		skipVec    = "0240b8a37cd6d71c43c58076c67910e8804ae74f"
 	)
 
 	tests := []struct {
@@ -88,13 +88,13 @@ func TestLiveTraceDeviceJSON(t *testing.T) {
 }
 
 func TestLiveHeartBeatSignatureJSON(t *testing.T) {
-	got, err := liveHeartBeatSignatureJSON(58, 211, 3, 1234567, "buvid", "uuid", 1000, 2000)
+	got, err := liveHeartBeatSignatureJSON(1, 34, 1, 23058, "buvid", "uuid", 1570562610, 300, 1570562730734)
 	if err != nil {
 		t.Fatalf("liveHeartBeatSignatureJSON 返回错误: %v", err)
 	}
 	// 字段顺序是协议要求，必须精确冻结。
-	expect := `{"platform":"web","parent_id":58,"area_id":211,"seq_id":3,"room_id":1234567,` +
-		`"buvid":"buvid","uuid":"uuid","ets":1000,"time":60,"ts":2000}`
+	expect := `{"platform":"web","parent_id":1,"area_id":34,"seq_id":1,"room_id":23058,` +
+		`"buvid":"buvid","uuid":"uuid","ets":1570562610,"time":300,"ts":1570562730734}`
 	if got != expect {
 		t.Fatalf("liveHeartBeatSignatureJSON = %q, 期望 %q", got, expect)
 	}
