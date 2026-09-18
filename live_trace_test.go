@@ -88,7 +88,10 @@ func TestLiveTraceDeviceJSON(t *testing.T) {
 }
 
 func TestLiveHeartBeatSignatureJSON(t *testing.T) {
-	got, err := liveHeartBeatSignatureJSON(1, 34, 1, 23058, "buvid", "uuid", 1570562610, 300, 1570562730734)
+	got, err := liveHeartBeatSignatureJSON(liveHeartBeatSignature{
+		ParentID: 1, AreaID: 34, SeqID: 1, RoomID: 23058,
+		Buvid: "buvid", UUID: "uuid", Ets: 1570562610, Time: 300, TS: 1570562730734,
+	})
 	if err != nil {
 		t.Fatalf("liveHeartBeatSignatureJSON 返回错误: %v", err)
 	}

@@ -163,8 +163,17 @@ func (c *Client) SendLiveHeartBeat(ctx context.Context, param SendLiveHeartBeatP
 	if err != nil {
 		return nil, err
 	}
-	payload, err := liveHeartBeatSignatureJSON(param.ParentID, param.AreaID, param.SeqID,
-		param.RoomID, param.Buvid, param.UUID, param.Ets, param.Time, param.TS)
+	payload, err := liveHeartBeatSignatureJSON(liveHeartBeatSignature{
+		ParentID: param.ParentID,
+		AreaID:   param.AreaID,
+		SeqID:    param.SeqID,
+		RoomID:   param.RoomID,
+		Buvid:    param.Buvid,
+		UUID:     param.UUID,
+		Ets:      param.Ets,
+		Time:     param.Time,
+		TS:       param.TS,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -220,20 +229,10 @@ type liveHeartBeatSignature struct {
 	TS       int64  `json:"ts"`
 }
 
-// liveHeartBeatSignatureJSON 按固定字段顺序构造心跳签名明文 JSON。
-func liveHeartBeatSignatureJSON(parentID, areaID, seqID, roomID int64, buvid, uuid string, ets, heartBeatTime, ts int64) (string, error) {
-	data, err := json.Marshal(liveHeartBeatSignature{
-		Platform: "web",
-		ParentID: parentID,
-		AreaID:   areaID,
-		SeqID:    seqID,
-		RoomID:   roomID,
-		Buvid:    buvid,
-		UUID:     uuid,
-		Ets:      ets,
-		Time:     heartBeatTime,
-		TS:       ts,
-	})
+// liveHeartBeatSignatureJSON 按固定字段顺序构造心跳签名明文 JSON（platform 固定为 web）。
+func liveHeartBeatSignatureJSON(s liveHeartBeatSignature) (string, error) {
+	s.Platform = "web"
+	data, err := json.Marshal(s)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
