@@ -192,6 +192,14 @@ for _, module := range list.RoomList {
 
 `GetLiveHotRankList` 获取首页人气榜，条目中的 `LotStatus`/`RedPocketStatus` 可低成本初筛有抽奖或红包活动的房间。
 
+`SendLiveDanmaku` 向直播间发送一条文本弹幕，CSRF 自动从 Cookie 的 `bili_jct` 填入。服务端对弹幕有频率与长度限制（普通用户单条 20 字符），库不代为限流，需要批量发送时由调用方控制节奏：
+
+```go
+_, err := client.SendLiveDanmaku(ctx, bilibili.SendLiveDanmakuParam{
+    RoomID: 23058, Msg: "打卡",
+})
+```
+
 ### Web 端观看时长上报
 
 当前网页播放器已把观看时长上报迁移至 `data.bilivideo.com` 域的新端点，对应本库的 `ReportWebWatchEnter`（进房）与 `ReportWebWatchHeartBeat`（心跳）。流程：进房响应下发 `STKY`（心跳密钥，每跳轮换）、`SID`（会话 id）与 `HBIL`（间隔秒数）；之后按间隔循环发送心跳，每跳使用上一响应轮换出的 `STKY`。
