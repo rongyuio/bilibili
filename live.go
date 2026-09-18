@@ -241,6 +241,10 @@ type GetLiveAreaRoomListParam struct {
 }
 
 // GetLiveAreaRoomList 获取直播二级分区的房间列表，WBI 签名。
+//
+// 已废弃：该接口（second/getList）自 2026-09 起被风控拦截（-352），
+// 请改用 GetLiveWebRoomList（index/getList）。保留本方法仅作兼容。
+//
 // 注意：WBI 签名后按库约定会清空 Referer，但本接口实测在不携带直播域 Referer 时
 // 会被风控拦截（-352），因此签名后重新补回直播域 Referer/Origin。
 func (c *Client) GetLiveAreaRoomList(ctx context.Context, param GetLiveAreaRoomListParam) (*LiveAreaRoomList, error) {
