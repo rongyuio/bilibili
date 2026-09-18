@@ -238,40 +238,6 @@ type LiveWebArea struct {
 	Name string `json:"name"` // 分区名称
 }
 
-// LiveAreaRoomList 是直播二级分区房间列表的响应。
-type LiveAreaRoomList struct {
-	NewTags []LiveAreaRoomListTag  `json:"new_tags"` // 排序方式列表。翻页时一般把第一项的 SortType 作为下一页的排序方式
-	List    []LiveAreaRoomListItem `json:"list"`     // 房间列表
-	HasMore int                    `json:"has_more"` // 是否还有更多。1-有
-}
-
-// LiveAreaRoomListTag 是直播二级分区房间列表的排序方式。
-type LiveAreaRoomListTag struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	SortType string `json:"sort_type"`
-}
-
-// LiveAreaRoomListItem 是直播二级分区房间列表中的房间。
-type LiveAreaRoomListItem struct {
-	RoomID      int64                          `json:"roomid"`       // 直播间号。注意字段名没有下划线
-	UID         int64                          `json:"uid"`          // 主播 UID
-	Title       string                         `json:"title"`        // 直播间标题
-	Uname       string                         `json:"uname"`        // 主播昵称
-	ParentID    int                            `json:"parent_id"`    // 父分区 id
-	ParentName  string                         `json:"parent_name"`  // 父分区名称
-	AreaID      int                            `json:"area_id"`      // 子分区 id
-	AreaName    string                         `json:"area_name"`    // 子分区名称
-	PendantInfo map[string]LiveAreaRoomPendant `json:"pendant_info"` // 挂件信息。键为 source_id（如 "2"）
-}
-
-// LiveAreaRoomPendant 是直播二级分区房间列表中的挂件信息。官方字段拼写为 pendent（无 i）。
-// PendentID 为 504 表示天选时刻房间。
-type LiveAreaRoomPendant struct {
-	PendentID int64 `json:"pendent_id"` // 挂件 id
-	Content   any   `json:"content"`    // 挂件内容
-}
-
 // CheckLiveAnchorLotteryResult 是直播间天选时刻的查询结果。
 type CheckLiveAnchorLotteryResult struct {
 	ID             int64  `json:"id"`               // 天选抽奖 id，参与时原样传入 JoinLiveAnchorLottery

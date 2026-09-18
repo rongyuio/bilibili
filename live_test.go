@@ -11,28 +11,6 @@ func restyNew() *resty.Request {
 	return resty.New().R()
 }
 
-func TestGetLiveAreaRoomListParamEncoding(t *testing.T) {
-	r := restyNew()
-	if err := withParams(r, GetLiveAreaRoomListParam{ParentAreaID: 2}); err != nil {
-		t.Fatalf("withParams 返回错误: %v", err)
-	}
-	if r.QueryParam.Get("platform") != "web" {
-		t.Fatalf("platform 应回退默认值 web，实际 %q", r.QueryParam.Get("platform"))
-	}
-	if r.QueryParam.Get("page") != "1" {
-		t.Fatalf("page 应回退默认值 1，实际 %q", r.QueryParam.Get("page"))
-	}
-	if _, ok := r.QueryParam["area_id"]; !ok {
-		t.Fatal("area_id=0 表示全部分区，不应被省略")
-	}
-	if _, ok := r.QueryParam["sort_type"]; !ok {
-		t.Fatal("sort_type 空串也应发送，与源实现一致")
-	}
-	if r.QueryParam.Get("parent_area_id") != "2" {
-		t.Fatalf("parent_area_id 编码不正确: %v", r.QueryParam)
-	}
-}
-
 func TestCheckLiveAnchorLotteryParamEncoding(t *testing.T) {
 	r := restyNew()
 	if err := withParams(r, CheckLiveAnchorLotteryParam{RoomID: 1234567}); err != nil {

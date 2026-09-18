@@ -231,35 +231,6 @@ func (c *Client) GetLiveWebAreaList(ctx context.Context) (*LiveWebAreaList, erro
 	return execute[*LiveWebAreaList](ctx, c, method, url, nil, fillParam("source_id", "2"))
 }
 
-// GetLiveAreaRoomListParam 指定获取分区房间列表的条件。
-type GetLiveAreaRoomListParam struct {
-	Platform     string `json:"platform" request:"default=web"` // 平台，一般为 web。留空时自动填 web
-	ParentAreaID int64  `json:"parent_area_id"`                 // 父分区 id，来自 GetLiveWebAreaList
-	AreaID       int64  `json:"area_id"`                        // 子分区 id。0 表示全部
-	SortType     string `json:"sort_type"`                      // 排序方式；可为空，空值也会发送
-	Page         int    `json:"page" request:"default=1"`       // 页码，从 1 开始。留空时自动填 1
-}
-
-// GetLiveAreaRoomList 获取直播二级分区的房间列表，WBI 签名。
-//
-// 已废弃：该接口（second/getList）自 2026-09 起被风控拦截（-352），
-// 请改用 GetLiveWebRoomList（index/getList）。保留本方法仅作兼容。
-//
-// 注意：WBI 签名后按库约定会清空 Referer，但本接口实测在不携带直播域 Referer 时
-// 会被风控拦截（-352），因此签名后重新补回直播域 Referer/Origin。
-func (c *Client) GetLiveAreaRoomList(ctx context.Context, param GetLiveAreaRoomListParam) (*LiveAreaRoomList, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://api.live.bilibili.com/xlive/web-interface/v1/second/getList"
-	)
-	return execute[*LiveAreaRoomList](ctx, c, method, url, param, c.fillWbi(),
-		func(r *resty.Request) error {
-			r.SetHeader("Referer", "https://live.bilibili.com/")
-			r.SetHeader("Origin", "https://live.bilibili.com")
-			return nil
-		})
-}
-
 // CheckLiveAnchorLotteryParam 指定要查询天选时刻的直播间。
 type CheckLiveAnchorLotteryParam struct {
 	RoomID int64 `json:"room_id" request:"field=roomid"` // 直播间号。接口参数名是 roomid（无下划线）

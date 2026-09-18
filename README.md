@@ -175,7 +175,7 @@ log.Printf("剩余抽奖次数: %d", result.Times)
 
 ### 直播间列表与天选时刻
 
-`GetLiveWebRoomList` 获取直播间列表（网页端新接口，WBI 签名）。旧的 `GetLiveAreaRoomList`（second/getList）已被风控拦截，请勿再用。天选时刻的房间集中在互动玩法下的天选分区：
+`GetLiveWebRoomList` 获取直播间列表（网页端新接口，WBI 签名）。旧的 second/getList 接口已被风控拦截（-352），请勿再使用。天选时刻的房间集中在互动玩法下的天选分区：
 
 ```go
 list, err := client.GetLiveWebRoomList(ctx, bilibili.GetLiveWebRoomListParam{
