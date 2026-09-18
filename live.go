@@ -345,3 +345,29 @@ func randomVisitID() (string, error) {
 	visitID[11] = '0'
 	return string(visitID), nil
 }
+
+// GetLiveWebRoomListParam 指定获取直播间列表的条件（Web 端新接口）。
+type GetLiveWebRoomListParam struct {
+	Platform     string `json:"platform" request:"default=web"`   // 平台。留空时自动填 web
+	ParentAreaID int64  `json:"parent_area_id"`                   // 父分区 id
+	AreaID       int64  `json:"area_id"`                          // 子分区 id。0 表示全部
+	SortType     string `json:"sort_type"`                        // 排序方式；可为空
+	Page         int    `json:"page" request:"default=1"`         // 页码，从 1 开始
+	WebLocation  string `json:"web_location" request:"omitempty"` // 页面位置标识；留空时由库填入 444.7
+}
+
+// GetLiveWebRoomList 获取直播间列表（Web 端新接口，WBI 签名）。
+// 注意：旧的 second/getList 接口已被风控拦截（-352），当前网页端使用本接口。
+func (c *Client) GetLiveWebRoomList(ctx context.Context, param GetLiveWebRoomListParam) (*LiveWebRoomList, error) {
+	if param.WebLocation == "" {
+		param.WebLocation = liveWebLocationDefault
+	}
+	const (
+		method = resty.MethodGet
+		url    = "https://api.live.bilibili.com/xlive/web-interface/v1/index/getList"
+	)
+	return execute[*LiveWebRoomList](ctx, c, method, url, param, c.fillWbi())
+}
+
+// liveWebLocationDefault 是直播间列表接口默认的页面位置标识。
+const liveWebLocationDefault = "444.7"

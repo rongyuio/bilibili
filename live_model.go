@@ -301,3 +301,31 @@ type JoinLiveAnchorLotteryResult struct {
 	GoodsID    int64  `json:"goods_id"`     // (?)。作用尚不明确
 	NewOrderID string `json:"new_order_id"` // (?)。订单号
 }
+
+// LiveWebRoomList 是 Web 端直播间列表（新接口）的响应。
+type LiveWebRoomList struct {
+	RoomList          []LiveWebRoomModule `json:"room_list"`           // 房间模块列表
+	RecommendRoomList []LiveWebRoom       `json:"recommend_room_list"` // 推荐房间列表
+}
+
+// LiveWebRoomModule 是直播间列表中的一个模块。
+type LiveWebRoomModule struct {
+	ModuleInfo struct {
+		ID    int    `json:"id"`    // 模块 id
+		Title string `json:"title"` // 模块标题
+		Count int    `json:"count"` // 房间总数
+	} `json:"module_info"`
+	List []LiveWebRoom `json:"list"` // 房间列表
+}
+
+// LiveWebRoom 是直播间列表中的房间。
+type LiveWebRoom struct {
+	RoomID     int64  `json:"roomid"`              // 直播间号。注意字段名没有下划线
+	UID        int64  `json:"uid"`                 // 主播 UID
+	Uname      string `json:"uname"`               // 主播昵称
+	Title      string `json:"title"`               // 直播间标题
+	AreaV2Name string `json:"area_v2_name"`        // 子分区名
+	ParentName string `json:"area_v2_parent_name"` // 父分区名
+	Online     int    `json:"online"`              // 人气值
+	Cover      string `json:"cover"`               // 封面
+}
