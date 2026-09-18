@@ -329,3 +329,31 @@ type LiveWebRoom struct {
 	Online     int    `json:"online"`              // 人气值
 	Cover      string `json:"cover"`               // 封面
 }
+
+// LiveHotRankList 是首页人气榜直播间列表的响应。
+type LiveHotRankList struct {
+	List []LiveHotRankItem `json:"list"` // 榜单房间列表
+}
+
+// LiveHotRankItem 是人气榜中的一个直播间。
+type LiveHotRankItem struct {
+	RoomID          int64  `json:"roomid"`              // 直播间号。注意字段名没有下划线
+	UID             int64  `json:"uid"`                 // 主播 UID
+	Uname           string `json:"uname"`               // 主播昵称
+	Face            string `json:"face"`                // 主播头像
+	Title           string `json:"title"`               // 直播间标题
+	AreaV2ID        int    `json:"area_v2_id"`          // 子分区 id
+	AreaV2Name      string `json:"area_v2_name"`        // 子分区名
+	ParentID        int    `json:"area_v2_parent_id"`   // 父分区 id
+	ParentName      string `json:"area_v2_parent_name"` // 父分区名
+	Online          int    `json:"online"`              // 人气值
+	OfficialVerify  int    `json:"official_verify"`     // 官方认证。-1：无
+	LotStatus       int    `json:"lot_status"`          // 抽奖活动状态。0：无
+	RedPocketStatus int    `json:"red_pocket_status"`   // 红包状态。0：无
+	UserNum         int    `json:"user_num"`            // 助力人数
+	UserNumText     string `json:"user_num_text"`       // 助力人数文案
+	Score           int    `json:"score"`               // 榜单分数
+	ScoreText       string `json:"score_text"`          // 榜单分数文案
+	LiveStatus      int    `json:"live_status"`         // 开播状态。1：直播中
+	Rank            int    `json:"rank"`                // 榜单排名
+}

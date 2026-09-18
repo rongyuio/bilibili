@@ -371,3 +371,14 @@ func (c *Client) GetLiveWebRoomList(ctx context.Context, param GetLiveWebRoomLis
 
 // liveWebLocationDefault 是直播间列表接口默认的页面位置标识。
 const liveWebLocationDefault = "444.7"
+
+// GetLiveHotRankList 获取首页人气榜直播间列表（Web 端）。
+// 响应中的 LotStatus 标记直播间是否有进行中的抽奖类活动，可用于初筛。
+func (c *Client) GetLiveHotRankList(ctx context.Context) (*LiveHotRankList, error) {
+	const (
+		method = resty.MethodGet
+		url    = "https://api.live.bilibili.com/xlive/web-interface/v1/index/getHotRankList"
+	)
+	return execute[*LiveHotRankList](ctx, c, method, url, nil,
+		fillParam("web_location", liveWebLocationDefault))
+}
