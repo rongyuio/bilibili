@@ -297,7 +297,7 @@ type liveAnchorJoinForm struct {
 }
 
 // JoinLiveAnchorLottery 参与天选时刻抽奖，CSRF 自动填入表单。
-// 注意：要求赠礼的天选会消耗瓜子，参与前请自行检查 CheckLiveAnchorLotteryResult.GiftPrice。
+// 注意：要求赠礼的天选需赠送消耗电池的礼物（GiftPrice 为礼物单价），参与前请自行检查 CheckLiveAnchorLotteryResult.GiftPrice。
 func (c *Client) JoinLiveAnchorLottery(ctx context.Context, param JoinLiveAnchorLotteryParam) (*JoinLiveAnchorLotteryResult, error) {
 	if err := checkContext(ctx); err != nil {
 		return nil, err
