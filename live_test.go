@@ -47,3 +47,30 @@ func TestRandomVisitID(t *testing.T) {
 		t.Fatalf("两次生成的 visitID 不应相同: %q", visitID)
 	}
 }
+
+func TestSendLiveDanmakuParamEncoding(t *testing.T) {
+	r := restyNew()
+	if err := withParams(r, liveDanmakuForm{
+		Msg:      "测试弹幕",
+		RoomID:   1234567,
+		Bubble:   0,
+		Color:    liveDanmakuDefaultColor,
+		FontSize: liveDanmakuDefaultFontSize,
+		Mode:     liveDanmakuDefaultMode,
+		Rnd:      liveDanmakuDefaultRnd,
+	}); err != nil {
+		t.Fatalf("withParams 返回错误: %v", err)
+	}
+	if err := moveFormParams("msg", "roomid", "bubble", "color", "fontsize", "mode", "rnd")(r); err != nil {
+		t.Fatalf("moveFormParams 返回错误: %v", err)
+	}
+	if r.FormData.Get("msg") != "测试弹幕" || r.FormData.Get("roomid") != "1234567" {
+		t.Fatalf("表单字段不正确: %v", r.FormData)
+	}
+	if r.FormData.Get("color") != "16777215" || r.FormData.Get("fontsize") != "25" || r.FormData.Get("mode") != "1" {
+		t.Fatalf("弹幕默认值不正确: %v", r.FormData)
+	}
+	if r.QueryParam.Has("msg") || r.QueryParam.Has("roomid") {
+		t.Fatalf("字段应全部移入表单: %v", r.QueryParam)
+	}
+}

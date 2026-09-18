@@ -3,6 +3,7 @@ package bilibili
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -356,4 +357,72 @@ func (c *Client) GetLiveHotRankList(ctx context.Context) (*LiveHotRankList, erro
 	)
 	return execute[*LiveHotRankList](ctx, c, method, url, nil,
 		fillParam("web_location", liveWebLocationDefault))
+}
+
+// 发送直播弹幕的出厂默认值（与网页端一致）。
+const (
+	liveDanmakuDefaultColor    = 16777215 // 白色
+	liveDanmakuDefaultFontSize = 25       // 标准字号
+	liveDanmakuDefaultMode     = 1        // 滚动弹幕
+	liveDanmakuDefaultRnd      = 1        // 固定值，源实现如此
+)
+
+// SendLiveDanmakuParam 指定要发送的直播弹幕，CSRF 自动填入表单。
+//
+// 服务端对弹幕有频率与长度限制（普通用户单条 20 字符、发送间隔数秒），
+// 本库不代为限流，调用方需自行控制节奏。
+type SendLiveDanmakuParam struct {
+	RoomID   int64  // 直播间号
+	Msg      string // 弹幕内容
+	Color    int    // 弹幕颜色，十进制 RGB 值；0 表示默认白色
+	FontSize int    // 弹幕字号；0 表示默认 25
+	Mode     int    // 弹幕模式；0 表示默认滚动弹幕
+	Bubble   int    // 气泡 id；0 表示不使用气泡
+}
+
+// liveDanmakuForm 是发送直播弹幕的表单字段。
+type liveDanmakuForm struct {
+	Msg      string `json:"msg"`
+	RoomID   int64  `json:"roomid"`
+	Bubble   int    `json:"bubble"`
+	Color    int    `json:"color"`
+	FontSize int    `json:"fontsize"`
+	Mode     int    `json:"mode"`
+	Rnd      int    `json:"rnd"`
+}
+
+// SendLiveDanmaku 发送一条直播弹幕（文本，非表情）。需要登录态：CSRF 取自 Cookie
+// 的 bili_jct，由库自动填入。
+func (c *Client) SendLiveDanmaku(ctx context.Context, param SendLiveDanmakuParam) (*SendLiveDanmakuResult, error) {
+	color := param.Color
+	if color == 0 {
+		color = liveDanmakuDefaultColor
+	}
+	fontSize := param.FontSize
+	if fontSize == 0 {
+		fontSize = liveDanmakuDefaultFontSize
+	}
+	mode := param.Mode
+	if mode == 0 {
+		mode = liveDanmakuDefaultMode
+	}
+
+	const (
+		method = resty.MethodPost
+		url    = "https://api.live.bilibili.com/msg/send"
+	)
+	return execute[*SendLiveDanmakuResult](ctx, c, method, url, liveDanmakuForm{
+		Msg:      param.Msg,
+		RoomID:   param.RoomID,
+		Bubble:   param.Bubble,
+		Color:    color,
+		FontSize: fontSize,
+		Mode:     mode,
+		Rnd:      liveDanmakuDefaultRnd,
+	}, moveFormParams("msg", "roomid", "bubble", "color", "fontsize", "mode", "rnd"), fillFormCsrf(c),
+		func(r *resty.Request) error {
+			r.SetHeader("Referer", fmt.Sprintf("https://live.bilibili.com/%d", param.RoomID))
+			r.SetHeader("Origin", "https://live.bilibili.com")
+			return nil
+		})
 }

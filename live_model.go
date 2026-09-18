@@ -323,3 +323,15 @@ type LiveHotRankItem struct {
 	LiveStatus      int    `json:"live_status"`         // 开播状态。1：直播中
 	Rank            int    `json:"rank"`                // 榜单排名
 }
+
+// SendLiveDanmakuResult 是发送直播弹幕的响应（data 部分）。
+type SendLiveDanmakuResult struct {
+	ModeInfo SendLiveDanmakuModeInfo `json:"mode_info"` // 弹幕模式信息
+}
+
+// SendLiveDanmakuModeInfo 是弹幕下发后的模式信息。
+type SendLiveDanmakuModeInfo struct {
+	Mode           int    `json:"mode"`             // 实际生效的弹幕模式
+	ShowPlayerType int    `json:"show_player_type"` // 播放器展示类型
+	Extra          string `json:"extra"`            // 附加信息
+}
