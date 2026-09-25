@@ -202,10 +202,15 @@ func fillFormCsrf(_ *Client) paramHandler {
 
 // webLocationOrDefault 在调用方未指定页面标识时返回接口默认值。
 func webLocationOrDefault(webLocation, fallback string) string {
-	if webLocation == "" {
+	return stringOrDefault(webLocation, fallback)
+}
+
+// stringOrDefault 在调用方未指定值时返回接口默认值。
+func stringOrDefault(value, fallback string) string {
+	if value == "" {
 		return fallback
 	}
-	return webLocation
+	return value
 }
 
 // newRequest snapshots cookies once. Configuration is immutable while requests run.
