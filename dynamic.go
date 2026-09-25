@@ -4,16 +4,23 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/pkg/errors"
 )
 
 // 动态相关接口。响应模型见 dynamic_model.go。
+
+// errMissingDedeUserID 表示 cookie 里没有 DedeUserID：网页端登录态不完整。
+//
+// 做成包级静态错误（与 request.go 的 errMissingHTTPResponse 同形）而不是每次内联 errors.New：
+// 调用方可以拿 errors.Is 判断「是没登录，还是别的失败」。
+// 文本与 video.go 里那处保持一致（那边还是内联的，将来可一并收拢到这里）。
+var errMissingDedeUserID = errors.New("B站登录过期：缺少 DedeUserID")
 
 type SearchDynamicAtParam struct {
 	UID     int    `json:"uid"`     // 自己的uid
@@ -316,7 +323,7 @@ func repostDynamicHandler(param RepostDynamicParam) paramHandler {
 	return func(r *resty.Request) error {
 		mid := cookieValue(r.Cookies, "DedeUserID")
 		if mid == "" {
-			return errors.New("B站登录过期：缺少 DedeUserID")
+			return errMissingDedeUserID
 		}
 
 		uploadID := param.UploadID
