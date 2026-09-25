@@ -27,7 +27,7 @@ go test -race -v ./...            # 输出详细结果（CI 使用的形式）
 
 `go run tools/gen_struct.go` 可将粘贴的 Markdown 字段表格转换成 Go 结构体定义。详见 `tools/README.md`。
 
-测试均为纯逻辑单元测试（根目录下的 `*_test.go`），**不会**访问真实 API，也不需要凭证。多数只依赖标准库 `testing`；`util_test.go` 额外用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，但从不发出请求。`test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 同时排除了 `test/` 与 `tools/`。
+测试**不会访问真实 API，也不需要凭证**。多数只依赖标准库 `testing`；`util_test.go` 用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，`dynamic_test.go` 的少数用例用假 transport（`SetTransport`）把整条请求链路走完 —— 覆盖 URL / 方法 / CSRF 位置 / body 形状，那些是 handler 单测够不到的部分（URL 与方法是写死在 `execute` 调用里的常量）。**两者都不发出真实请求。** `test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 同时排除了 `test/` 与 `tools/`。
 
 CI（`.github/workflows/`）在向 `master` 的 push / PR 时运行两个 workflow：`gofmt.yml` 要求 `gofmt -s -l .` 输出为空；`golangci-lint.yml`（workflow 名为 `Go`）依次运行 golangci-lint、`go test -race -v ./...`、`go build -v ./...`。三个 workflow 的 Go 版本均由 `go-version-file: go.mod` 决定，因此改 `go.mod` 的 `go` 指令即可切换验证环境；该指令表示最低支持版本（当前 1.26），提升需在 PR 中说明理由。`master` 已开启分支保护，改动通过 PR 合入。
 
@@ -101,6 +101,8 @@ CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它
 - `*DecodeError` —— `Method`、`Endpoint`、`RootType`、`GoField`、`JSONPath`（例如 `$.data.items[3].modules.module_author.mid`）、`Expected`、`Actual`、从 1 开始计数的 `Offset`、`Exact`，以及包装的 `Err`。
 
 网络故障、取消和超时保留原始错误链（不会转换成 `HTTPError`）。`decode_diagnostic.go` / `decode_fields.go` 实现失败后的 JSON 路径 / 偏移定位；它**仅在**解码失败后运行，绝不重复执行自定义 unmarshaler，当只能定位到边界时标记 `Exact=false`，且始终基于未剪枝的原始字节，因此 `JSONPath` 与 `Offset` 不受容错影响。`DecodeError` 只在容错也失败时返回；被容错丢弃的字段不是错误，改用 `DroppedField` 上报（`decode_tolerate.go`，经 `SetDroppedFieldHandler` 注册），同样不含字段值。不要把 `ParamError.Err`、响应值、Cookie 或凭证泄漏到日志中。
+
+⚠️ **新增的错误要用包级静态变量**（`var errXxx = errors.New(...)`），别在函数里现写。golangci-lint 开着 `err113`（不许定义动态错误）与 `staticcheck` 的 `ST1005`（错误串不能以大写字母开头），而**这两条规则只认标准库的 `errors.New`** —— 库里既有的那些内联写法走的是 `github.com/pkg/errors`，所以历史代码从没被扫到。**新代码别照抄它们**：2026-09-26 加转发接口时，同一个 `errors.New` 连撞这两条。中文错误串尤其容易中 `ST1005`（「B站…」的 B 是拉丁大写）。
 
 ## 客户端构造与会话
 

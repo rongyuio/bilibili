@@ -129,6 +129,31 @@ err = client.ReportVideoWatchTime(ctx, bilibili.ReportVideoWatchTimeParam{
 
 参数校验在发出请求前完成：`cid`、`realtime`、`video_duration` 必须大于 0，`aid` 与 `bvid` 任选一个（`bvid` 需为 12 位）；`played_time` 传 `VideoPlayedComplete`（-1）表示已看完。清晰度由库固定为 `VideoQuality720P`，如需其他清晰度见 [video_stream_model.go](video_stream_model.go) 中的 `VideoQuality*` 常量。
 
+### 关注动态流与转发
+
+`GetDynamicFeedAll` 封装 `/x/polymer/web-dynamic/v1/feed/all`（动态首页的关注流）。它的 `data` 与空间动态是同一套 polymer 形态，因此复用 `DynamicInfo`。`FeedType` 留空即 `all`，`Features` 与 `WebLocation` 留空时由库填入网页端默认值：
+
+```go
+feed, err := client.GetDynamicFeedAll(ctx, bilibili.GetDynamicFeedAllParam{})
+for _, item := range feed.Items {
+    log.Println(item.IDStr.String(), item.Modules.ModuleAuthor.Name)
+}
+```
+
+`RepostDynamic` 转发一条动态（网页版「发表动态」接口的 `scene=4`）。它需要登录态：`DedeUserID` 与 `bili_jct` 都取自 Cookie，缺失会返回错误；不需要 WBI 签名，CSRF 走 URL 参数：
+
+```go
+res, err := client.RepostDynamic(ctx, bilibili.RepostDynamicParam{
+    DynamicID: 755402172521250838, // 被转发的原动态 ID
+    Content:   "转发抽奖",           // 可为空，空即纯转发
+})
+log.Println(res.DynIDStr)
+```
+
+⚠️ 被转发的原动态 ID 放在**外层的 `web_repost_src.dyn_id_str`**，而不是 `dyn_req.repost_src` —— 网页端构造完 `dyn_req` 之后会把 `repost_src` 删掉。上游文档只有 `scene=2`（图文）的示例，照它拼 `repost_src` 服务端不认。
+
+转发是**不可逆的对外动作**：库不判重、不限制频率、也不自动重试，这些都留给调用方决定。
+
 ### 话题动态列表
 
 `GetTopicFeed(ctx, param)` 封装 `/x/polymer/web-dynamic/v1/feed/topic`，返回一页响应的 `data`，复用统一 Cookie、context、参数编码和错误处理。参数全部位于 query，不额外启用 WBI 签名或 CSRF，也不自动重试或翻页；`WebLocation` 留空时由库填入默认值。
