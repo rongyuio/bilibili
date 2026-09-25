@@ -102,6 +102,8 @@ CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它
 
 网络故障、取消和超时保留原始错误链（不会转换成 `HTTPError`）。`decode_diagnostic.go` / `decode_fields.go` 实现失败后的 JSON 路径 / 偏移定位；它**仅在**解码失败后运行，绝不重复执行自定义 unmarshaler，当只能定位到边界时标记 `Exact=false`，且始终基于未剪枝的原始字节，因此 `JSONPath` 与 `Offset` 不受容错影响。`DecodeError` 只在容错也失败时返回；被容错丢弃的字段不是错误，改用 `DroppedField` 上报（`decode_tolerate.go`，经 `SetDroppedFieldHandler` 注册），同样不含字段值。不要把 `ParamError.Err`、响应值、Cookie 或凭证泄漏到日志中。
 
+⚠️ **新增的错误要用包级静态变量**（`var errXxx = errors.New(...)`），别在函数里现写。golangci-lint 开着 `err113`（不许定义动态错误）与 `staticcheck` 的 `ST1005`（错误串不能以大写字母开头），而**这两条规则只认标准库的 `errors.New`** —— 库里既有的那些内联写法走的是 `github.com/pkg/errors`，所以历史代码从没被扫到。**新代码别照抄它们**：2026-09-26 加转发接口时，同一个 `errors.New` 连撞这两条。中文错误串尤其容易中 `ST1005`（「B站…」的 B 是拉丁大写）。
+
 ## 客户端构造与会话
 
 - `New()` —— 离线创建，不联网；只构造带 B 站风格默认请求头和 20 秒超时的 Resty 客户端，并使用 `NoRedirectPolicy`。
