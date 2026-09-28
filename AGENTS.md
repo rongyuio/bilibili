@@ -4,7 +4,9 @@
 
 ## 概述
 
-封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`（导入路径与目录名不一致），要求 Go 1.26+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是 `CuteReimu/bilibili` 的持续维护 fork，该仓库现已 404；其所依据的接口文档仓库 `SocialSisterYi/bilibili-API-collect` 亦已归档（默认分支改为 `deprecated`，内容清空，根目录只剩 `README.md`）。我们现在维护自己的分叉，`tools/sync_docs` 对着它比对字段。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
+封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`（导入路径与目录名不一致），要求 Go 1.26+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是已归档的 `CuteReimu/bilibili` 的持续维护 fork；上游与接口文档仓库 `SocialSisterYi/bilibili-API-collect` 均已归档。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
+
+> **2026-09-28 修正**：上面那句里的 `CuteReimu/bilibili` 已被作者删除，[该地址](https://github.com/CuteReimu/bilibili)现在 404 ——「已归档」说的是它删除前的状态。`SocialSisterYi/bilibili-API-collect` 没有被删，是作者 2026-01-28 收到律师函后自己归档的（原件就是它根目录的 `reason.jpg`）：内容清空、默认分支改为 `deprecated`。我们维护自己的分叉，`tools/sync_docs` 对着它比对字段。
 
 所有代码都位于仓库根目录的 `bilibili` 包中（扁平包结构，除被忽略的 `test/` 和 `tools/` 生成器外没有子包）。文档与代码注释使用中文；修改既有文档和注释时请保持这一风格。
 
