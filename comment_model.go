@@ -108,15 +108,25 @@ type Comment struct {
 }
 
 type CommentsControl struct {
-	InputDisable          bool   `json:"input_disable"`            // 是否禁止新增评论。用户涉及合约争议，锁定该用户所有稿件、动态的评论区，不允许新增评论，root_input_text和child_input_text值为“当前评论区不可新增评论”
-	RootInputText         string `json:"root_input_text"`          // 评论框文字
-	ChildInputText        string `json:"child_input_text"`         // 评论框文字
-	BgText                string `json:"bg_text"`                  // 空评论区文字
-	WebSelection          bool   `json:"web_selection"`            // 评论是否筛选后可见。false：无需筛选。true：需要筛选
-	AnswerGuideText       string `json:"answer_guide_text"`        // 答题页面链接文字
-	AnswerGuideIconURL    string `json:"answer_guide_icon_url"`    // 答题页面图标 url
-	AnswerGuideIosURL     string `json:"answer_guide_ios_url"`     // 答题页面 ios url
-	AnswerGuideAndroidURL string `json:"answer_guide_android_url"` // 答题页面安卓 url
+	InputDisable           bool   `json:"input_disable"`             // 是否禁止新增评论。用户涉及合约争议，锁定该用户所有稿件、动态的评论区，不允许新增评论，root_input_text和child_input_text值为“当前评论区不可新增评论”
+	RootInputText          string `json:"root_input_text"`           // 评论框文字
+	ChildInputText         string `json:"child_input_text"`          // 评论框文字
+	BgText                 string `json:"bg_text"`                   // 空评论区文字
+	WebSelection           bool   `json:"web_selection"`             // 评论是否筛选后可见。false：无需筛选。true：需要筛选
+	AnswerGuideText        string `json:"answer_guide_text"`         // 答题页面链接文字
+	AnswerGuideIconURL     string `json:"answer_guide_icon_url"`     // 答题页面图标 url
+	AnswerGuideIosURL      string `json:"answer_guide_ios_url"`      // 答题页面 ios url
+	AnswerGuideAndroidURL  string `json:"answer_guide_android_url"`  // 答题页面安卓 url
+	GiveupInputText        string `json:"giveup_input_text"`         // 放弃发表评论时的提示文字。如 不发没关系，请继续友善哦~
+	ScreenshotIconState    int    `json:"screenshot_icon_state"`     // 截图图标状态。0：隐藏。1：显示
+	UploadPictureIconState int    `json:"upload_picture_icon_state"` // 上传图片图标状态。0：隐藏。1：显示
+	DisableJumpEmote       bool   `json:"disable_jump_emote"`        // 是否禁止点击表情跳转。实测为 false
+	EnableCharged          bool   `json:"enable_charged"`            // 是否开启充电评论？。实测为 false，作用尚不明确
+	EnableCmBizHelper      bool   `json:"enable_cm_biz_helper"`      // 是否开启商业评论助手？。实测为 false，作用尚不明确
+	// 空评论区页面配置？（？）。文档只给了字段名与类型，没有对象表；实测为 null
+	EmptyPage any `json:"empty_page"`
+	// 预加载资源？（？）。文档只给了字段名与类型，没有对象表；实测为 null
+	PreloadResources []any `json:"preload_resources"`
 }
 
 type CommentsDetail struct {

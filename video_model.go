@@ -162,43 +162,74 @@ type TopRecommendVideoItem struct {
 	VtDisplay       string     `json:"vt_display"`        // 未知作用
 }
 type VideoInfo struct {
-	Bvid               string        `json:"bvid"`         // 稿件bvid
-	Aid                int           `json:"aid"`          // 稿件avid
-	Videos             int           `json:"videos"`       // 稿件分P总数。默认为1
-	Tid                int           `json:"tid"`          // 分区tid
-	Tname              string        `json:"tname"`        // 子分区名称
-	Copyright          int           `json:"copyright"`    // 视频类型。1：原创。2：转载
-	Pic                string        `json:"pic"`          // 稿件封面图片url
-	Title              string        `json:"title"`        // 稿件标题
-	PubDate            int           `json:"pubdate"`      // 稿件发布时间。秒级时间戳
-	Ctime              int           `json:"ctime"`        // 用户投稿时间。秒级时间戳
-	Desc               string        `json:"desc"`         // 视频简介
-	DescV2             []DescV2      `json:"desc_v2"`      // 新版视频简介
-	State              int           `json:"state"`        // 视频状态。详情见[属性数据文档](attribute_data.md#state字段值(稿件状态))
-	Duration           int           `json:"duration"`     // 稿件总时长(所有分P)。单位为秒
-	Forward            int           `json:"forward"`      // 撞车视频跳转avid。仅撞车视频存在此字段
-	MissionID          int           `json:"mission_id"`   // 稿件参与的活动id
-	RedirectURL        string        `json:"redirect_url"` // 重定向url。仅番剧或影视视频存在此字段。用于番剧&影视的av/bv->ep
-	Rights             VideoRights   `json:"rights"`       // 视频属性标志
-	Owner              Owner         `json:"owner"`        // 视频UP主信息
-	Stat               VideoStat     `json:"stat"`         // 视频状态数
-	Dynamic            string        `json:"dynamic"`      // 视频同步发布的的动态的文字内容
-	Cid                int           `json:"cid"`          // 视频1P cid
-	Dimension          Dimension     `json:"dimension"`    // 视频1P分辨率
-	SeasonID           int           `json:"season_id"`    // 合集id
-	Premiere           any           `json:"premiere"`     // null
-	TeenageMode        int           `json:"teenage_mode"`
-	IsChargeableSeason bool          `json:"is_chargeable_season"`
-	IsStory            bool          `json:"is_story"`
-	NoCache            bool          `json:"no_cache"` // 作用尚不明确
-	Pages              []VideoPage   `json:"pages"`    // 视频分P列表
-	Subtitle           VideoSubtitle `json:"subtitle"` // 视频CC字幕信息
-	Staff              []Staff       `json:"staff"`    // 合作成员列表。非合作视频无此项
-	IsSeasonDisplay    bool          `json:"is_season_display"`
-	UserGarb           UserGarb      `json:"user_garb"` // 用户装扮信息
-	HonorReply         HonorReply    `json:"honor_reply"`
-	LikeIcon           string        `json:"like_icon"`
-	ArgueInfo          ArgueInfo     `json:"argue_info"` // 争议/警告信息
+	Bvid                    string        `json:"bvid"`         // 稿件bvid
+	Aid                     int           `json:"aid"`          // 稿件avid
+	Videos                  int           `json:"videos"`       // 稿件分P总数。默认为1
+	Tid                     int           `json:"tid"`          // 分区tid
+	Tname                   string        `json:"tname"`        // 子分区名称
+	Copyright               int           `json:"copyright"`    // 视频类型。1：原创。2：转载
+	Pic                     string        `json:"pic"`          // 稿件封面图片url
+	Title                   string        `json:"title"`        // 稿件标题
+	PubDate                 int           `json:"pubdate"`      // 稿件发布时间。秒级时间戳
+	Ctime                   int           `json:"ctime"`        // 用户投稿时间。秒级时间戳
+	Desc                    string        `json:"desc"`         // 视频简介
+	DescV2                  []DescV2      `json:"desc_v2"`      // 新版视频简介
+	State                   int           `json:"state"`        // 视频状态。详情见[属性数据文档](attribute_data.md#state字段值(稿件状态))
+	Duration                int           `json:"duration"`     // 稿件总时长(所有分P)。单位为秒
+	Forward                 int           `json:"forward"`      // 撞车视频跳转avid。仅撞车视频存在此字段
+	MissionID               int           `json:"mission_id"`   // 稿件参与的活动id
+	RedirectURL             string        `json:"redirect_url"` // 重定向url。仅番剧或影视视频存在此字段。用于番剧&影视的av/bv->ep
+	Rights                  VideoRights   `json:"rights"`       // 视频属性标志
+	Owner                   Owner         `json:"owner"`        // 视频UP主信息
+	Stat                    VideoStat     `json:"stat"`         // 视频状态数
+	Dynamic                 string        `json:"dynamic"`      // 视频同步发布的的动态的文字内容
+	Cid                     int           `json:"cid"`          // 视频1P cid
+	Dimension               Dimension     `json:"dimension"`    // 视频1P分辨率
+	SeasonID                int           `json:"season_id"`    // 合集id
+	Premiere                any           `json:"premiere"`     // null
+	TeenageMode             int           `json:"teenage_mode"`
+	IsChargeableSeason      bool          `json:"is_chargeable_season"`
+	IsStory                 bool          `json:"is_story"`
+	NoCache                 bool          `json:"no_cache"` // 作用尚不明确
+	Pages                   []VideoPage   `json:"pages"`    // 视频分P列表
+	Subtitle                VideoSubtitle `json:"subtitle"` // 视频CC字幕信息
+	Staff                   []Staff       `json:"staff"`    // 合作成员列表。非合作视频无此项
+	IsSeasonDisplay         bool          `json:"is_season_display"`
+	UserGarb                UserGarb      `json:"user_garb"` // 用户装扮信息
+	HonorReply              HonorReply    `json:"honor_reply"`
+	LikeIcon                string        `json:"like_icon"`
+	ArgueInfo               ArgueInfo     `json:"argue_info"`                  // 争议/警告信息
+	UpFromV2                int           `json:"up_from_v2"`                  // （？）。作用尚不明确
+	PubLocation             string        `json:"pub_location"`                // （？）。作用尚不明确
+	Tidv2                   int           `json:"tidv2"`                       // （？）。作用尚不明确
+	Tnamev2                 string        `json:"tnamev2"`                     // （？）。作用尚不明确
+	PidV2                   int           `json:"pid_v2"`                      // （？）。作用尚不明确
+	PidNameV2               string        `json:"pid_name_v2"`                 // （？）。作用尚不明确
+	CurrentState            int           `json:"current_state"`               // （？）。作用尚不明确
+	GlobalState             int           `json:"global_state"`                // （？）。作用尚不明确
+	IsOgv                   bool          `json:"is_ogv"`                      // （？）。作用尚不明确
+	AttributeV3             int           `json:"attribute_v3"`                // （？）。作用尚不明确
+	AiRcmd                  AiRcmd        `json:"ai_rcmd"`                     // （？）。作用尚不明确
+	TidV2                   int           `json:"tid_v2"`                      // 分区tid (v2)。详情见[视频分区一览 (v2)](video_zone_v2.md)
+	TnameV2                 string        `json:"tname_v2"`                    // 子分区名称 (v2)
+	IsUpowerExclusive       bool          `json:"is_upower_exclusive"`         // 是否为充电专属视频
+	IsUpowerPlay            bool          `json:"is_upower_play"`              //
+	IsUpowerPreview         bool          `json:"is_upower_preview"`           // 充电专属视频是否支持试看
+	IsUpowerExclusiveWithQa bool          `json:"is_upower_exclusive_with_qa"` // （？）。作用尚不明确
+	IsHuaSheng              bool          `json:"is_hua_sheng"`                // （？）。作用尚不明确
+	UgcSeason               UgcSeason     `json:"ugc_season"`                  // 视频合集信息。不在合集中的视频无此项
+	NeedJumpBv              bool          `json:"need_jump_bv"`                // 需要跳转到BV号?
+	DisableShowUpInfo       bool          `json:"disable_show_up_info"`        // 禁止展示UP主信息?
+	IsStoryPlay             bool          `json:"is_story_play"`               // 。作用未知，可能与动态视频有关
+	IsViewSelf              bool          `json:"is_view_self"`                // 是否尽自己可见
+}
+
+// AiRcmd AI 推荐信息。`Related[]` 与 `View` 上是同一个结构
+type AiRcmd struct {
+	Id      int    `json:"id"`      // （？）。作用尚不明确
+	Goto    string `json:"goto"`    // （？）。作用尚不明确
+	Trackid string `json:"trackid"` // （？）。作用尚不明确
+	UniqId  string `json:"uniq_id"` // （？）。作用尚不明确
 }
 
 // CardVip 是视频卡片与用户空间共用的大会员信息。
@@ -206,18 +237,43 @@ type VideoInfo struct {
 // SpaceVip 是本类型的别名；UserCardVip、MyVip、VipUserVip 等字段集或命名
 // 不同，保留独立类型。
 type CardVip struct {
-	Type               int    `json:"type"`                 // 会员类型。0：无。1：月大会员。2：年度及以上大会员
-	Status             int    `json:"status"`               // 会员状态。0：无。1：有
-	DueDate            int    `json:"due_date"`             // 会员过期时间。Unix时间戳(毫秒)
-	VipPayType         int    `json:"vip_pay_type"`         // 支付类型。0：未支付（常见于官方账号）。1：已支付（以正常渠道获取的大会员均为此值）
-	ThemeType          int    `json:"theme_type"`           // 0。作用尚不明确
-	Label              Label  `json:"label"`                // 会员标签
-	AvatarSubscript    int    `json:"avatar_subscript"`     // 是否显示会员图标。0：不显示。1：显示
-	NicknameColor      string `json:"nickname_color"`       // 会员昵称颜色。颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
-	Role               int    `json:"role"`                 // 大角色类型。1：月度大会员。3：年度大会员。7：十年大会员。15：百年大会员
-	AvatarSubscriptURL string `json:"avatar_subscript_url"` // 大会员角标地址
-	TvVipStatus        int    `json:"tv_vip_status"`        // 电视大会员状态。0：未开通
-	TvVipPayType       int    `json:"tv_vip_pay_type"`      // 电视大会员支付类型
+	Type               int         `json:"type"`                 // 会员类型。0：无。1：月大会员。2：年度及以上大会员
+	Status             int         `json:"status"`               // 会员状态。0：无。1：有
+	DueDate            int         `json:"due_date"`             // 会员过期时间。Unix时间戳(毫秒)
+	VipPayType         int         `json:"vip_pay_type"`         // 支付类型。0：未支付（常见于官方账号）。1：已支付（以正常渠道获取的大会员均为此值）
+	ThemeType          int         `json:"theme_type"`           // 0。作用尚不明确
+	Label              Label       `json:"label"`                // 会员标签
+	AvatarSubscript    int         `json:"avatar_subscript"`     // 是否显示会员图标。0：不显示。1：显示
+	NicknameColor      string      `json:"nickname_color"`       // 会员昵称颜色。颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
+	Role               int         `json:"role"`                 // 大角色类型。1：月度大会员。3：年度大会员。7：十年大会员。15：百年大会员
+	AvatarSubscriptURL string      `json:"avatar_subscript_url"` // 大会员角标地址
+	TvVipStatus        int         `json:"tv_vip_status"`        // 电视大会员状态。0：未开通
+	TvVipPayType       int         `json:"tv_vip_pay_type"`      // 电视大会员支付类型
+	OttInfo            VipOttInfo  `json:"ott_info"`             // （？）。作用尚不明确
+	SuperVip           VipSuperVip `json:"super_vip"`            // （？）。作用尚不明确
+	TvDueDate          int         `json:"tv_due_date"`          // 电视大会员过期时间。秒级时间戳
+	AvatarIcon         AvatarIcon  `json:"avatar_icon"`          // 大会员角标信息
+}
+
+// VipOttInfo `vip` 中的 `ott_info` 对象
+type VipOttInfo struct {
+	VipType      int    `json:"vip_type"`       // （？）。作用尚不明确
+	PayType      int    `json:"pay_type"`       // （？）。作用尚不明确
+	PayChannelId string `json:"pay_channel_id"` // （？）。作用尚不明确
+	Status       int    `json:"status"`         // （？）。作用尚不明确
+	OverdueTime  int    `json:"overdue_time"`   // （？）。作用尚不明确
+}
+
+// VipSuperVip `vip` 中的 `super_vip` 对象
+type VipSuperVip struct {
+	IsSuperVip bool `json:"is_super_vip"` // （？）。作用尚不明确
+}
+
+// AvatarIcon 大会员角标信息。`vip` 中的 `avatar_icon` 对象。
+// 视频卡片与用户信息里的 `vip` 都带这一项
+type AvatarIcon struct {
+	IconType     int `json:"icon_type"`     // （？）。作用尚不明确
+	IconResource any `json:"icon_resource"` // （？）。作用尚不明确
 }
 
 type VideoCard struct {
@@ -260,16 +316,142 @@ type VideoDetailInfoCard struct {
 }
 
 type VideoDetailInfo struct {
-	View      VideoInfo           `json:"View"`       // 视频基本信息
-	Card      VideoDetailInfoCard `json:"Card"`       // 视频UP主信息
-	Tags      []VideoTag          `json:"Tags"`       // 视频TAG信息
-	Reply     CommentsHotReply    `json:"Reply"`      // 视频热评信息
-	Related   []VideoInfo         `json:"Related"`    // 推荐视频信息
-	Spec      any                 `json:"Spec"`       // ？。作用尚不明确
-	HotShare  any                 `json:"hot_share"`  // ？。作用尚不明确
-	Elec      any                 `json:"elec"`       // ？。作用尚不明确
-	Recommend any                 `json:"recommend"`  // ？。作用尚不明确
-	ViewAddit any                 `json:"view_addit"` // ？。作用尚不明确
+	View                   VideoInfo           `json:"View"`                       // 视频基本信息
+	Card                   VideoDetailInfoCard `json:"Card"`                       // 视频UP主信息
+	Tags                   []VideoTag          `json:"Tags"`                       // 视频TAG信息
+	Reply                  CommentsHotReply    `json:"Reply"`                      // 视频热评信息
+	Related                []VideoInfo         `json:"Related"`                    // 推荐视频信息
+	Spec                   any                 `json:"Spec"`                       // ？。作用尚不明确
+	IsHitLabourDayActivity bool                `json:"is_hit_labour_day_activity"` // （？）。作用尚不明确
+	HotShare               any                 `json:"hot_share"`                  // ？。作用尚不明确
+	Elec                   any                 `json:"elec"`                       // ？。作用尚不明确
+	Recommend              any                 `json:"recommend"`                  // ？。作用尚不明确
+	ViewAddit              any                 `json:"view_addit"`                 // ？。作用尚不明确
+	Emergency              Emergency           `json:"emergency"`                  // 视频操作按钮信息
+	Participle             []string            `json:"participle"`                 // 分词信息。用于推荐
+	ReplaceRecommend       bool                `json:"replace_recommend"`          // ？。作用尚不明确
+	Guide                  any                 `json:"guide"`                      // ？。作用尚不明确
+	QueryTags              any                 `json:"query_tags"`                 // ？。作用尚不明确
+	ModuleCtrl             any                 `json:"module_ctrl"`                // ？。作用尚不明确
+}
+
+// Emergency 视频操作按钮信息。控制详情页各操作按钮是否展示
+type Emergency struct {
+	NoLike  bool `json:"no_like"`  // 是否不显示点赞按钮
+	NoCoin  bool `json:"no_coin"`  // 是否不显示投币按钮
+	NoFav   bool `json:"no_fav"`   // 是否不显示收藏按钮
+	NoShare bool `json:"no_share"` // 是否不显示分享按钮
+}
+
+// UgcSeason 视频合集信息。不在合集中的视频无此项
+type UgcSeason struct {
+	Id          int                `json:"id"`            // 视频合集id
+	Title       string             `json:"title"`         // 视频合集标题
+	Cover       string             `json:"cover"`         // 视频合集封面url。文档字段表未列，取自本节 JSON 示例
+	Mid         int                `json:"mid"`           // 视频合集作者id。文档字段表标为 str，示例中是数字
+	Intro       string             `json:"intro"`         // 视频合集介绍
+	SignState   int                `json:"sign_state"`    // （？）。作用尚不明确
+	Attribute   int                `json:"attribute"`     // 稿件属性位。详情见[属性数据文档](attribute_data.md#attribute字段值(稿件属性位))
+	Sections    []UgcSeasonSection `json:"sections"`      // 视频合集中分部列表，名称可由up主自定义，默认为正片
+	Stat        UgcSeasonStat      `json:"stat"`          // 视频合集状态数
+	EpCount     int                `json:"ep_count"`      // 视频合集中视频数量
+	SeasonType  int                `json:"season_type"`   // （？）。作用尚不明确
+	IsPaySeason bool               `json:"is_pay_season"` // 是否为付费合集
+	EnableVt    int                `json:"enable_vt"`     // （？）。作用尚不明确
+}
+
+// UgcSeasonStat `ugc_season` 中的 `stat` 对象。
+// 与 `VideoStat` 不同：收藏数键名是 `fav` 而非 `favorite`，且多了 `vv`
+type UgcSeasonStat struct {
+	SeasonID int `json:"season_id"` // 视频合集id
+	View     int `json:"view"`      // 视频合集总浏览量
+	Danmaku  int `json:"danmaku"`   // 视频合集总弹幕量
+	Reply    int `json:"reply"`     // 视频合集总评论量
+	Fav      int `json:"fav"`       // 视频合集总收藏数
+	Coin     int `json:"coin"`      // 视频合集总投币数
+	Share    int `json:"share"`     // 视频合集总分享数
+	NowRank  int `json:"now_rank"`  // 视频合集当前排名
+	HisRank  int `json:"his_rank"`  // 视频合集历史排名
+	Like     int `json:"like"`      // 视频合集总获赞数
+	Vt       int `json:"vt"`        // （？）。作用尚不明确
+	Vv       int `json:"vv"`        // （？）。作用尚不明确
+}
+
+// UgcSeasonSection `ugc_season` 中的 `sections` 数组中的对象
+type UgcSeasonSection struct {
+	SeasonID int `json:"season_id"` // 视频合集中分部所属视频合集id
+	// 分部的 id。文档字段表写作 `section_id`，但本节 JSON 示例里是 `id`，
+	// 且示例中不存在 `section_id`。两个都留着 —— 缺失的键不会填值，不会丢数据
+	ID        int                `json:"id"`
+	SectionID int                `json:"section_id"`
+	Title     string             `json:"title"`    // 视频合集中分部标题
+	Type      int                `json:"type"`     // （？）。作用尚不明确
+	Episodes  []UgcSeasonEpisode `json:"episodes"` // 视频合集中分部的视频列表
+}
+
+// UgcSeasonEpisode `ugc_season.sections[].episodes[]` 中的对象
+type UgcSeasonEpisode struct {
+	SeasonID  int                 `json:"season_id"`  // 分部中视频所属视频合集id
+	SectionID int                 `json:"section_id"` // 分部中视频所属视频合集分部id
+	Id        int                 `json:"id"`         // 分部中视频id
+	Aid       int                 `json:"aid"`        // 视频aid
+	Cid       int                 `json:"cid"`        // 视频cid
+	Title     string              `json:"title"`      // 视频标题。合集列表中展示的标题，默认视频真实标题
+	Attribute int                 `json:"attribute"`  // 稿件属性位。文档标为已弃用，示例中仍在返回
+	Arc       UgcSeasonEpisodeArc `json:"arc"`        // 视频详细信息
+	Page      VideoPage           `json:"page"`       // 视频分P信息
+	Bvid      string              `json:"bvid"`       // 视频bvid
+	Pages     []VideoPage         `json:"pages"`      // 视频分P列表
+}
+
+// UgcSeasonEpisodeArc `ugc_season.sections[].episodes[].arc` 对象，视频详细信息。
+//
+// 文档称「基本同『获取视频详细信息(web端)』中的 data 对象」，但实测键名有差异 ——
+// `author` 而非 `owner`、`type_id`/`type_name` 而非 `tid`/`tname`、`stat.fav` 而非
+// `stat.favorite`。复用 VideoInfo 会把这些字段静默丢掉，所以单独建型。
+type UgcSeasonEpisodeArc struct {
+	Aid                int                  `json:"aid"`                  // 稿件avid
+	Videos             int                  `json:"videos"`               // 稿件分P总数。默认为1
+	TypeID             int                  `json:"type_id"`              // 分区tid
+	TypeName           string               `json:"type_name"`            // 子分区名称
+	Copyright          int                  `json:"copyright"`            // 视频类型。1：原创。2：转载
+	Pic                string               `json:"pic"`                  // 稿件封面图片url
+	Title              string               `json:"title"`                // 稿件标题
+	PubDate            int                  `json:"pubdate"`              // 稿件发布时间。秒级时间戳
+	Ctime              int                  `json:"ctime"`                // 用户投稿时间。秒级时间戳
+	Desc               string               `json:"desc"`                 // 视频简介
+	State              int                  `json:"state"`                // 视频状态
+	Duration           int                  `json:"duration"`             // 稿件总时长。单位为秒
+	Rights             VideoRights          `json:"rights"`               // 视频属性标志
+	Author             Owner                `json:"author"`               // UP主信息
+	Stat               UgcSeasonEpisodeStat `json:"stat"`                 // 视频状态数
+	Dynamic            string               `json:"dynamic"`              // 同步发布的动态的文字内容
+	Dimension          Dimension            `json:"dimension"`            // 视频1P分辨率
+	DescV2             any                  `json:"desc_v2"`              // 新版视频简介。合集示例中为 null
+	IsChargeableSeason bool                 `json:"is_chargeable_season"` // 是否为付费合集
+	IsBlooper          bool                 `json:"is_blooper"`           // 是否为花絮
+	EnableVt           int                  `json:"enable_vt"`            // （？）。作用尚不明确
+	VtDisplay          string               `json:"vt_display"`           // （？）。作用尚不明确
+}
+
+// UgcSeasonEpisodeStat `ugc_season.sections[].episodes[].arc.stat` 对象。
+// 有 `fav`、`vv`、`argue_msg`，无 `favorite`、`no_reprint`，与 `VideoStat` 不同型
+type UgcSeasonEpisodeStat struct {
+	Aid        int    `json:"aid"`        // 稿件avid
+	View       int    `json:"view"`       // 播放数
+	Danmaku    int    `json:"danmaku"`    // 弹幕数
+	Reply      int    `json:"reply"`      // 评论数
+	Fav        int    `json:"fav"`        // 收藏数
+	Coin       int    `json:"coin"`       // 投币数
+	Share      int    `json:"share"`      // 分享数
+	NowRank    int    `json:"now_rank"`   // 当前排名
+	HisRank    int    `json:"his_rank"`   // 历史最高排行
+	Like       int    `json:"like"`       // 获赞数
+	Dislike    int    `json:"dislike"`    // 点踩数。恒为0
+	Evaluation string `json:"evaluation"` // 视频评分
+	ArgueMsg   string `json:"argue_msg"`  // 警告信息
+	Vt         int    `json:"vt"`         // （？）。作用尚不明确
+	Vv         int    `json:"vv"`         // （？）。作用尚不明确
 }
 
 type Dimension struct {
@@ -340,6 +522,12 @@ type VideoOnlineInfo struct {
 	Total      string     `json:"total"`       // 所有终端总计人数。例如10万+
 	Count      string     `json:"count"`       // web端实时在线人数
 	ShowSwitch ShowSwitch `json:"show_switch"` // 数据显示控制
+	Abtest     Abtest     `json:"abtest"`      // AB测试分组。实测为 {"group":"b"}
+}
+
+// Abtest AB 测试分组
+type Abtest struct {
+	Group string `json:"group"` // 分组标识。实测为 b
 }
 
 type VideoStatusNumber struct {

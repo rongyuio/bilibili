@@ -11,9 +11,14 @@ type Geetest struct {
 
 type CaptchaResult struct {
 	Geetest Geetest `json:"geetest"` // 极验captcha数据
-	Tencent any     `json:"tencent"` // (?)。**作用尚不明确**
+	Tencent Tencent `json:"tencent"` // (?)。作用尚不明确
 	Token   string  `json:"token"`   // 登录 API token。与 captcha 无关，与登录接口有关
 	Type    string  `json:"type"`    // 验证方式。用于判断使用哪一种验证方式，目前所见只有极验。geetest：极验
+}
+
+// Tencent `data` 中的 `tencent` 对象
+type Tencent struct {
+	Appid string `json:"appid"` // (?)。实测为空
 }
 
 type LoginWithPasswordResult struct {
@@ -54,14 +59,15 @@ type LoginWithQRCodeResult struct {
 }
 
 type AccountInformation struct {
-	Mid      json.Number `json:"mid"`       // 我的mid
-	Uname    string      `json:"uname"`     // 我的昵称
-	Userid   string      `json:"userid"`    // 我的用户名
-	Sign     string      `json:"sign"`      // 我的签名
-	Birthday string      `json:"birthday"`  // 我的生日。YYYY-MM-DD
-	Sex      string      `json:"sex"`       // 我的性别。男 女 保密
-	NickFree bool        `json:"nick_free"` // 是否未设置昵称。false：设置过昵称。true：未设置昵称
-	Rank     string      `json:"rank"`      // 我的会员等级
+	Mid               json.Number          `json:"mid"`                 // 我的mid
+	Uname             string               `json:"uname"`               // 我的昵称
+	Userid            string               `json:"userid"`              // 我的用户名
+	Sign              string               `json:"sign"`                // 我的签名
+	Birthday          string               `json:"birthday"`            // 我的生日。YYYY-MM-DD
+	Sex               string               `json:"sex"`                 // 我的性别。男 女 保密
+	NickFree          bool                 `json:"nick_free"`           // 是否未设置昵称。false：设置过昵称。true：未设置昵称
+	Rank              string               `json:"rank"`                // 我的会员等级
+	UserFieldSettings []AccountInformation `json:"user_field_settings"` // 用户字段设置。元素结构与账号本体相同
 }
 type QRCode struct {
 	URL       string `json:"url"`        // 二维码内容 (登录页面 url)
