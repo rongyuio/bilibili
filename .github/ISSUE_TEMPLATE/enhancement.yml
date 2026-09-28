@@ -15,9 +15,9 @@ body:
   attributes:
     label: 接口文档
     placeholder: |-
-      https://github.com/SocialSisterYi/bilibili-API-collect/xxxx/xxxx/xxxx.md
-      
-      也可以直接贴上接口url和各字段含义
+      可以贴上接口文档的链接
+
+      也可以直接贴上接口 url 和各字段含义
   validations:
     required: true
 

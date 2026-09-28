@@ -58,20 +58,20 @@ type T struct {
 
 ---
 
-# 和 bilibili-API-collect 对字段（sync_docs）
+# 和接口文档对字段（sync_docs）
 
 `gen_struct.go` 是「文档 → 代码」的手动单向粘贴，粘贴完两边就脱钩了：文档加了字段你不会知道，
 代码改了名文档也不会知道。`tools/sync_docs` 补这一环 —— 它把本库的结构体和
-[bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect) 的字段表对起来。
+接口文档的字段表对起来。
 
-先在旁边检出 BAC，然后：
+先在旁边检出接口文档仓库，然后：
 
 ```bash
 go run ./tools/sync_docs -check       # 只报漂移，有漂移退出码非 0
 go run ./tools/sync_docs -write       # 把「文档有、Go 没有」的字段补进结构体
 go run ./tools/sync_docs -v           # 打印每个锚点实际匹到哪张表
 go run ./tools/sync_docs -coverage    # 还有多少结构体没挂锚点
-go run ./tools/sync_docs -docs <路径>  # BAC 检出位置，默认 ../bilibili-API-collect
+go run ./tools/sync_docs -docs <路径>  # 接口文档检出位置，默认 ../bilibili-API-collect
 ```
 
 退出码：`0` 一致，`1` 有漂移，`2` 用法/IO 出错。
@@ -121,6 +121,6 @@ go run ./tools/sync_docs -docs <路径>  # BAC 检出位置，默认 ../bilibili
 
 ## CI
 
-`-check` 需要 BAC 的检出，两个仓库一个私有一个公开，跨仓库拉取不值当，
-所以没接进 CI。同步 BAC 之后手动跑一次 `-check`，或者本地起个
+`-check` 需要接口文档的检出，跨仓库拉取不值当，
+所以没接进 CI。同步接口文档之后手动跑一次 `-check`，或者本地起个
 workflow_dispatch 自己传 `-docs` 路径。
