@@ -4,9 +4,9 @@
 
 ## 概述
 
-封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`（导入路径与目录名不一致），要求 Go 1.26+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是已归档的 `CuteReimu/bilibili` 的持续维护 fork；上游与接口文档仓库 `SocialSisterYi/bilibili-API-collect` 均已归档。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
+封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`（导入路径与目录名不一致），要求 Go 1.26+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是已归档的 `CuteReimu/bilibili` 的持续维护 fork，其所依据的接口文档仓库也已停止维护。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
 
-> **2026-09-28 修正**：上面那句里的 `CuteReimu/bilibili` 已被作者删除，[该地址](https://github.com/CuteReimu/bilibili)现在 404 ——「已归档」说的是它删除前的状态。`SocialSisterYi/bilibili-API-collect` 没有被删，是作者 2026-01-28 收到律师函后自己归档的（原件就是它根目录的 `reason.jpg`）：内容清空、默认分支改为 `deprecated`。我们维护自己的分叉，`tools/sync_docs` 对着它比对字段。
+> **2026-09-28 修正**：上面那句里的 `CuteReimu/bilibili` 已被作者删除，[该地址](https://github.com/CuteReimu/bilibili)现在 404 ——「已归档」说的是它删除前的状态。我们维护自己的分叉，`tools/sync_docs` 对着本地的接口文档副本比对字段。
 
 所有代码都位于仓库根目录的 `bilibili` 包中（扁平包结构，除被忽略的 `test/` 和 `tools/` 生成器外没有子包）。文档与代码注释使用中文；修改既有文档和注释时请保持这一风格。
 
@@ -27,7 +27,7 @@ go test -run 'TestCookie|TestSignMap' ./...   # 按正则运行一组测试
 go test -race -v ./...            # 输出详细结果（CI 使用的形式）
 ```
 
-`go run tools/gen_struct.go` 可将粘贴的 Markdown 字段表格转换成 Go 结构体定义；`go run ./tools/sync_docs -check` 则把本库结构体与 bilibili-API-collect 的字段表对起来，报出两边不一致的字段。两者都详见 `tools/README.md`。
+`go run tools/gen_struct.go` 可将粘贴的 Markdown 字段表格转换成 Go 结构体定义；`go run ./tools/sync_docs -check` 则把本库结构体与接口文档的字段表对起来，报出两边不一致的字段。两者都详见 `tools/README.md`。
 
 测试**不会访问真实 API，也不需要凭证**。多数只依赖标准库 `testing`；`util_test.go` 用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，`dynamic_test.go` 的少数用例用假 transport（`SetTransport`）把整条请求链路走完 —— 覆盖 URL / 方法 / CSRF 位置 / body 形状，那些是 handler 单测够不到的部分（URL 与方法是写死在 `execute` 调用里的常量）。**两者都不发出真实请求。** `test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 同时排除了 `test/` 与 `tools/`。
 
@@ -37,7 +37,7 @@ CI（`.github/workflows/`）在向 `master` 的 push / PR 时运行两个 workfl
 
 ## 文件组织约定
 
-包按 API 业务域划分，与上游 `bilibili-API-collect` 的文档结构保持一致：
+包按 API 业务域划分，与上游接口文档的目录结构保持一致：
 
 - `<domain>.go` —— 方法与 `*Param` / `*Result` 类型（例如 `video.go`、`user.go`、`live.go`、`dynamic.go`、`fav.go`、`login.go`）。
 - `<domain>_model.go` —— 该业务域的响应模型结构体（例如 `video_model.go`、`user_model.go`）。
@@ -117,7 +117,7 @@ CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它
 
 ## 命名规范（见 `.github/CONTRIBUTING.md`）
 
-- 方法名逐词翻译中文接口描述（例如 `GetLiveAreaList`）。术语遵循 `bilibili-API-collect`（专栏文集为 `Articles`，专栏文章为 `Article`）。
+- 方法名逐词翻译中文接口描述（例如 `GetLiveAreaList`）。术语遵循上游接口文档（专栏文集为 `Articles`，专栏文章为 `Article`）。
 - 参数结构体：`XxxParam`；结果结构体：`XxxResult`。对于 `Get*` 类方法，结果类型可省略 `Get` 和 `Result`（例如 `LiveAreaList`）。没有参数就不要建空结构体，传 `nil`。
 - `csrf` 不作为调用方传入的参数。
 - 能在多文件间复用的子类型尽量复用；共享类型放入 `type.go`。注意通过前缀避免文件之间的命名冲突。

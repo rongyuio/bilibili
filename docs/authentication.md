@@ -102,7 +102,7 @@ log.Printf("地区代码: %+v", countryCrownResult)
 
 当然，如果你已经确定`cid`的值，这一步可以跳过。中国大陆的`cid`就是`86`。
 
-然后发送短信验证码：*（上游曾记录 [86103 错误](https://github.com/SocialSisterYi/bilibili-API-collect/issues/756)，当前可用性需以实际响应为准）*
+然后发送短信验证码：*（上游曾记录 86103 错误，当前可用性需以实际响应为准）*
 
 ```go
 sendSMSResult, err := client.SendSMS(ctx, bilibili.SendSMSParam{

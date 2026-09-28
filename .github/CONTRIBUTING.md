@@ -8,7 +8,7 @@
 ## 关于命名规范
 
 - 函数命名参考中文翻译，例如“获取全部直播间分区列表”翻译成`GetLiveAreaList`，每个词一一对应，个别词语在不影响理解的情况下可以省略，例如这里“全部”被省略了。
-  - 可以参考一下 **bilibili-API-collect** 库的翻译，例如专栏文集叫`Articles`，专栏文章叫`Article`。
+  - 可以参考一下上游接口文档的用词，例如专栏文集叫`Articles`，专栏文章叫`Article`。
 - 函数传入参数的结构体名定义为`GetLiveAreaListParam`，也就是后面加“Param”，然后返回值定义为`GetLiveAreaListResult`，也就是后面加“Result”。
   - 如果完全没有传入参数，没必要弄个空的结构体，留空即可。
   - 对于“Get”类的函数，返回值可以简写成`LiveAreaList`，也就是把“Get”和“Result”省略掉。
@@ -40,10 +40,10 @@ type Article struct {
 
 ## 关于go文件的命名
 
-对于**bilibili-API-collect**库的接口，将对应方法放在对应的`.go`文件里。例如：
+接口按业务域拆分成多个`.go`文件，把对应的方法放进对应的文件里。例如：
 
-- **bilibili-API-collect**中的`docs/user`文件夹下面的所有接口，对应方法放在`user.go`文件里
-- **bilibili-API-collect**中的`docs/video`文件夹下面的所有接口，对应方法放在`video.go`文件里
+- 用户相关的接口，对应方法放在`user.go`文件里
+- 视频相关的接口，对应方法放在`video.go`文件里
 
 对于并非是对应接口的方法（例如一些纯工具类方法），可自行找一个合适的`.go`文件。
 
