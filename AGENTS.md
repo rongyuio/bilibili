@@ -31,7 +31,7 @@ go test -race -v ./...            # 输出详细结果（CI 使用的形式）
 
 `go run tools/gen_struct.go` 可将粘贴的 Markdown 字段表格转换成 Go 结构体定义。`go run ./tools/sync_docs` 则把本库结构体与接口文档的字段表对起来，四个 flag：`-check`（报漂移，有漂移退出码非 0）、`-write`（按文档补齐字段）、`-v`（打印每个锚点实际匹到哪张表）、`-coverage`（还有多少结构体没挂锚点）。
 
-⚠️ `sync_docs` **需要旁边有一份接口文档的检出**，位置用 `-docs` 指定。`make sync-docs` 会按特征文件（同级目录里谁有 `docs/video/info.md`）自动探测，探测不中时用 `make sync-docs DOCS=../某个目录` 显式给。两者都详见 `tools/README.md`。
+⚠️ `-check` 与 `-write` **必须给 `-docs`**，指到接口文档的检出位置 —— 不给会直接报错退出（这个参数故意没有默认值：目录名跟本地布局绑定、跟代码无关，写进仓库会一路带进公开历史）。`-coverage` 不读文档，不用给。`make sync-docs` 会按特征文件（同级目录里谁有 `docs/video/info.md`）自动探测，探测不中时用 `make sync-docs DOCS=../某个目录` 显式给。两者都详见 `tools/README.md`。
 
 测试**不会访问真实 API，也不需要凭证**。多数只依赖标准库 `testing`；`util_test.go` 用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，`dynamic_test.go` 的少数用例用假 transport（`SetTransport`）把整条请求链路走完 —— 覆盖 URL / 方法 / CSRF 位置 / body 形状，那些是 handler 单测够不到的部分（URL 与方法是写死在 `execute` 调用里的常量）。**两者都不发出真实请求。** `test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 同时排除了 `test/` 与 `tools/`。
 
