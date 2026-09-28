@@ -66,25 +66,24 @@ type FavourUgc struct {
 }
 
 type FavourInfo struct {
-	ID            int                   `json:"id"`
-	Type          int                   `json:"type"`
-	Title         string                `json:"title"`
-	Cover         string                `json:"cover"`
-	Intro         string                `json:"intro"`
-	Page          int                   `json:"page"`
-	Duration      int                   `json:"duration"`
-	Upper         FavourUpper           `json:"upper"`
-	Attr          int                   `json:"attr"`
-	CntInfo       FavourResourceCntInfo `json:"cnt_info"`
-	Link          string                `json:"link"`
-	Ctime         int                   `json:"ctime"`
-	Pubtime       int                   `json:"pubtime"`
-	FavTime       int                   `json:"fav_time"`
-	BvID          string                `json:"bv_id"`
-	Bvid          string                `json:"bvid"`
-	Season        any                   `json:"season"`
-	Ugc           FavourUgc             `json:"ugc"`
-	MediaListLink string                `json:"media_list_link"` // 媒体列表跳转链接。实测为 `bilibili://music/playlist/playpage/...` 形式
+	ID       int                   `json:"id"`
+	Type     int                   `json:"type"`
+	Title    string                `json:"title"`
+	Cover    string                `json:"cover"`
+	Intro    string                `json:"intro"`
+	Page     int                   `json:"page"`
+	Duration int                   `json:"duration"`
+	Upper    FavourUpper           `json:"upper"`
+	Attr     int                   `json:"attr"`
+	CntInfo  FavourResourceCntInfo `json:"cnt_info"`
+	Link     string                `json:"link"`
+	Ctime    int                   `json:"ctime"`
+	Pubtime  int                   `json:"pubtime"`
+	FavTime  int                   `json:"fav_time"`
+	BvID     string                `json:"bv_id"`
+	Bvid     string                `json:"bvid"`
+	Season   any                   `json:"season"`
+	Ugc      FavourUgc             `json:"ugc"`
 }
 
 // FavourFolderDetail 是 FavourFolderInfo 的别名（GetFavourList 的 info 字段，字段完全一致）。
@@ -109,6 +108,10 @@ type FavourMedia struct {
 	BvID     string                `json:"bv_id"`    // 视频稿件bvid
 	Bvid     string                `json:"bvid"`     // 视频稿件bvid
 	Ugc      FavourUgc             `json:"ugc"`
+	// 媒体列表跳转链接。实测为 bilibili://music/playlist/playpage/... 形式
+	MediaListLink string `json:"media_list_link"`
+	Season        any    `json:"season"` // （？）
+	Ogv           any    `json:"ogv"`    // (?)。实测为 null
 }
 
 type FavourList struct {

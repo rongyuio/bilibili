@@ -115,43 +115,63 @@ type UserSeries struct {
 }
 
 type UserSpaceDetail struct {
-	Mid            int            `json:"mid"`              // mid
-	Name           string         `json:"name"`             // 昵称
-	Sex            string         `json:"sex"`              // 性别。男/女/保密
-	Face           string         `json:"face"`             // 头像链接
-	FaceNft        int            `json:"face_nft"`         // 是否为 NFT 头像。0：不是 NFT 头像。1：是 NFT 头像
-	FaceNftType    int            `json:"face_nft_type"`    // NFT 头像类型？
-	Sign           string         `json:"sign"`             // 签名
-	Rank           int            `json:"rank"`             // 用户权限等级。目前应该无任何作用。5000：0级未答题。10000：普通会员。20000：字幕君。25000：VIP。30000：真·职人。32000：管理员
-	Level          int            `json:"level"`            // 当前等级。0-6 级
-	Jointime       int            `json:"jointime"`         // 注册时间。此接口返回恒为0
-	Moral          int            `json:"moral"`            // 节操值。此接口返回恒为0
-	Silence        int            `json:"silence"`          // 封禁状态。0：正常。1：被封
-	Coins          int            `json:"coins"`            // 硬币数。需要登录（Cookie） 。只能查看自己的。默认为0
-	FansBadge      bool           `json:"fans_badge"`       // 是否具有粉丝勋章。false：无。true：有
-	FansMedal      FansMedal      `json:"fans_medal"`       // 粉丝勋章信息
-	Official       Official       `json:"official"`         // 认证信息
-	Vip            SpaceVip       `json:"vip"`              // 会员信息
-	Pendant        Pendant        `json:"pendant"`          // 头像框信息
-	Nameplate      Nameplate      `json:"nameplate"`        // 勋章信息
-	UserHonourInfo UserHonourInfo `json:"user_honour_info"` // （？）
-	IsFollowed     bool           `json:"is_followed"`      // 是否关注此用户。true：已关注。false：未关注。需要登录（Cookie） 。未登录恒为false
-	TopPhoto       string         `json:"top_photo"`        // 主页头图链接
-	Theme          any            `json:"theme"`            // （？）
-	SysNotice      SysNotice      `json:"sys_notice"`       // 系统通知。无内容则为空对象。主要用于展示如用户争议、纪念账号等等的小黄条
-	LiveRoom       LiveRoom       `json:"live_room"`        // 直播间信息
-	Birthday       string         `json:"birthday"`         // 生日。MM-DD。如设置隐私为空
-	School         School         `json:"school"`           // 学校
-	Profession     Profession     `json:"profession"`       // 专业资质信息
-	Tags           any            `json:"tags"`             // 个人标签
-	Series         UserSeries     `json:"series"`
-	IsSeniorMember int            `json:"is_senior_member"` // 是否为硬核会员。0：否。1：是
-	McnInfo        any            `json:"mcn_info"`         // （？）
-	GaiaResType    int            `json:"gaia_res_type"`    // （？）
-	GaiaData       any            `json:"gaia_data"`        // （？）
-	IsRisk         bool           `json:"is_risk"`          // （？）
-	Elec           Elec           `json:"elec"`             // 充电信息
-	Contract       Contract       `json:"contract"`         // 是否显示老粉计划
+	Mid             int            `json:"mid"`              // mid
+	Name            string         `json:"name"`             // 昵称
+	Sex             string         `json:"sex"`              // 性别。男/女/保密
+	Face            string         `json:"face"`             // 头像链接
+	FaceNft         int            `json:"face_nft"`         // 是否为 NFT 头像。0：不是 NFT 头像。1：是 NFT 头像
+	FaceNftType     int            `json:"face_nft_type"`    // NFT 头像类型？
+	Sign            string         `json:"sign"`             // 签名
+	Rank            int            `json:"rank"`             // 用户权限等级。目前应该无任何作用。5000：0级未答题。10000：普通会员。20000：字幕君。25000：VIP。30000：真·职人。32000：管理员
+	Level           int            `json:"level"`            // 当前等级。0-6 级
+	Jointime        int            `json:"jointime"`         // 注册时间。此接口返回恒为0
+	Moral           int            `json:"moral"`            // 节操值。此接口返回恒为0
+	Silence         int            `json:"silence"`          // 封禁状态。0：正常。1：被封
+	Coins           int            `json:"coins"`            // 硬币数。需要登录（Cookie） 。只能查看自己的。默认为0
+	FansBadge       bool           `json:"fans_badge"`       // 是否具有粉丝勋章。false：无。true：有
+	FansMedal       FansMedal      `json:"fans_medal"`       // 粉丝勋章信息
+	Official        Official       `json:"official"`         // 认证信息
+	Vip             SpaceVip       `json:"vip"`              // 会员信息
+	Pendant         Pendant        `json:"pendant"`          // 头像框信息
+	Nameplate       Nameplate      `json:"nameplate"`        // 勋章信息
+	UserHonourInfo  UserHonourInfo `json:"user_honour_info"` // （？）
+	IsFollowed      bool           `json:"is_followed"`      // 是否关注此用户。true：已关注。false：未关注。需要登录（Cookie） 。未登录恒为false
+	TopPhoto        string         `json:"top_photo"`        // 主页头图链接
+	Theme           any            `json:"theme"`            // （？）
+	SysNotice       SysNotice      `json:"sys_notice"`       // 系统通知。无内容则为空对象。主要用于展示如用户争议、纪念账号等等的小黄条
+	LiveRoom        LiveRoom       `json:"live_room"`        // 直播间信息
+	Birthday        string         `json:"birthday"`         // 生日。MM-DD。如设置隐私为空
+	School          School         `json:"school"`           // 学校
+	Profession      Profession     `json:"profession"`       // 专业资质信息
+	Tags            any            `json:"tags"`             // 个人标签
+	Series          UserSeries     `json:"series"`
+	IsSeniorMember  int            `json:"is_senior_member"` // 是否为硬核会员。0：否。1：是
+	McnInfo         any            `json:"mcn_info"`         // （？）
+	GaiaResType     int            `json:"gaia_res_type"`    // （？）
+	GaiaData        any            `json:"gaia_data"`        // （？）
+	IsRisk          bool           `json:"is_risk"`          // （？）
+	Elec            Elec           `json:"elec"`             // 充电信息
+	Contract        Contract       `json:"contract"`         // 是否显示老粉计划
+	CertificateShow bool           `json:"certificate_show"` // （？）
+	NameRender      NameRender     `json:"name_render"`      // 昵称渲染信息
+}
+
+// NameRender 昵称渲染信息。空间详细信息里的 `name_render` 对象
+type NameRender struct {
+	ColorsInfo   NameRenderColors `json:"colors_info"`   // 昵称颜色信息（？）。作用尚不明确
+	RenderScheme string           `json:"render_scheme"` // "Default" 或 "Colorful"。（？）。作用尚不明确
+}
+
+// NameRenderColors `name_render` 中的 `colors_info` 对象
+type NameRenderColors struct {
+	Color    []NameRenderColor `json:"color"`     // 昵称颜色（？）。作用尚不明确
+	ColorIDs []string          `json:"color_ids"` // 昵称颜色 id（？）。作用尚不明确。实测为 ["6"]
+}
+
+// NameRenderColor `colors_info.color` 数组中的对象
+type NameRenderColor struct {
+	ColorDay   string `json:"color_day"`   // 浅色模式昵称颜色。HEX颜色代码
+	ColorNight string `json:"color_night"` // 深色模式昵称颜色。HEX颜色代码
 }
 
 type VideoArea struct {

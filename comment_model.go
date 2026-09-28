@@ -123,6 +123,10 @@ type CommentsControl struct {
 	DisableJumpEmote       bool   `json:"disable_jump_emote"`        // 是否禁止点击表情跳转。实测为 false
 	EnableCharged          bool   `json:"enable_charged"`            // 是否开启充电评论？。实测为 false，作用尚不明确
 	EnableCmBizHelper      bool   `json:"enable_cm_biz_helper"`      // 是否开启商业评论助手？。实测为 false，作用尚不明确
+	// 空评论区页面配置？（？）。文档只给了字段名与类型，没有对象表；实测为 null
+	EmptyPage any `json:"empty_page"`
+	// 预加载资源？（？）。文档只给了字段名与类型，没有对象表；实测为 null
+	PreloadResources []any `json:"preload_resources"`
 }
 
 type CommentsDetail struct {

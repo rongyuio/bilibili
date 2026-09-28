@@ -44,6 +44,17 @@ type VipPrivilege struct {
 	Format060102    int                `json:"format060102"`      // (?)
 	KeeptimeStart   int                `json:"keeptime_start"`    // 大会员当前阶段开始时间。秒级时间戳
 	ComicShowCoupon ComicShowCoupon    `json:"comic_show_coupon"` // 漫展优惠券信息
+	IsOverdueVip    bool               `json:"is_overdue_vip"`    // 大会员是否过期
+	VipStatus       int                `json:"vip_status"`        // 会员状态。0：无。1：有
+	VipType         int                `json:"vip_type"`          // 会员类型。0：无。1：月大会员。2：年度及以上大会员
+	KeeptimeEnd     int                `json:"keeptime_end"`      // 大会员当前阶段过期时间。秒级时间戳
+	VipDueDate      int                `json:"vip_due_date"`      // 大会员过期时间。秒级时间戳
+	VipIsAnnual     bool               `json:"vip_is_annual"`     // 是否为年度及以上大会员
+	VipIsMonth      bool               `json:"vip_is_month"`      // 是否为月大会员
+	VipIsNewUser    bool               `json:"vip_is_new_user"`   // 是否为大会员新用户
+	BindPhone       string             `json:"bind_phone"`        // 绑定的手机号。星号隐藏部分信息
+	// 绑定的淘宝账号（？）。文档只给了字段名与类型，没有对象表
+	TaobaoAccount any `json:"taobao_account"`
 }
 
 // ComicShowCoupon `data` 中的 `comic_show_coupon` 对象
