@@ -2,10 +2,13 @@
 //
 // 用法（在仓库根目录）：
 //
-//	go run tools/sync_docs.go -check       # 只报漂移，有漂移则退出码非 0
-//	go run tools/sync_docs.go -write       # 把文档里有、结构体里没有的字段补上
-//	go run tools/sync_docs.go -coverage    # 报告映射覆盖率（还有多少结构体没挂锚点）
-//	go run tools/sync_docs.go -docs <路径>  # 接口文档检出位置，默认 ../bilibili-api-docs
+//	go run tools/sync_docs.go -check -docs <路径>   # 只报漂移，有漂移则退出码非 0
+//	go run tools/sync_docs.go -write -docs <路径>   # 把文档里有、结构体里没有的字段补上
+//	go run tools/sync_docs.go -coverage            # 报告映射覆盖率（还有多少结构体没挂锚点）
+//
+// `-check` 与 `-write` 必须给 `-docs`，指到接口文档的检出位置；`-coverage` 不读文档，
+// 不用给。这个参数没有默认值 —— 那个目录名跟本地布局绑定、跟代码无关，写进仓库会
+// 一路带进公开历史。在仓库根目录跑 `make sync-docs` 会自动探测，省掉它。
 //
 // ## 为什么是「映射表 + 工具」而不是全自动
 //
@@ -66,7 +69,7 @@ var (
 	flagCheck    = flag.Bool("check", false, "只检查，有漂移则退出码非 0")
 	flagWrite    = flag.Bool("write", false, "把缺失字段写回 Go 文件")
 	flagCoverage = flag.Bool("coverage", false, "报告映射覆盖率")
-	flagDocs     = flag.String("docs", "../bilibili-api-docs", "接口文档检出路径")
+	flagDocs     = flag.String("docs", "", "接口文档检出路径（-check / -write 必填）")
 	flagQuiet    = flag.Bool("quiet", false, "只打印汇总")
 	flagVerbose  = flag.Bool("v", false, "打印每个锚点实际匹到的表标签")
 )
@@ -87,6 +90,13 @@ func main() {
 	if *flagCoverage {
 		reportCoverage(root, structs)
 		return
+	}
+
+	if *flagDocs == "" {
+		fmt.Fprintln(os.Stderr, "✗ 没给接口文档检出位置。")
+		fmt.Fprintln(os.Stderr, "    用 -docs 指定：go run ./tools/sync_docs -check -docs ../某个目录")
+		fmt.Fprintln(os.Stderr, "    或者在仓库根目录跑 make sync-docs（会自动探测检出位置）")
+		os.Exit(2)
 	}
 
 	drift := 0
