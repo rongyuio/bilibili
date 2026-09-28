@@ -60,6 +60,8 @@ type Article struct {
 	Title           string       `json:"title"`      // 标题
 	Summary         string       `json:"summary"`    // 摘要
 	BannerURL       string       `json:"banner_url"` // 封面图
+	AuthorUid       int          `json:"author_uid"` // 作者mid。实测为 293793435
+	OnlyFans        int          `json:"only_fans"`  // 是否仅粉丝可见。实测为 0
 	TemplateID      int          `json:"template_id"`
 	State           int          `json:"state"`
 	Author          *Author      `json:"author"` // UP主信息
@@ -127,6 +129,7 @@ type ArticleInfo struct {
 	Next            int            `json:"next"`              // 下一篇文章cvid。无为0
 	ShareChannels   []ShareChannel `json:"share_channels"`    // 分享方式列表
 	Type            int            `json:"type"`              // 文章类别。0：文章。2：笔记
+	DisableShare    bool           `json:"disable_share"`     // 是否禁止分享。实测为 false
 }
 
 // CoinArticleResult 是 CoinVideoResult 的别名（专栏投币与视频投币的响应字段完全一致）。

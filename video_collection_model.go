@@ -22,6 +22,7 @@ type CollectionVideo struct {
 	Title            string              `json:"title"`             // 稿件标题
 	UgcPay           int                 `json:"ugc_pay"`           // 0
 	VtDisplay        string              `json:"vt_display"`
+	UpMid            int                 `json:"upMid"` // UP主mid。实测为 39665558
 }
 
 type CollectionMeta struct {

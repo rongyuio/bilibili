@@ -198,7 +198,25 @@ type VideoInfo struct {
 	UserGarb           UserGarb      `json:"user_garb"` // 用户装扮信息
 	HonorReply         HonorReply    `json:"honor_reply"`
 	LikeIcon           string        `json:"like_icon"`
-	ArgueInfo          ArgueInfo     `json:"argue_info"` // 争议/警告信息
+	ArgueInfo          ArgueInfo     `json:"argue_info"`    // 争议/警告信息	UpFromV2        int           `json:"up_from_v2"`      // （？）。作用尚不明确
+	PubLocation        string        `json:"pub_location"`  // （？）。作用尚不明确
+	Tidv2              int           `json:"tidv2"`         // （？）。作用尚不明确
+	Tnamev2            string        `json:"tnamev2"`       // （？）。作用尚不明确
+	PidV2              int           `json:"pid_v2"`        // （？）。作用尚不明确
+	PidNameV2          string        `json:"pid_name_v2"`   // （？）。作用尚不明确
+	CurrentState       int           `json:"current_state"` // （？）。作用尚不明确
+	GlobalState        int           `json:"global_state"`  // （？）。作用尚不明确
+	IsOgv              bool          `json:"is_ogv"`        // （？）。作用尚不明确
+	AttributeV3        int           `json:"attribute_v3"`  // （？）。作用尚不明确
+	AiRcmd             AiRcmd        `json:"ai_rcmd"`       // （？）。作用尚不明确
+}
+
+// AiRcmd AI 推荐信息。`Related[]` 与 `View` 上是同一个结构
+type AiRcmd struct {
+	Id      int    `json:"id"`      // （？）。作用尚不明确
+	Goto    string `json:"goto"`    // （？）。作用尚不明确
+	Trackid string `json:"trackid"` // （？）。作用尚不明确
+	UniqId  string `json:"uniq_id"` // （？）。作用尚不明确
 }
 
 // CardVip 是视频卡片与用户空间共用的大会员信息。
@@ -206,18 +224,34 @@ type VideoInfo struct {
 // SpaceVip 是本类型的别名；UserCardVip、MyVip、VipUserVip 等字段集或命名
 // 不同，保留独立类型。
 type CardVip struct {
-	Type               int    `json:"type"`                 // 会员类型。0：无。1：月大会员。2：年度及以上大会员
-	Status             int    `json:"status"`               // 会员状态。0：无。1：有
-	DueDate            int    `json:"due_date"`             // 会员过期时间。Unix时间戳(毫秒)
-	VipPayType         int    `json:"vip_pay_type"`         // 支付类型。0：未支付（常见于官方账号）。1：已支付（以正常渠道获取的大会员均为此值）
-	ThemeType          int    `json:"theme_type"`           // 0。作用尚不明确
-	Label              Label  `json:"label"`                // 会员标签
-	AvatarSubscript    int    `json:"avatar_subscript"`     // 是否显示会员图标。0：不显示。1：显示
-	NicknameColor      string `json:"nickname_color"`       // 会员昵称颜色。颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
-	Role               int    `json:"role"`                 // 大角色类型。1：月度大会员。3：年度大会员。7：十年大会员。15：百年大会员
-	AvatarSubscriptURL string `json:"avatar_subscript_url"` // 大会员角标地址
-	TvVipStatus        int    `json:"tv_vip_status"`        // 电视大会员状态。0：未开通
-	TvVipPayType       int    `json:"tv_vip_pay_type"`      // 电视大会员支付类型
+	Type               int         `json:"type"`                 // 会员类型。0：无。1：月大会员。2：年度及以上大会员
+	Status             int         `json:"status"`               // 会员状态。0：无。1：有
+	DueDate            int         `json:"due_date"`             // 会员过期时间。Unix时间戳(毫秒)
+	VipPayType         int         `json:"vip_pay_type"`         // 支付类型。0：未支付（常见于官方账号）。1：已支付（以正常渠道获取的大会员均为此值）
+	ThemeType          int         `json:"theme_type"`           // 0。作用尚不明确
+	Label              Label       `json:"label"`                // 会员标签
+	AvatarSubscript    int         `json:"avatar_subscript"`     // 是否显示会员图标。0：不显示。1：显示
+	NicknameColor      string      `json:"nickname_color"`       // 会员昵称颜色。颜色码，一般为#FB7299，曾用于愚人节改变大会员配色
+	Role               int         `json:"role"`                 // 大角色类型。1：月度大会员。3：年度大会员。7：十年大会员。15：百年大会员
+	AvatarSubscriptURL string      `json:"avatar_subscript_url"` // 大会员角标地址
+	TvVipStatus        int         `json:"tv_vip_status"`        // 电视大会员状态。0：未开通
+	TvVipPayType       int         `json:"tv_vip_pay_type"`      // 电视大会员支付类型
+	OttInfo            VipOttInfo  `json:"ott_info"`             // （？）。作用尚不明确
+	SuperVip           VipSuperVip `json:"super_vip"`            // （？）。作用尚不明确
+}
+
+// VipOttInfo `vip` 中的 `ott_info` 对象
+type VipOttInfo struct {
+	VipType      int    `json:"vip_type"`       // （？）。作用尚不明确
+	PayType      int    `json:"pay_type"`       // （？）。作用尚不明确
+	PayChannelId string `json:"pay_channel_id"` // （？）。作用尚不明确
+	Status       int    `json:"status"`         // （？）。作用尚不明确
+	OverdueTime  int    `json:"overdue_time"`   // （？）。作用尚不明确
+}
+
+// VipSuperVip `vip` 中的 `super_vip` 对象
+type VipSuperVip struct {
+	IsSuperVip bool `json:"is_super_vip"` // （？）。作用尚不明确
 }
 
 type VideoCard struct {
@@ -260,16 +294,17 @@ type VideoDetailInfoCard struct {
 }
 
 type VideoDetailInfo struct {
-	View      VideoInfo           `json:"View"`       // 视频基本信息
-	Card      VideoDetailInfoCard `json:"Card"`       // 视频UP主信息
-	Tags      []VideoTag          `json:"Tags"`       // 视频TAG信息
-	Reply     CommentsHotReply    `json:"Reply"`      // 视频热评信息
-	Related   []VideoInfo         `json:"Related"`    // 推荐视频信息
-	Spec      any                 `json:"Spec"`       // ？。作用尚不明确
-	HotShare  any                 `json:"hot_share"`  // ？。作用尚不明确
-	Elec      any                 `json:"elec"`       // ？。作用尚不明确
-	Recommend any                 `json:"recommend"`  // ？。作用尚不明确
-	ViewAddit any                 `json:"view_addit"` // ？。作用尚不明确
+	View                   VideoInfo           `json:"View"`                       // 视频基本信息
+	Card                   VideoDetailInfoCard `json:"Card"`                       // 视频UP主信息
+	Tags                   []VideoTag          `json:"Tags"`                       // 视频TAG信息
+	Reply                  CommentsHotReply    `json:"Reply"`                      // 视频热评信息
+	Related                []VideoInfo         `json:"Related"`                    // 推荐视频信息
+	Spec                   any                 `json:"Spec"`                       // ？。作用尚不明确
+	IsHitLabourDayActivity bool                `json:"is_hit_labour_day_activity"` // （？）。作用尚不明确
+	HotShare               any                 `json:"hot_share"`                  // ？。作用尚不明确
+	Elec                   any                 `json:"elec"`                       // ？。作用尚不明确
+	Recommend              any                 `json:"recommend"`                  // ？。作用尚不明确
+	ViewAddit              any                 `json:"view_addit"`                 // ？。作用尚不明确
 }
 
 type Dimension struct {
@@ -340,6 +375,12 @@ type VideoOnlineInfo struct {
 	Total      string     `json:"total"`       // 所有终端总计人数。例如10万+
 	Count      string     `json:"count"`       // web端实时在线人数
 	ShowSwitch ShowSwitch `json:"show_switch"` // 数据显示控制
+	Abtest     Abtest     `json:"abtest"`      // AB测试分组。实测为 {"group":"b"}
+}
+
+// Abtest AB 测试分组
+type Abtest struct {
+	Group string `json:"group"` // 分组标识。实测为 b
 }
 
 type VideoStatusNumber struct {

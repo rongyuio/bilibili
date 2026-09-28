@@ -10,23 +10,26 @@ type CntInfo struct {
 }
 
 type FavourFolderInfo struct {
-	ID         int     `json:"id"`          // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
-	Fid        int     `json:"fid"`         // 收藏夹原始id
-	Mid        int     `json:"mid"`         // 创建者mid
-	Attr       int     `json:"attr"`        // 属性位（？）
-	Title      string  `json:"title"`       // 收藏夹标题
-	Cover      string  `json:"cover"`       // 收藏夹封面图片url
-	Upper      Upper   `json:"upper"`       // 创建者信息
-	CoverType  int     `json:"cover_type"`  // 封面图类别（？）
-	CntInfo    CntInfo `json:"cnt_info"`    // 收藏夹状态数
-	Type       int     `json:"type"`        // 类型（？）
-	Intro      string  `json:"intro"`       // 备注
-	Ctime      int     `json:"ctime"`       // 创建时间戳
-	Mtime      int     `json:"mtime"`       // 收藏时间戳
-	State      int     `json:"state"`       // 状态（？）
-	FavState   int     `json:"fav_state"`   // 收藏夹收藏状态，已收藏：1，未收藏：0
-	LikeState  int     `json:"like_state"`  // 点赞状态，已点赞：1，未点赞：0
-	MediaCount int     `json:"media_count"` // 收藏夹内容数量
+	ID              int     `json:"id"`                // 收藏夹mlid（完整id），收藏夹原始id+创建者mid尾号2位
+	Fid             int     `json:"fid"`               // 收藏夹原始id
+	Mid             int     `json:"mid"`               // 创建者mid
+	Attr            int     `json:"attr"`              // 属性位（？）
+	Title           string  `json:"title"`             // 收藏夹标题
+	Cover           string  `json:"cover"`             // 收藏夹封面图片url
+	Upper           Upper   `json:"upper"`             // 创建者信息
+	CoverType       int     `json:"cover_type"`        // 封面图类别（？）
+	CntInfo         CntInfo `json:"cnt_info"`          // 收藏夹状态数
+	Type            int     `json:"type"`              // 类型（？）
+	Intro           string  `json:"intro"`             // 备注
+	Ctime           int     `json:"ctime"`             // 创建时间戳
+	Mtime           int     `json:"mtime"`             // 收藏时间戳
+	State           int     `json:"state"`             // 状态（？）
+	FavState        int     `json:"fav_state"`         // 收藏夹收藏状态，已收藏：1，未收藏：0
+	LikeState       int     `json:"like_state"`        // 点赞状态，已点赞：1，未点赞：0
+	MediaCount      int     `json:"media_count"`       // 收藏夹内容数量
+	IsTop           bool    `json:"is_top"`            // 是否置顶。实测为 false
+	IsKidPlaylist   bool    `json:"is_kid_playlist"`   // 是否为儿童播放列表。实测为 false
+	KidPlaylistDesc string  `json:"kid_playlist_desc"` // 儿童播放列表说明。实测为空
 }
 
 type AllFavourFolderInfo struct {
@@ -50,9 +53,11 @@ type FavourUpper = Owner
 
 // FavourResourceCntInfo 是收藏内容的计数信息（含弹幕数）。
 type FavourResourceCntInfo struct {
-	Collect int `json:"collect"`
-	Play    int `json:"play"`
-	Danmaku int `json:"danmaku"`
+	Collect    int    `json:"collect"`
+	Play       int    `json:"play"`
+	Danmaku    int    `json:"danmaku"`
+	PlaySwitch int    `json:"play_switch"` // 播放开关。实测为 0
+	ViewText1  string `json:"view_text_1"` // 播放数文案。实测为 "285.9万"
 }
 
 // FavourUgc 是收藏内容的稿件元信息。
@@ -61,24 +66,25 @@ type FavourUgc struct {
 }
 
 type FavourInfo struct {
-	ID       int                   `json:"id"`
-	Type     int                   `json:"type"`
-	Title    string                `json:"title"`
-	Cover    string                `json:"cover"`
-	Intro    string                `json:"intro"`
-	Page     int                   `json:"page"`
-	Duration int                   `json:"duration"`
-	Upper    FavourUpper           `json:"upper"`
-	Attr     int                   `json:"attr"`
-	CntInfo  FavourResourceCntInfo `json:"cnt_info"`
-	Link     string                `json:"link"`
-	Ctime    int                   `json:"ctime"`
-	Pubtime  int                   `json:"pubtime"`
-	FavTime  int                   `json:"fav_time"`
-	BvID     string                `json:"bv_id"`
-	Bvid     string                `json:"bvid"`
-	Season   any                   `json:"season"`
-	Ugc      FavourUgc             `json:"ugc"`
+	ID            int                   `json:"id"`
+	Type          int                   `json:"type"`
+	Title         string                `json:"title"`
+	Cover         string                `json:"cover"`
+	Intro         string                `json:"intro"`
+	Page          int                   `json:"page"`
+	Duration      int                   `json:"duration"`
+	Upper         FavourUpper           `json:"upper"`
+	Attr          int                   `json:"attr"`
+	CntInfo       FavourResourceCntInfo `json:"cnt_info"`
+	Link          string                `json:"link"`
+	Ctime         int                   `json:"ctime"`
+	Pubtime       int                   `json:"pubtime"`
+	FavTime       int                   `json:"fav_time"`
+	BvID          string                `json:"bv_id"`
+	Bvid          string                `json:"bvid"`
+	Season        any                   `json:"season"`
+	Ugc           FavourUgc             `json:"ugc"`
+	MediaListLink string                `json:"media_list_link"` // 媒体列表跳转链接。实测为 `bilibili://music/playlist/playpage/...` 形式
 }
 
 // FavourFolderDetail 是 FavourFolderInfo 的别名（GetFavourList 的 info 字段，字段完全一致）。

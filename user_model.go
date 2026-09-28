@@ -75,10 +75,12 @@ type School struct {
 }
 
 type Profession struct {
-	Name       string `json:"name"`       // 资质名称
-	Department string `json:"department"` // 职位
-	Title      string `json:"title"`      // 所属机构
-	IsShow     int    `json:"is_show"`    // 是否显示。0：不显示。1：显示
+	Name          string `json:"name"`           // 资质名称
+	Department    string `json:"department"`     // 职位
+	Title         string `json:"title"`          // 所属机构
+	IsShow        int    `json:"is_show"`        // 是否显示。0：不显示。1：显示
+	CategoryOne   string `json:"category_one"`   // 资质分类。实测为空
+	CertificateNo string `json:"certificate_no"` // 资质证书编号。实测为空
 }
 
 // ElecShowInfo 是充电信息。
@@ -274,34 +276,83 @@ type MyProfession struct {
 }
 
 type MyUserSpaceDetail struct {
-	Mid            int          `json:"mid"`             // mid
-	Name           string       `json:"name"`            // 昵称
-	Sex            string       `json:"sex"`             // 性别。男 女 保密
-	Face           string       `json:"face"`            // 头像图片url
-	Sign           string       `json:"sign"`            // 签名
-	Rank           int          `json:"rank"`            // 10000。**作用尚不明确**
-	Level          int          `json:"level"`           // 当前等级。0-6级
-	Jointime       int          `json:"jointime"`        // 0。**作用尚不明确**
-	Moral          int          `json:"moral"`           // 节操。默认70
-	Silence        int          `json:"silence"`         // 封禁状态。0：正常。1：被封
-	EmailStatus    int          `json:"email_status"`    // 已验证邮箱。0：未验证。1：已验证
-	TelStatus      int          `json:"tel_status"`      // 已验证手机号。0：未验证。1：已验证
-	Identification int          `json:"identification"`  // 1。**作用尚不明确**
-	Vip            MyVip        `json:"vip"`             // 大会员状态
-	Pendant        Pendant      `json:"pendant"`         // 头像框信息
-	Nameplate      Nameplate    `json:"nameplate"`       // 勋章信息
-	Official       Official     `json:"official"`        // 认证信息
-	Birthday       int          `json:"birthday"`        // 生日。时间戳
-	IsTourist      int          `json:"is_tourist"`      // 0。**作用尚不明确**
-	IsFakeAccount  int          `json:"is_fake_account"` // 0。**作用尚不明确**
-	PinPrompting   int          `json:"pin_prompting"`   // 0。**作用尚不明确**
-	IsDeleted      int          `json:"is_deleted"`      // 0。**作用尚不明确**
-	InRegAudit     int          `json:"in_reg_audit"`
-	IsRipUser      bool         `json:"is_rip_user"`
-	Profession     MyProfession `json:"profession"` // 专业资质
-	Coins          float64      `json:"coins"`      // 硬币数
-	Following      int          `json:"following"`  // 粉丝数
-	Follower       int          `json:"follower"`   // 粉丝数
+	Mid            int           `json:"mid"`             // mid
+	Name           string        `json:"name"`            // 昵称
+	Sex            string        `json:"sex"`             // 性别。男 女 保密
+	Face           string        `json:"face"`            // 头像图片url
+	Sign           string        `json:"sign"`            // 签名
+	Rank           int           `json:"rank"`            // 10000。**作用尚不明确**
+	Level          int           `json:"level"`           // 当前等级。0-6级
+	Jointime       int           `json:"jointime"`        // 0。**作用尚不明确**
+	Moral          int           `json:"moral"`           // 节操。默认70
+	Silence        int           `json:"silence"`         // 封禁状态。0：正常。1：被封
+	EmailStatus    int           `json:"email_status"`    // 已验证邮箱。0：未验证。1：已验证
+	TelStatus      int           `json:"tel_status"`      // 已验证手机号。0：未验证。1：已验证
+	Identification int           `json:"identification"`  // 1。**作用尚不明确**
+	Vip            MyVip         `json:"vip"`             // 大会员状态
+	Pendant        Pendant       `json:"pendant"`         // 头像框信息
+	Nameplate      Nameplate     `json:"nameplate"`       // 勋章信息
+	Official       Official      `json:"official"`        // 认证信息
+	Birthday       int           `json:"birthday"`        // 生日。时间戳
+	IsTourist      int           `json:"is_tourist"`      // 0。**作用尚不明确**
+	IsFakeAccount  int           `json:"is_fake_account"` // 0。**作用尚不明确**
+	PinPrompting   int           `json:"pin_prompting"`   // 0。**作用尚不明确**
+	IsDeleted      int           `json:"is_deleted"`      // 0。**作用尚不明确**
+	InRegAudit     int           `json:"in_reg_audit"`
+	IsRipUser      bool          `json:"is_rip_user"`
+	Profession     MyProfession  `json:"profession"`   // 专业资质
+	Coins          float64       `json:"coins"`        // 硬币数
+	Following      int           `json:"following"`    // 粉丝数
+	Follower       int           `json:"follower"`     // 粉丝数
+	Honours        MyHonours     `json:"honours"`      // 荣誉信息
+	DigitalId      string        `json:"digital_id"`   // 数字id。实测为空
+	DigitalType    int           `json:"digital_type"` // 数字id类型。实测为 -2
+	Attestation    MyAttestation `json:"attestation"`  // 认证信息
+	LevelExp       MyLevelExp    `json:"level_exp"`    // 等级经验信息
+}
+
+// MyHonours `data` 中的 `honours` 对象。荣誉信息
+type MyHonours struct {
+	Mid               int            `json:"mid"`                 // 用户 mid
+	Colour            MyHonourColour `json:"colour"`              // 荣誉颜色
+	Tags              []any          `json:"tags"`                // 荣誉标签。实测为 null
+	IsLatest100Honour int            `json:"is_latest_100honour"` // 是否为最近 100 个荣誉？。0：否。1：是。实测为 0
+}
+
+// MyHonourColour `honours` 中的 `colour` 对象
+type MyHonourColour struct {
+	Dark   string `json:"dark"`   // 深色模式下的颜色。实测为 #CE8620
+	Normal string `json:"normal"` // 浅色模式下的颜色。实测为 #F0900B
+}
+
+// MyLevelExp `data` 中的 `level_exp` 对象
+type MyLevelExp struct {
+	CurrentLevel int `json:"current_level"` // 当前等级。0-6级
+	CurrentMin   int `json:"current_min"`   // 指当前等级从多少经验值开始
+	CurrentExp   int `json:"current_exp"`   // 当前账户的经验值
+	NextExp      int `json:"next_exp"`      // 下一个等级所需的经验值（不是还需要多少）
+	LevelUp      int `json:"level_up"`      // 升级时间。Unix秒级时间戳
+}
+
+// MyAttestation `data` 中的 `attestation` 对象。认证信息
+type MyAttestation struct {
+	Type       int                     `json:"type"`        // 认证类型。见 docs/user/official_role.md
+	CommonInfo MyAttestationCommonInfo `json:"common_info"` // 认证信息
+	SpliceInfo MyAttestationSpliceInfo `json:"splice_info"` // 拼接认证信息
+	Icon       string                  `json:"icon"`        // 认证图标url。实测为空
+	Desc       string                  `json:"desc"`        // 认证备注。实测为空
+}
+
+// MyAttestationCommonInfo `attestation` 中的 `common_info` 对象
+type MyAttestationCommonInfo struct {
+	Title       string `json:"title"`        // 认证信息。实测为空
+	Prefix      string `json:"prefix"`       // 认证前缀。如 bilibili UP主认证
+	PrefixTitle string `json:"prefix_title"` // 带前缀的认证信息
+}
+
+// MyAttestationSpliceInfo `attestation` 中的 `splice_info` 对象
+type MyAttestationSpliceInfo struct {
+	Title string `json:"title"` // 认证信息。实测为空
 }
 
 type JoinOldFansResult struct {
