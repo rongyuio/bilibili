@@ -27,11 +27,15 @@ go test -run 'TestCookie|TestSignMap' ./...   # 按正则运行一组测试
 go test -race -v ./...            # 输出详细结果（CI 使用的形式）
 ```
 
-`go run tools/gen_struct.go` 可将粘贴的 Markdown 字段表格转换成 Go 结构体定义；`go run ./tools/sync_docs -check` 则把本库结构体与接口文档的字段表对起来，报出两边不一致的字段。两者都详见 `tools/README.md`。
+`Makefile` 把 CI 的口径收成一个入口：`make check`（gofmt + vet + race + build + lint）、`make test`、`make race`、`make fmt`、`make lint`、`make build`。`make help` 列全。
+
+`go run tools/gen_struct.go` 可将粘贴的 Markdown 字段表格转换成 Go 结构体定义。`go run ./tools/sync_docs` 则把本库结构体与接口文档的字段表对起来，四个 flag：`-check`（报漂移，有漂移退出码非 0）、`-write`（按文档补齐字段）、`-v`（打印每个锚点实际匹到哪张表）、`-coverage`（还有多少结构体没挂锚点）。
+
+⚠️ `sync_docs` **需要旁边有一份接口文档的检出**，位置用 `-docs` 指定。`make sync-docs` 会按特征文件（同级目录里谁有 `docs/video/info.md`）自动探测，探测不中时用 `make sync-docs DOCS=../某个目录` 显式给。两者都详见 `tools/README.md`。
 
 测试**不会访问真实 API，也不需要凭证**。多数只依赖标准库 `testing`；`util_test.go` 用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，`dynamic_test.go` 的少数用例用假 transport（`SetTransport`）把整条请求链路走完 —— 覆盖 URL / 方法 / CSRF 位置 / body 形状，那些是 handler 单测够不到的部分（URL 与方法是写死在 `execute` 调用里的常量）。**两者都不发出真实请求。** `test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 同时排除了 `test/` 与 `tools/`。
 
-CI（`.github/workflows/`）在向 `master` 的 push / PR 时运行两个 workflow：`gofmt.yml` 要求 `gofmt -s -l .` 输出为空；`golangci-lint.yml`（workflow 名为 `Go`）依次运行 golangci-lint、`go test -race -v ./...`、`go build -v ./...`。三个 workflow 的 Go 版本均由 `go-version-file: go.mod` 决定，因此改 `go.mod` 的 `go` 指令即可切换验证环境；该指令表示最低支持版本（当前 1.26），提升需在 PR 中说明理由。`master` 已开启分支保护，改动通过 PR 合入。
+CI（`.github/workflows/`）共三个 workflow 文件：`gofmt.yml` 与 `golangci-lint.yml`（workflow 名为 `Go`）在向 `master` 的 push / PR 时运行 —— 前者要求 `gofmt -s -l .` 输出为空，后者依次运行 golangci-lint、`go test -race -v ./...`、`go build -v ./...`；`release.yml` 只在推 `v*` 标签时运行（见下）。三个的 Go 版本均由 `go-version-file: go.mod` 决定，因此改 `go.mod` 的 `go` 指令即可切换验证环境；该指令表示最低支持版本（当前 1.26），提升需在 PR 中说明理由。`master` 已开启分支保护，改动通过 PR 合入。
 
 发版由 `release.yml` 处理：推送 `v*` 标签后，先校验标签名符合语义化版本（`v<major>.<minor>.<patch>`）且该标签指向的提交位于 `master`（任一不满足即拒绝发布），再运行 `go test -race ./...` 与 `go build ./...`，最后执行 `gh release create --generate-notes` 创建 GitHub Release，无需手动操作。
 
@@ -138,3 +142,4 @@ CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它
 - `docs/request.md` —— `Client.Do` 逃生通道、`request` 标签规则、错误分类、解码诊断。
 - `docs/migration.md` —— 模块路径、context 签名、会话规则，以及 v0 各轮重构中的模型与字段重命名。
 - `docs/versioning.md` —— tag 与模块版本的格式约束（含禁止 build metadata）、递增规则、v0 与 v1 之后的兼容性约定。
+- `tools/README.md` —— `gen_struct.go`（表格 → 结构体）与 `sync_docs`（结构体 ↔ 接口文档字段比对）的用法，以及锚点表与 `docKnown` 的维护约定。
