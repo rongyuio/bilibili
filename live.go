@@ -128,7 +128,7 @@ type StartLiveParam struct {
 	AreaV2   int    `json:"area_v2"`  // 直播分区id（子分区id）。详见[直播分区]
 	Platform string `json:"platform"` // 直播平台。直播姬（pc）：pc_link。web在线直播：web_link（已下线）。bililink：android_link。
 
-	// 下面四个参数详见：https://github.com/SocialSisterYi/bilibili-API-collect/pull/1351/files 。
+	// 下面四个参数的说明见接口文档。
 	// 可以调用 GetHomePageLiveVersion 方法获取 Version 和 Build 参数。
 	Version string `json:"version"`          // 直播姬版本号，2025.7.20后对于某些用户必填
 	Build   int    `json:"build"`            // 直播姬构建号，2025.7.20后对于某些用户必填

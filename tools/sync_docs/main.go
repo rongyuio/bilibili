@@ -1,11 +1,11 @@
-// sync_docs 把 bilibili-API-collect 的字段表与本库的结构体对起来。
+// sync_docs 把接口文档的字段表与本库的结构体对起来。
 //
 // 用法（在仓库根目录）：
 //
 //	go run tools/sync_docs.go -check       # 只报漂移，有漂移则退出码非 0
 //	go run tools/sync_docs.go -write       # 把文档里有、结构体里没有的字段补上
 //	go run tools/sync_docs.go -coverage    # 报告映射覆盖率（还有多少结构体没挂锚点）
-//	go run tools/sync_docs.go -docs <路径>  # BAC 检出位置，默认 ../bilibili-API-collect
+//	go run tools/sync_docs.go -docs <路径>  # 接口文档检出位置，默认 ../bilibili-api-docs
 //
 // ## 为什么是「映射表 + 工具」而不是全自动
 //
@@ -66,7 +66,7 @@ var (
 	flagCheck    = flag.Bool("check", false, "只检查，有漂移则退出码非 0")
 	flagWrite    = flag.Bool("write", false, "把缺失字段写回 Go 文件")
 	flagCoverage = flag.Bool("coverage", false, "报告映射覆盖率")
-	flagDocs     = flag.String("docs", "../bilibili-API-collect", "bilibili-API-collect 检出路径")
+	flagDocs     = flag.String("docs", "../bilibili-api-docs", "接口文档检出路径")
 	flagQuiet    = flag.Bool("quiet", false, "只打印汇总")
 	flagVerbose  = flag.Bool("v", false, "打印每个锚点实际匹到的表标签")
 )

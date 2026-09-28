@@ -201,7 +201,7 @@ type GetVideoCollectionInfoParam struct {
 	PageSize    int  `json:"page_size,omitempty" request:"query,omitempty"`    // 单页内容数量
 }
 
-// GetVideoCollectionInfo 获取视频合集信息 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/collection.md#%E8%8E%B7%E5%8F%96%E8%A7%86%E9%A2%91%E5%90%88%E9%9B%86%E4%BF%A1%E6%81%AF
+// GetVideoCollectionInfo 获取视频合集信息
 func (c *Client) GetVideoCollectionInfo(ctx context.Context, param GetVideoCollectionInfoParam) (*VideoCollectionInfo, error) {
 	const (
 		method = resty.MethodGet
@@ -220,8 +220,6 @@ type GetVideoByKeywordsParam struct {
 }
 
 // GetVideoByKeywords 根据关键词查找视频
-//
-// https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/collection.md#%E6%A0%B9%E6%8D%AE%E5%85%B3%E9%94%AE%E8%AF%8D%E6%9F%A5%E6%89%BE%E8%A7%86%E9%A2%91
 func (c *Client) GetVideoByKeywords(ctx context.Context, param GetVideoByKeywordsParam) (*VideoCollectionByKeywordsInfo, error) {
 	const (
 		method = resty.MethodGet

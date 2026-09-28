@@ -67,12 +67,25 @@ type T struct {
 先在旁边检出接口文档仓库，然后：
 
 ```bash
+make sync-docs                        # 最省事：自动探测检出位置并跑 -check
+
 go run ./tools/sync_docs -check       # 只报漂移，有漂移退出码非 0
 go run ./tools/sync_docs -write       # 把「文档有、Go 没有」的字段补进结构体
 go run ./tools/sync_docs -v           # 打印每个锚点实际匹到哪张表
 go run ./tools/sync_docs -coverage    # 还有多少结构体没挂锚点
-go run ./tools/sync_docs -docs <路径>  # 接口文档检出位置，默认 ../bilibili-API-collect
+go run ./tools/sync_docs -docs <路径>  # 接口文档检出位置
 ```
+
+检出位置怎么给：`make sync-docs` 按**特征文件**在同级目录里探测（谁有 `docs/video/info.md`
+谁就是），仓库里**不写死目录名** —— 它跟本地布局绑定、跟代码无关，写进仓库会一路带进公开历史。
+探测不中（检出不在同级、或同时命中多个）时显式指定：
+
+```bash
+make sync-docs DOCS=../某个目录
+BAC_DOCS=/绝对路径 make sync-docs
+```
+
+直接跑 `go run` 的话用 `-docs`；不传时取默认值，那只是个占位，本地布局不同就显式传。
 
 退出码：`0` 一致，`1` 有漂移，`2` 用法/IO 出错。
 
@@ -122,5 +135,5 @@ go run ./tools/sync_docs -docs <路径>  # 接口文档检出位置，默认 ../
 ## CI
 
 `-check` 需要接口文档的检出，跨仓库拉取不值当，
-所以没接进 CI。同步接口文档之后手动跑一次 `-check`，或者本地起个
+所以没接进 CI。同步接口文档之后手动跑一次 `make sync-docs`，或者本地起个
 workflow_dispatch 自己传 `-docs` 路径。

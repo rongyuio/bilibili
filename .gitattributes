@@ -1,2 +1,6 @@
 # 源码文件统一使用 LF，避免 Windows 下 core.autocrlf 检出 CRLF 导致 gofmt 误报。
 *.go text eol=lf
+
+# Makefile 也必须 LF：recipe 里的多行 `\` 续行碰上 CRLF 会被 Windows 版 make
+# 把 `\r` 一起交给 shell，续行失效，整个 `{ ... }` 块被拆散。
+Makefile text eol=lf

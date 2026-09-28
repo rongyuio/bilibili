@@ -41,7 +41,6 @@ type GetUserCardParam struct {
 }
 
 // GetUserCard 获取用户用户名片 免登录
-// https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/user/info.md#%E7%94%A8%E6%88%B7%E5%90%8D%E7%89%87%E4%BF%A1%E6%81%AF
 func (c *Client) GetUserCard(ctx context.Context, param GetUserCardParam) (*UserCard, error) {
 	const (
 		method = resty.MethodGet

@@ -42,8 +42,6 @@ type GetDynamicRepostDetailParam struct {
 }
 
 // GetDynamicRepostDetail 获取动态转发列表
-//
-// 见 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/basicInfo.md
 func (c *Client) GetDynamicRepostDetail(ctx context.Context, param GetDynamicRepostDetailParam) (*DynamicRepostDetail, error) {
 	const (
 		method = resty.MethodGet
@@ -159,7 +157,7 @@ type CreateDynamicParam struct {
 	Content         string       `json:"content"`                                               // 动态内容
 	UpChooseComment int          `json:"up_choose_comment,omitempty" request:"query,omitempty"` // 0
 	UpCloseComment  int          `json:"up_close_comment,omitempty" request:"query,omitempty"`  // 0
-	Extension       string       `json:"extension,omitempty" request:"query,omitempty"`         // 位置信息，参考 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/dynamic/publish.md
+	Extension       string       `json:"extension,omitempty" request:"query,omitempty"`         // 位置信息
 	AtUIDs          string       `json:"at_uids,omitempty" request:"query,omitempty"`           // 动态中 at 到的用户的 uid。使用逗号,分隔
 	Ctrl            []FormatCtrl `json:"ctrl,omitempty" request:"query,omitempty"`              // 特殊格式控制 (如 at 别人时的蓝字体和链接)
 }
@@ -182,7 +180,7 @@ type GetUserSpaceDynamicParam struct {
 
 // GetUserSpaceDynamic 获取用户空间动态，mid就是用户UID，无需登录。
 //
-// 返回结构较为繁琐，见 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/space.md
+// 返回结构较为繁琐
 func (c *Client) GetUserSpaceDynamic(ctx context.Context, param GetUserSpaceDynamicParam) (*DynamicInfo, error) {
 	const (
 		method = resty.MethodGet
@@ -212,7 +210,6 @@ type GetDynamicFeedAllParam struct {
 // GetDynamicFeedAll 获取关注动态流（动态首页）。
 //
 // 返回的 data 与空间动态是同一套 polymer 形态，因此复用 DynamicInfo。
-// 见 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/all.md
 func (c *Client) GetDynamicFeedAll(ctx context.Context, param GetDynamicFeedAllParam) (*DynamicInfo, error) {
 	const (
 		method = resty.MethodGet
@@ -302,8 +299,6 @@ type repostWebSrc struct {
 //
 // 需要登录态：mid 取自 Cookie DedeUserID，CSRF 取自 Cookie bili_jct，任一缺失都返回错误。
 // 该接口不需要 WBI 签名，CSRF 走 URL 参数。
-//
-// 见 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/publish.md
 func (c *Client) RepostDynamic(ctx context.Context, param RepostDynamicParam) (*RepostDynamicResult, error) {
 	const (
 		method = resty.MethodPost
