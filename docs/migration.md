@@ -377,3 +377,37 @@ client.SetDroppedFieldHandler(func(field bilibili.DroppedField) {
 ### 版本影响
 
 按 v0 阶段规则，上述破坏性变更随下一版本发布即可，无需升主版本或改模块路径。
+
+## 第七轮：字段补齐与 `CaptchaResult.Tencent` 类型收敛
+
+v0.8.0 补齐了 104 个响应字段与 29 个导出类型，其中只有一处破坏性变更。
+
+### 破坏性变更
+
+| 项 | 说明 |
+| --- | --- |
+| `CaptchaResult.Tencent` | 类型由 `any` 收紧为具名结构体 `Tencent`。此前把该字段断言成 `map[string]any`（或其它具体类型）的代码需要改。 |
+
+```go
+// 旧：字段是 any，只能做类型断言
+if m, ok := result.Tencent.(map[string]any); ok {
+    appid, _ := m["appid"].(string)
+    _ = appid
+}
+
+// 新：直接读字段
+appid := result.Tencent.Appid
+```
+
+该字段此前没有对应的类型，文档里也只标注「作用尚不明确」；这次按实机响应建了结构体，
+目前只有一个 `Appid` 字段（实测为空串）。
+
+### 非破坏性变更
+
+`FavourInfo.MediaListLink` 挪到了 `FavourMedia.MediaListLink` —— 它描述的是单条收藏内容，
+不是收藏夹元数据，原先放错了结构体。`FavourInfo` 在 `v0.7.0` 里还没有这个字段
+（它和这次一起加进去，随即挪走的），所以**对已发布版本没有影响**。
+
+### 版本影响
+
+按 v0 阶段规则，上述破坏性变更随次版本（`v0.8.0`）发布即可，无需升主版本或改模块路径。
