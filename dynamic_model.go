@@ -30,7 +30,7 @@ type DynamicInfo struct {
 }
 
 // DynamicItemBasic contains comment identifiers and actions for a feed item.
-type DynamicItemBasic struct { // 见 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/all.md#data%E5%AF%B9%E8%B1%A1---items%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E5%AF%B9%E8%B1%A1---basic%E5%AF%B9%E8%B1%A1
+type DynamicItemBasic struct {
 	CommentIDStr string          `json:"comment_id_str"`
 	CommentType  int             `json:"comment_type"`
 	LikeIcon     DynamicLikeIcon `json:"like_icon"`

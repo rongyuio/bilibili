@@ -71,7 +71,7 @@ go run ./tools/sync_docs -check       # 只报漂移，有漂移退出码非 0
 go run ./tools/sync_docs -write       # 把「文档有、Go 没有」的字段补进结构体
 go run ./tools/sync_docs -v           # 打印每个锚点实际匹到哪张表
 go run ./tools/sync_docs -coverage    # 还有多少结构体没挂锚点
-go run ./tools/sync_docs -docs <路径>  # 接口文档检出位置，默认 ../bilibili-API-collect
+go run ./tools/sync_docs -docs <路径>  # 接口文档检出位置，默认 ../bilibili-api-docs
 ```
 
 退出码：`0` 一致，`1` 有漂移，`2` 用法/IO 出错。

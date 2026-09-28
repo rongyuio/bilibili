@@ -38,8 +38,6 @@ var (
 //
 //	!!! 使用 WBI 的接口 绝对不可以 set header Referer 会导致失败 !!!
 //	!!! 大部分使用 WBI 的接口都需要 set header Cookie !!!
-//
-// see https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/misc/sign/wbi.md
 type WBI struct {
 	cookies        []*http.Cookie
 	mixinKeyEncTab []int

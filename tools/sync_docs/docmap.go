@@ -2,7 +2,7 @@ package main
 
 // docLoc 指向文档里的一张字段表。
 //
-//	File    相对 BAC 仓库根的 Markdown 路径
+//	File    相对接口文档仓库根的 Markdown 路径
 //	Section `## ` 那一行的标题原文
 //	Label   表前面那行标签的**包含匹配**子串，如 "`data`中的`control`对象"
 //
