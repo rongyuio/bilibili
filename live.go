@@ -38,7 +38,8 @@ func (c *Client) ReportLiveLike(ctx context.Context, param ReportLiveLikeParam) 
 			r.SetFormData(map[string]string{"csrf": csrf})
 			r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
 			return nil
-		})
+		},
+		liveReferer(int64(param.RoomID)))
 	return err
 }
 
@@ -243,12 +244,36 @@ func (c *Client) CheckLiveAnchorLottery(ctx context.Context, param CheckLiveAnch
 		method = resty.MethodGet
 		url    = "https://api.live.bilibili.com/xlive/lottery-interface/v1/Anchor/Check"
 	)
-	return execute[*CheckLiveAnchorLotteryResult](ctx, c, method, url, param,
-		func(r *resty.Request) error {
-			r.SetHeader("Referer", "https://live.bilibili.com/")
-			r.SetHeader("Origin", "https://live.bilibili.com")
-			return nil
-		})
+	return execute[*CheckLiveAnchorLotteryResult](ctx, c, method, url, param, liveReferer(param.RoomID))
+}
+
+// liveReferer 给**直播域**的接口设 Referer / Origin。
+//
+// ⚠️ 直播接口全都走 `api.live.bilibili.com`，而真实的调用发生在**直播间页面**上
+// （`https://live.bilibili.com/<房间号>`）—— 与 `New()` 给的那对主站头
+// （`https://www.bilibili.com`）**对不上**。从主站首页永远发不出这些请求，
+// 这个不一致本身就是个能被认出来的特征：风控会回业务码 **-352（需要进行验证码校验）**。
+//
+// 这个坑在库里出现过三次，前两次都只补了一个接口：
+//   - `3c63c65` GetLiveAreaRoomList（WBI 签名会清空 Referer，那之后要补回来）
+//   - Anchor/Check
+//
+// 而 **Anchor/Join 一直漏着** —— 于是"查得到、参与不了"：2026-10-12 线上每次 Join
+// 都被 -352 挡，还把这个账号送进了风控名单（连在浏览器里手动参加都要验证码）。
+// 所以这次抽成一个函数，别再逐个接口手写。
+//
+// roomID > 0 时 Referer 带房间号（与浏览器那条请求逐字一致）；拿不到房间号的调用方
+// 传 0，退成直播首页 —— 域对得上，比主站那对强得多。
+func liveReferer(roomID int64) paramHandler {
+	return func(r *resty.Request) error {
+		referer := "https://live.bilibili.com/"
+		if roomID > 0 {
+			referer = fmt.Sprintf("https://live.bilibili.com/%d", roomID)
+		}
+		r.SetHeader("Referer", referer)
+		r.SetHeader("Origin", "https://live.bilibili.com")
+		return nil
+	}
 }
 
 // JoinLiveAnchorLotteryParam 指定参与天选时刻的抽奖信息，字段来自 CheckLiveAnchorLottery 的结果。
@@ -257,6 +282,12 @@ type JoinLiveAnchorLotteryParam struct {
 	GiftID  int64  // 礼物 id
 	GiftNum int    // 礼物数量
 	VisitID string // 访问标识；留空时由库自动生成
+
+	// RoomID **只用来拼 Referer**（见 liveReferer），不进请求表单。
+	//
+	// 接口本身不需要它，但浏览器那条请求的 Referer 是 `live.bilibili.com/<房间号>`，
+	// 而调用方从 Check 那边本来就知道房间号。留 0 则退成直播首页。
+	RoomID int64
 }
 
 // liveAnchorJoinForm 是参与天选时刻的表单字段。
@@ -292,7 +323,8 @@ func (c *Client) JoinLiveAnchorLottery(ctx context.Context, param JoinLiveAnchor
 		GiftNum:  param.GiftNum,
 		VisitID:  param.VisitID,
 		Platform: "pc",
-	}, moveFormParams("id", "gift_id", "gift_num", "visit_id", "platform"), fillFormCsrf(c))
+	}, moveFormParams("id", "gift_id", "gift_num", "visit_id", "platform"), fillFormCsrf(c),
+		liveReferer(param.RoomID))
 }
 
 // GetLiveNotice 获取直播公告。B 站会通过本接口的 Set-Cookie 下发 LIVE_BUVID，
@@ -420,9 +452,5 @@ func (c *Client) SendLiveDanmaku(ctx context.Context, param SendLiveDanmakuParam
 		Mode:     mode,
 		Rnd:      liveDanmakuDefaultRnd,
 	}, moveFormParams("msg", "roomid", "bubble", "color", "fontsize", "mode", "rnd"), fillFormCsrf(c),
-		func(r *resty.Request) error {
-			r.SetHeader("Referer", fmt.Sprintf("https://live.bilibili.com/%d", param.RoomID))
-			r.SetHeader("Origin", "https://live.bilibili.com")
-			return nil
-		})
+		liveReferer(param.RoomID))
 }
