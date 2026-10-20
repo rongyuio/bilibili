@@ -148,23 +148,6 @@ func (c *Client) GetUserSpaceCoinVideoList(ctx context.Context, param GetUserSpa
 	return bilibili.Execute[[]GetUserSpaceCoinVideoListItem](ctx, c.Client, method, url, param)
 }
 
-type GetUserSpaceCoinVideoListAppParam struct {
-	AccessKey string `json:"access_key,omitempty" request:"query,omitempty"` // APP登录Token
-	Appkey    string `json:"appkey" request:"query"`                         // APP密钥
-	Vmid      int    `json:"vmid" request:"query"`                           // 目标用户mid
-	Pn        int    `json:"pn,omitempty" request:"query,omitempty"`         // 页码。默认为1
-	Ps        int    `json:"ps,omitempty" request:"query,omitempty"`         // 每页项数。默认为20
-}
-
-// GetUserSpaceCoinVideoListApp 查询用户最近投币视频（APP）
-func (c *Client) GetUserSpaceCoinVideoListApp(ctx context.Context, param GetUserSpaceCoinVideoListAppParam) (*GetUserSpaceCoinVideoListAppResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.bilibili.com/x/v2/space/coinarc"
-	)
-	return bilibili.Execute[*GetUserSpaceCoinVideoListAppResult](ctx, c.Client, method, url, param)
-}
-
 type GetUserSpaceLikeVideoListParam struct {
 	Vmid int `json:"vmid" request:"query"` // 目标用户mid
 }
@@ -178,23 +161,6 @@ func (c *Client) GetUserSpaceLikeVideoList(ctx context.Context, param GetUserSpa
 		url    = "https://api.bilibili.com/x/space/like/video"
 	)
 	return bilibili.Execute[*GetUserSpaceLikeVideoListResult](ctx, c.Client, method, url, param)
-}
-
-type GetUserSpaceLikeVideoListAppParam struct {
-	AccessKey string `json:"access_key,omitempty" request:"query,omitempty"` // APP登录Token
-	Appkey    string `json:"appkey" request:"query"`                         // APP密钥
-	Vmid      int    `json:"vmid" request:"query"`                           // 目标用户mid
-	Pn        int    `json:"pn,omitempty" request:"query,omitempty"`         // 页码。默认为1
-	Ps        int    `json:"ps,omitempty" request:"query,omitempty"`         // 每页项数。默认为20
-}
-
-// GetUserSpaceLikeVideoListApp 查询用户最近点赞视频（APP）
-func (c *Client) GetUserSpaceLikeVideoListApp(ctx context.Context, param GetUserSpaceLikeVideoListAppParam) (*GetUserSpaceLikeVideoListAppResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.bilibili.com/x/v2/space/likearc"
-	)
-	return bilibili.Execute[*GetUserSpaceLikeVideoListAppResult](ctx, c.Client, method, url, param)
 }
 
 type GetUserSpaceArchiveCursorParam struct {
@@ -227,6 +193,7 @@ type GetUserSpaceArchiveCursorParam struct {
 // GetUserSpaceArchiveCursor 查询用户投稿明细（APP、无需wbi鉴权）
 //
 // 不能裸打：必须按 APP 签名规则计算 sign（md5，小写十六进制），本方法不代算签名。
+// 2026-09-27 实测的最小必填集为 vmid、appkey、ts、sign；缺 appkey 或 sign 返回 -3/-400。
 func (c *Client) GetUserSpaceArchiveCursor(ctx context.Context, param GetUserSpaceArchiveCursorParam) (*GetUserSpaceArchiveCursorResult, error) {
 	const (
 		method = resty.MethodGet

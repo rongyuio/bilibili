@@ -254,87 +254,11 @@ type GetUserSpaceLastPlayGameItem struct {
 	GameStatusV2 int      `json:"game_status_v2"` // (?)
 }
 
-// GetUserSpaceCoinVideoListAppResult 是「查询用户最近投币视频（APP）」的 data 对象。
-type GetUserSpaceCoinVideoListAppResult struct {
-	Count int                                `json:"count"` // 投币的视频数
-	Item  []GetUserSpaceCoinVideoListAppItem `json:"item"`  // 投币视频列表
-}
-
-// GetUserSpaceCoinVideoListAppItem 是 APP 端投币视频列表中的一项。
-type GetUserSpaceCoinVideoListAppItem struct {
-	Title           string `json:"title"`             // 稿件标题
-	Subtitle        string `json:"subtitle"`          // 空
-	Tname           string `json:"tname"`             // 空
-	Cover           string `json:"cover"`             // 封面图片url
-	CoverIcon       string `json:"cover_icon"`        // 空
-	URI             string `json:"uri"`               // APP跳转uri。如 bilibili://video/2
-	Param           string `json:"param"`             // 稿件avid
-	Goto            string `json:"goto"`              // av
-	Length          string `json:"length"`            // 空。文档标为 num，示例返回空字符串
-	Duration        int    `json:"duration"`          // 稿件视频长度。单位为秒
-	IsPopular       bool   `json:"is_popular"`        // (?)
-	IsSteins        bool   `json:"is_steins"`         // (?)
-	IsUgcpay        bool   `json:"is_ugcpay"`         // (?)
-	IsCooperation   bool   `json:"is_cooperation"`    // (?)。文档标为 str，示例为 bool
-	IsPgc           bool   `json:"is_pgc"`            // (?)。文档标为 str，示例为 bool
-	IsLivePlayback  bool   `json:"is_live_playback"`  // (?)。文档标为 str，示例为 bool
-	IsPugv          bool   `json:"is_pugv"`           // (?)。文档标为 str，示例为 bool
-	IsFold          bool   `json:"is_fold"`           // (?)。文档标为 num，示例为 bool
-	Play            int    `json:"play"`              // 播放量
-	Danmaku         int    `json:"danmaku"`           // 弹幕量
-	Ctime           int    `json:"ctime"`             // 发布时间。时间戳
-	UgcPay          int    `json:"ugc_pay"`           // 0
-	Author          string `json:"author"`            // UP主昵称
-	State           bool   `json:"state"`             // true
-	Videos          int    `json:"videos"`            // 0
-	ViewContent     string `json:"view_content"`      // 稿件播放量文案
-	IconType        int    `json:"icon_type"`         // 0
-	PublishTimeText string `json:"publish_time_text"` // 空
-}
-
 // GetUserSpaceLikeVideoListResult 是「查询用户最近点赞视频（Web）」的 data 对象。
 //
 // 文档字段表把 data 写成数组，但响应示例为 {"list": [...]}，这里按示例建模。
 type GetUserSpaceLikeVideoListResult struct {
 	List []GetUserSpaceLikeVideoListItem `json:"list"` // 点赞视频列表
-}
-
-// GetUserSpaceLikeVideoListAppResult 是「查询用户最近点赞视频（APP）」的 data 对象。
-type GetUserSpaceLikeVideoListAppResult struct {
-	Count int                                `json:"count"` // 点赞的视频数
-	Item  []GetUserSpaceLikeVideoListAppItem `json:"item"`  // 点赞视频列表
-}
-
-// GetUserSpaceLikeVideoListAppItem 是 APP 端点赞视频列表中的一项。
-type GetUserSpaceLikeVideoListAppItem struct {
-	Title           string `json:"title"`             // 稿件标题
-	Subtitle        string `json:"subtitle"`          // 空
-	Tname           string `json:"tname"`             // 空
-	Cover           string `json:"cover"`             // 封面图片url
-	CoverIcon       string `json:"cover_icon"`        // 空
-	URI             string `json:"uri"`               // APP跳转uri。如 bilibili://video/2
-	Param           string `json:"param"`             // 稿件avid
-	Goto            string `json:"goto"`              // av
-	Length          string `json:"length"`            // 空。文档标为 num，示例返回空字符串
-	Duration        int    `json:"duration"`          // 稿件视频长度。单位为秒
-	IsPopular       bool   `json:"is_popular"`        // (?)
-	IsSteins        bool   `json:"is_steins"`         // (?)
-	IsUgcpay        bool   `json:"is_ugcpay"`         // (?)
-	IsCooperation   bool   `json:"is_cooperation"`    // (?)。文档标为 str，示例为 bool
-	IsPgc           bool   `json:"is_pgc"`            // (?)。文档标为 str，示例为 bool
-	IsLivePlayback  bool   `json:"is_live_playback"`  // (?)。文档标为 str，示例为 bool
-	IsPugv          bool   `json:"is_pugv"`           // (?)。文档标为 str，示例为 bool
-	IsFold          bool   `json:"is_fold"`           // (?)。文档标为 num，示例为 bool
-	Play            int    `json:"play"`              // 播放量
-	Danmaku         int    `json:"danmaku"`           // 弹幕量
-	Ctime           int    `json:"ctime"`             // 发布时间。时间戳
-	UgcPay          int    `json:"ugc_pay"`           // 0
-	Author          string `json:"author"`            // UP主昵称
-	State           bool   `json:"state"`             // true
-	Videos          int    `json:"videos"`            // 0
-	ViewContent     string `json:"view_content"`      // 稿件播放量文案
-	IconType        int    `json:"icon_type"`         // 0
-	PublishTimeText string `json:"publish_time_text"` // 空
 }
 
 // GetUserSpaceArchiveCursorResult 是「查询用户投稿明细（APP）」的 data 对象。

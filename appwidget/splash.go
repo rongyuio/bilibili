@@ -19,6 +19,7 @@ type GetSplashBrandListParam struct {
 // GetSplashBrandList 获取 APP 端开屏图片列表
 //
 // 该接口走 APP 域名，需按 APP 方式提供 appkey、ts 与 sign。
+// 库只负责发请求，不计算 APP 签名；接口文档标注为未验证。
 func (c *Client) GetSplashBrandList(ctx context.Context, param GetSplashBrandListParam) (*GetSplashBrandListResult, error) {
 	const (
 		method = resty.MethodGet
@@ -38,6 +39,8 @@ type GetSplashListParam struct {
 }
 
 // GetSplashList 获取 APP 端开屏广告信息
+//
+// 该接口走 APP 域名，参数按 APP 端填写；接口文档标注为未验证。
 func (c *Client) GetSplashList(ctx context.Context, param GetSplashListParam) (*GetSplashListResult, error) {
 	const (
 		method = resty.MethodGet

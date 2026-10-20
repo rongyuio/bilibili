@@ -78,6 +78,9 @@ type GetGarbSkinLoadEquip struct {
 }
 
 // GetGarbSkin 获取主题及加载动画。
+//
+// 仅可 APP 认证：appkey、ts、sign 等参数由调用方按 APP 签名规则生成，库不计算签名。
+// 接口文档标注为未验证。
 func (c *Client) GetGarbSkin(ctx context.Context, param GetGarbSkinParam) (*GetGarbSkinResult, error) {
 	const (
 		method = resty.MethodGet

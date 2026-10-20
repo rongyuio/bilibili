@@ -21,6 +21,7 @@ type GetVideoOnlineInfoAppParam struct {
 // GetVideoOnlineInfoApp 获取视频在线人数（APP端）。
 //
 // 该接口走 APP 域名，除 aid 与 cid 外还需按 APP 方式提供 appkey、ts 与 sign。
+// 库只负责发请求，不计算 APP 签名；接口文档标注为未验证。
 func (c *Client) GetVideoOnlineInfoApp(ctx context.Context, param GetVideoOnlineInfoAppParam) (*GetVideoOnlineInfoAppResult, error) {
 	const (
 		method = resty.MethodGet

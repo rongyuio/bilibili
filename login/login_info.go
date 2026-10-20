@@ -44,6 +44,7 @@ type AppAccountMyInfoParam struct {
 // GetAppAccountMyInfo 获取登录用户信息（APP 端）。
 //
 // 仅可 APP 认证：access_key、appkey、ts、sign 均由调用方提供，库不做签名。
+// 接口文档标注为未验证。
 func (c *Client) GetAppAccountMyInfo(ctx context.Context, param AppAccountMyInfoParam) (*GetAppAccountMyInfoResult, error) {
 	const (
 		method = resty.MethodGet

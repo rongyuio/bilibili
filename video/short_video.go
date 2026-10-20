@@ -56,7 +56,8 @@ type GetStoryVideoListParam struct {
 
 // GetStoryVideoList 根据点击视频获取的短视频播放列表
 //
-// 在APP端点击主页视频后发出的请求。
+// 在APP端点击主页视频后发出的请求。该接口走 APP 域名，sign 由调用方按 APP 签名规则生成，
+// 库不计算签名；接口文档标注为未验证。
 func (c *Client) GetStoryVideoList(ctx context.Context, param GetStoryVideoListParam) (*GetStoryVideoListResult, error) {
 	const (
 		method = resty.MethodGet
@@ -91,6 +92,8 @@ type GetShortVideoListParam struct {
 }
 
 // GetShortVideoList 获取短视频模式视频列表
+//
+// 该接口走 APP 域名，参数按 APP 端填写；接口文档标注为未验证。
 func (c *Client) GetShortVideoList(ctx context.Context, param GetShortVideoListParam) (*GetShortVideoListResult, error) {
 	const (
 		method = resty.MethodGet

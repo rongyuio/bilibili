@@ -51,6 +51,15 @@ CI（`.github/workflows/`）共四个 workflow 文件：
 
 新增接口时，在对应子包中新增方法、`*Param` / `*Result`，并为该接口单独定义返回模型。
 
+## 接口来源与验证状态
+
+新增接口前先看接口文档仓库里该接口的 `验证时间` 标注：
+
+- 标注具体日期表示文档维护者实测过。`2026-09-26` 是只读 GET 的全量实测日，但**只覆盖 web 端**；APP 域名（`app.bilibili.com`、`app.biliapi.com`、`app.biliapi.net`、`club.bilibili.com`）与 appkey 鉴权接口不在其中，不得据该日期推断已验证。
+- 标注 `未验证` 表示没有实测记录。实现后不得在注释、文档或提交信息里暗示该接口已验证。
+- APP 端接口：库不提供 appkey 签名，`appkey` / `sign` 等参数由调用方按 APP 规则生成。这类接口的注释必须写明「库不计算签名」。
+- 新增或修改验证标注时，只能依据文档仓库里可追溯的实测提交；抓包文件不在仓库内时，不要凭 `只读 GET` 之类的属性反推。
+
 ## 请求链路（核心架构）
 
 绝大多数内置接口调用走同一条链路。实现位于根包 `request.go`，并通过 `export.go` 导出给子包复用。少数需要读取 302 `Location` 或 HTML 的接口直接走 `Resty()` 逃生通道（`miscellaneous.UnwrapShortURL`、`login.GetWebCookieRefreshCsrf`）：

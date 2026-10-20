@@ -155,6 +155,19 @@ default:
 
 具体类型名以子包源码和方法签名为准。
 
+## APP 端接口清理
+
+以下 4 个接口只服务 APP 端、要求调用方自算 appkey 签名，且同包内已有能力重叠的 web 接口，现已删除：
+
+| 已删除 | 替代 |
+| --- | --- |
+| `user.GetUserSpaceCoinVideoListApp` | `user.GetUserSpaceCoinVideoList` |
+| `user.GetUserSpaceLikeVideoListApp` | `user.GetUserSpaceLikeVideoList` |
+| `garb.GetGarbColorInfoFromApp` | `garb.GetGarbColorInfo` |
+| `video.GetVideoSnapshotApp` | `video.GetVideoSnapshot` |
+
+这些接口在接口文档中并无独立实测记录，返回值按文档示例建模，未经验证。仍保留的 APP 端接口（如 `user.GetUserSpaceArchiveCursor`、`garb.GetGarbSkin`、`video.GetVideoOnlineInfoApp`）只在调用方自行完成 APP 签名后可用，库不计算签名。
+
 ## 文件组织
 
 每个业务子包内：
