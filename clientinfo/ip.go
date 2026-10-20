@@ -9,18 +9,6 @@ import (
 
 // IP 归属地相关接口。响应模型见 ip_model.go。
 
-// GetResourceIP 根据请求 IP 确定属地（APP 端）
-//
-// 文档地址为 app.bilibili.com/x/resource/ip，返回字段与
-// web-interface/zone、直播端 getIpInfo 相同。
-func (c *Client) GetResourceIP(ctx context.Context) (*GetResourceIPResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.bilibili.com/x/resource/ip"
-	)
-	return bilibili.Execute[*GetResourceIPResult](ctx, c.Client, method, url, nil)
-}
-
 // GetIPInfoNewParam 指定要查询归属地的 IP。
 type GetIPInfoNewParam struct {
 	IP string `json:"ip,omitempty" request:"query,omitempty"` // IP 地址。IPv4 或 IPv6 均可，留空则查询请求来源 IP

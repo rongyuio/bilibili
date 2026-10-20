@@ -67,17 +67,3 @@ type searchHotListWebEnvelope struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
-
-// GetSearchHotListAppParam 是获取热搜列表（手机端）的参数。
-type GetSearchHotListAppParam struct {
-	Limit int `json:"limit,omitempty" request:"query,omitempty"` // 热搜数量。留空为 20，最大为 100
-}
-
-// GetSearchHotListApp 获取热搜列表（手机端）。
-func (c *Client) GetSearchHotListApp(ctx context.Context, param GetSearchHotListAppParam) (*GetSearchHotListAppResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.bilibili.com/x/v2/search/trending/ranking"
-	)
-	return bilibili.Execute[*GetSearchHotListAppResult](ctx, c.Client, method, url, param)
-}

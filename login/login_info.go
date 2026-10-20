@@ -24,33 +24,13 @@ func (c *Client) GetNavInfo(ctx context.Context) (*GetNavInfoResult, error) {
 
 // GetHomeUserInfo 获取登录用户信息（仅部分字段）。
 //
-// Deprecated: 该接口已被官方弃用，字段也不完整，请改用 GetNavInfo 或 GetAppAccountMyInfo。
+// Deprecated: 该接口已被官方弃用，字段也不完整，请改用 GetNavInfo。
 func (c *Client) GetHomeUserInfo(ctx context.Context) (*GetHomeUserInfoResult, error) {
 	const (
 		method = resty.MethodGet
 		url    = "https://account.bilibili.com/home/userInfo"
 	)
 	return bilibili.Execute[*GetHomeUserInfoResult](ctx, c.Client, method, url, nil)
-}
-
-// AppAccountMyInfoParam 是 APP 端登录用户信息的请求参数。
-type AppAccountMyInfoParam struct {
-	AccessKey string `json:"access_key"` // APP登录Token
-	AppKey    string `json:"appkey"`     // APP密钥
-	Ts        int64  `json:"ts"`         // 当前时间戳
-	Sign      string `json:"sign"`       // APP签名
-}
-
-// GetAppAccountMyInfo 获取登录用户信息（APP 端）。
-//
-// 仅可 APP 认证：access_key、appkey、ts、sign 均由调用方提供，库不做签名。
-// 接口文档标注为未验证。
-func (c *Client) GetAppAccountMyInfo(ctx context.Context, param AppAccountMyInfoParam) (*GetAppAccountMyInfoResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.bilibili.com/x/v2/account/myinfo"
-	)
-	return bilibili.Execute[*GetAppAccountMyInfoResult](ctx, c.Client, method, url, param)
 }
 
 // NavStatParam 是登录用户状态数的请求参数。

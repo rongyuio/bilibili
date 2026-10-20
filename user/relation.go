@@ -42,25 +42,6 @@ func (c *Client) GetUserFollowings(ctx context.Context, param GetUserFollowingsP
 	return bilibili.Execute[*GetUserFollowingsResult](ctx, c.Client, method, url, param)
 }
 
-// GetUserFollowings2Param 是查询用户关注明细2的请求参数。
-type GetUserFollowings2Param struct {
-	Vmid  int    `json:"vmid"`                                      // 目标用户 mid
-	Order string `json:"order,omitempty" request:"query,omitempty"` // 排序方式。按照降序排列：desc。按照升序排列：asc。默认降序排列
-	Ps    int    `json:"ps,omitempty" request:"query,omitempty"`    // 每页项数。默认为 50
-	Pn    int    `json:"pn,omitempty" request:"query,omitempty"`    // 页码。默认为 1。仅可查看前 5 页
-}
-
-// GetUserFollowings2 查询用户关注明细2。
-//
-// 仅可查看前 5 页，对于已设置可见性隐私关注列表的用户，则返回的List为nil，Total为0。
-func (c *Client) GetUserFollowings2(ctx context.Context, param GetUserFollowings2Param) (*GetUserFollowings2Result, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.biliapi.net/x/v2/relation/followings"
-	)
-	return bilibili.Execute[*GetUserFollowings2Result](ctx, c.Client, method, url, param)
-}
-
 // GetUserFollowings3Param 是 GetUserFollowersParam 的别名。
 type GetUserFollowings3Param = GetUserFollowersParam
 

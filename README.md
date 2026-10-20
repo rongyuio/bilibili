@@ -45,7 +45,7 @@
 业务接口按域拆分到子包。每个子包提供 `New(*bilibili.Client) *Client`，返回嵌入了根包 `Client` 的调用入口，因此同一份 Cookie、WBI 缓存与错误处理在所有子包之间共享：
 
 - `activity` —— 活动主题与活动列表
-- `appwidget` —— APP 组件
+- `appwidget` —— 客户端版本下载地址
 - `article` —— 专栏文章与文集
 - `audio` —— 音频、歌单与音频排行
 - `bangumi` —— 番剧、影视、时间表与视频流

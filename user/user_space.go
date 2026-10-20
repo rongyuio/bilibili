@@ -163,45 +163,6 @@ func (c *Client) GetUserSpaceLikeVideoList(ctx context.Context, param GetUserSpa
 	return bilibili.Execute[*GetUserSpaceLikeVideoListResult](ctx, c.Client, method, url, param)
 }
 
-type GetUserSpaceArchiveCursorParam struct {
-	Vmid          int    `json:"vmid" request:"query"`                               // 目标用户mid
-	Aid           int    `json:"aid,omitempty" request:"query,omitempty"`            // 请求返回起始视频。首次请求不需要，填写上次请求返回最后视频的aid
-	Order         string `json:"order,omitempty" request:"query,omitempty"`          // 排序方式。click：最多播放。pubdate：最新发布
-	Sort          string `json:"sort,omitempty" request:"query,omitempty"`           // 创建时间：asc。修改时间：desc
-	AccessKey     string `json:"access_key,omitempty" request:"query,omitempty"`     // APP登录Token。实测全程未使用
-	Appkey        string `json:"appkey" request:"query"`                             // APP密钥。取自 APPKey 公开表
-	Build         int    `json:"build,omitempty" request:"query,omitempty"`          // 版本。实测值任意
-	CLocale       string `json:"c_locale,omitempty" request:"query,omitempty"`       // 语言。如 zh_CN
-	Channel       int    `json:"channel,omitempty" request:"query,omitempty"`        // 频道
-	Fnval         int    `json:"fnval,omitempty" request:"query,omitempty"`          // 视频流类型
-	Fnver         int    `json:"fnver,omitempty" request:"query,omitempty"`          // 请求时提供的fnver。可为0
-	ForceHost     int    `json:"force_host,omitempty" request:"query,omitempty"`     // 源url类型。0：无限制。1：使用http。2：使用https
-	Fourk         int    `json:"fourk,omitempty" request:"query,omitempty"`          // 是否允许4K视频。0：最高1080P。1：最高4K
-	IncludeCursor bool   `json:"include_cursor,omitempty" request:"query,omitempty"` // 未知。可为false
-	MobiApp       string `json:"mobi_app,omitempty" request:"query,omitempty"`       // 平台标识。可为 web、android 等
-	Platform      string `json:"platform,omitempty" request:"query,omitempty"`       // 平台。可为 web
-	Ps            int    `json:"ps,omitempty" request:"query,omitempty"`             // 每页条数。默认为20
-	Pn            int    `json:"pn,omitempty" request:"query,omitempty"`             // 似乎不是页码。默认为32
-	PnPolicy      int    `json:"pn_policy,omitempty" request:"query,omitempty"`      // 未知。可为1
-	SLocale       string `json:"s_locale,omitempty" request:"query,omitempty"`       // 语言。如 zh_CN
-	Statistics    string `json:"statistics,omitempty" request:"query,omitempty"`     // 位置。如 {"appId":1,"platform":3,"version":"8.13.0","abtest":""}
-	Ts            int64  `json:"ts" request:"query"`                                 // 秒级时间戳。必须存在且非空，值本身不被校验
-	VoiceBalance  int    `json:"voice_balance,omitempty" request:"query,omitempty"`  // 未知。默认为1
-	Sign          string `json:"sign" request:"query"`                               // APP签名。算法见 APP API 签名与鉴权文档
-}
-
-// GetUserSpaceArchiveCursor 查询用户投稿明细（APP、无需wbi鉴权）
-//
-// 不能裸打：必须按 APP 签名规则计算 sign（md5，小写十六进制），本方法不代算签名。
-// 2026-09-27 实测的最小必填集为 vmid、appkey、ts、sign；缺 appkey 或 sign 返回 -3/-400。
-func (c *Client) GetUserSpaceArchiveCursor(ctx context.Context, param GetUserSpaceArchiveCursorParam) (*GetUserSpaceArchiveCursorResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.biliapi.com/x/v2/space/archive/cursor"
-	)
-	return bilibili.Execute[*GetUserSpaceArchiveCursorResult](ctx, c.Client, method, url, param)
-}
-
 type GetUserSpaceArticleListParam struct {
 	Mid  int    `json:"mid" request:"query"`                      // 用户uid
 	Pn   int    `json:"pn,omitempty" request:"query,omitempty"`   // 页码。默认为1

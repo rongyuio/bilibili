@@ -157,16 +157,31 @@ default:
 
 ## APP 端接口清理
 
-以下 4 个接口只服务 APP 端、要求调用方自算 appkey 签名，且同包内已有能力重叠的 web 接口，现已删除：
+以下 19 个接口均为 APP 域名（`app.bilibili.com`、`app.biliapi.com`、`app.biliapi.net`、`club.bilibili.com`），由接口补齐时从文档引入，文档中没有独立实测记录。库不提供 appkey 签名，调用方必须自行计算 `appkey` / `sign` 才能使用，实际不可直接调用，现已全部删除：
 
 | 已删除 | 替代 |
 | --- | --- |
+| `appwidget.GetSplashBrandList` | 无（APP 开屏） |
+| `appwidget.GetSplashList` | 无 |
+| `appwidget.GetVersionInfo` | 无 |
+| `appwidget.GetVersionUpgrade` | 无 |
+| `clientinfo.GetResourceIP` | `clientinfo.GetIPInfoNew` / `GetWebRoomIPInfo` |
+| `dynamic.GetRecommendTopic` | 无 |
+| `dynamic.GetTopicDetails` | 无 |
+| `garb.GetGarbColorInfoFromApp` | `garb.GetGarbColorInfo` |
+| `garb.GetGarbSkin` | 无 |
+| `login.GetAppAccountMyInfo` | `login.GetNavInfo` / `GetHomeUserInfo` |
+| `search.GetSearchHotListApp` | `search.GetSearchHotListWeb` |
+| `user.GetUserFollowings2` | `user.GetUserFollowings` / `GetUserFollowings3` |
+| `user.GetUserSpaceArchiveCursor` | 无 |
 | `user.GetUserSpaceCoinVideoListApp` | `user.GetUserSpaceCoinVideoList` |
 | `user.GetUserSpaceLikeVideoListApp` | `user.GetUserSpaceLikeVideoList` |
-| `garb.GetGarbColorInfoFromApp` | `garb.GetGarbColorInfo` |
+| `video.GetShortVideoList` | 无 |
+| `video.GetStoryVideoList` | 无 |
+| `video.GetVideoOnlineInfoApp` | `video.GetVideoOnlineInfo` |
 | `video.GetVideoSnapshotApp` | `video.GetVideoSnapshot` |
 
-这些接口在接口文档中并无独立实测记录，返回值按文档示例建模，未经验证。仍保留的 APP 端接口（如 `user.GetUserSpaceArchiveCursor`、`garb.GetGarbSkin`、`video.GetVideoOnlineInfoApp`）只在调用方自行完成 APP 签名后可用，库不计算签名。
+`appwidget` 子包保留 `GetAppVersion`（走 `api.bilibili.com`，不需要 APP 签名）。web 接口上原有的可选 `access_key` 参数不受影响，不传时仍走 Cookie。
 
 ## 文件组织
 
