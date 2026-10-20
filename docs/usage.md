@@ -2,39 +2,38 @@
 
 [返回 README](../README.md)
 
-本文代码片段中的 `ctx`、`root`、`mid`、`bvid` 等由调用方提供。`root` 是 `bilibili.New()` 创建的根客户端，子包入口按需构造，例如 `v := video.New(root)`、`d := dynamic.New(root)`、`l := live.New(root)`。示例省略错误判断的写法见 README 的「快速开始」。
+本文代码片段中的 `ctx`、`root`、`mid`、`bvid` 等由调用方提供。`root` 是 `bilibili.New()` 创建的根客户端，子包入口按需构造，例如 `v := video.New(root)`、`d := dynamic.New(root)`、`l := live.New(root)`。跨域调用可以用聚合入口 `client := bili.New()`，之后 `client.Video`、`client.User` 直接可用；示例里的 `v`、`d`、`l` 分别对应 `client.Video`、`client.Dynamic`、`client.Live`，两者共享同一套会话与构造语义。示例省略错误判断的写法见 README 的「快速开始」。
 
 ## 登录与 Cookie
 
 已有浏览器 Cookie 时，在发送请求前导入：
 
 ```go
-root := bilibili.New()
-root.SetRawCookies(cookieHeader) // cookieHeader 由调用方读取，不写入代码或日志。
+client := bili.New()
+client.SetRawCookies(cookieHeader) // cookieHeader 由调用方读取，不写入代码或日志。
 ```
 
-`root.GetHomePage(ctx)` 访问一次 B 站首页，可补全 `buvid3` 等设备字段；`root.RefreshWebCookie(ctx, refreshToken)` 一条龙完成官方 Cookie 刷新（不需要刷新时返回 nil），刷新成功后务必持久化返回值中的新 `RefreshToken`，否则之后无法再次刷新。
+`client.GetHomePage(ctx)` 访问一次 B 站首页，可补全 `buvid3` 等设备字段；`client.RefreshWebCookie(ctx, refreshToken)` 一条龙完成官方 Cookie 刷新（不需要刷新时返回 nil），刷新成功后务必持久化返回值中的新 `RefreshToken`，否则之后无法再次刷新。
 
-`bilibili.New()` 不联网；需要游客 Cookie 时用 `bilibili.NewAnonymousClient(ctx)`。扫码登录在 `login` 子包：
+`bili.New()` 不联网；需要游客 Cookie 时用 `bili.NewAnonymous(ctx)`。扫码登录在 `login` 子包：
 
 ```go
-root := bilibili.New()
-l := login.New(root)
+client := bili.New()
 
-qr, err := l.GetQRCode(ctx)
+qr, err := client.Login.GetQRCode(ctx)
 if err != nil {
     log.Fatal(err)
 }
 qr.Print() // 在终端展示二维码
 
-result, err := l.LoginWithQRCode(ctx, login.QRCodeLoginParam{QrcodeKey: qr.QrcodeKey})
+result, err := client.Login.LoginWithQRCode(ctx, login.QRCodeLoginParam{QrcodeKey: qr.QrcodeKey})
 if err != nil {
     log.Fatal(err)
 }
 if result.Code != 0 {
     log.Printf("登录未完成: %s", result.Message)
 }
-// 登录成功后 Cookie 已自动合并进 root，后续子包共用同一会话。
+// 登录成功后 Cookie 已自动合并进 client，后续域共用同一会话。
 ```
 
 `LoginWithQRCode` 会轮询到扫码成功或二维码失效，`ctx` 应预留人工确认所需时间。密码与短信登录、Cookie 的保存与恢复、Resty 接管见 [认证与会话](authentication.md)。

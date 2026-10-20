@@ -6,7 +6,7 @@
 
 封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.26+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是上游 `CuteReimu/bilibili` 的持续维护 fork；上游已被作者删除（原地址 404），删除前已归档并停止维护，其所依据的接口文档仓库也已停止维护。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
 
-代码分为根包与业务子包：根包 `bilibili` 位于仓库根目录，只保留客户端、请求链路、参数编码、错误与解码、Cookie、WBI 等基础设施；业务接口按域拆分到 34 个业务子包（`video`、`user`、`live` 等），每个子包通过 `New(*bilibili.Client)` 复用根包客户端。文档与代码注释使用中文；修改既有文档和注释时请保持这一风格。
+代码分为根包与业务子包：根包 `bilibili` 位于仓库根目录，只保留客户端、请求链路、参数编码、错误与解码、Cookie、WBI 等基础设施；业务接口按域拆分到 34 个业务子包（`video`、`user`、`live` 等），每个子包通过 `New(*bilibili.Client)` 复用根包客户端。聚合包 `bili` 把这些入口挂到同一个对象上（`client.Video`、`client.User` 等），字段与初始化由 `go generate ./...` 生成，新增子包后必须重新生成并提交。文档与代码注释使用中文；修改既有文档和注释时请保持这一风格。
 
 ## 分支与提交
 
@@ -23,16 +23,17 @@ go test ./...                     # 运行全部测试
 go test -run TestName ./...       # 运行单个测试
 go test -run 'TestCookie|TestSignMap' ./...   # 按正则运行一组测试
 go test -race -v ./...            # 输出详细结果（CI 使用的形式）
+go generate ./...                 # 重新生成 bili/client_gen.go
 ```
 
-`Makefile` 把 CI 的口径收成一个入口：`make check`（gofmt + vet + race + build + lint）、`make test`、`make race`、`make fmt`、`make lint`、`make build`。`make help` 列全。
+`Makefile` 把 CI 的口径收成一个入口：`make check`（gencheck + gofmt + vet + race + build + lint）、`make test`、`make race`、`make fmt`、`make lint`、`make build`、`make generate`、`make gencheck`。`make help` 列全。
 
 测试**不会访问真实 API，也不需要凭证**。多数只依赖标准库 `testing`；根包 `util_test.go` 用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，`live/trace_test.go`、`miscellaneous/misc_test.go` 等子包测试直接验证签名、转换等纯逻辑。**都不发出真实请求。** `test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 排除了 `test/`。
 
 CI（`.github/workflows/`）共四个 workflow 文件：
 
 - `gofmt.yml`（workflow 名 `GoFmt`）—— 在向 `master` 的 push / PR 时运行，要求 `gofmt -s -l .` 输出为空。
-- `golangci-lint.yml`（workflow 名 `Go`）—— 同样在 push / PR 时运行，依次执行 golangci-lint、`go test -race -v ./...`、`go build -v ./...`。
+- `golangci-lint.yml`（workflow 名 `Go`）—— 同样在 push / PR 时运行，依次执行 `go generate ./...`、生成物 diff 校验、golangci-lint、`go test -race -v ./...`、`go build -v ./...`。
 - `label.yml`（workflow 名 `Label`）—— 只在 PR 事件运行，按 PR 标题的 Conventional Commits 前缀自动打 label（含 `!` 时额外打 `breaking`），供 `release.yml` 生成分类 Release Notes。
 - `release.yml`（workflow 名 `Release`）—— 只在推 `v*` 标签时运行（见下）。
 
@@ -44,8 +45,10 @@ CI（`.github/workflows/`）共四个 workflow 文件：
 
 仓库采用「根包 + 业务子包」结构，子包按 API 业务域划分，与上游接口文档的目录结构保持一致：
 
-- **根包 `bilibili`（仓库根目录）** —— 只放基础设施：`client.go`（构造与会话）、`request.go` / `response.go` / `params.go` / `raw.go`（请求链路）、`errors.go` 与 `decode_*.go`（错误与解码诊断）、`cookie.go` / `cookie_model.go`（Cookie）、`wbi.go` / `wbi_storage.go`（WBI 签名）、`export.go`（向子包导出 `Execute` 等设施）、`number.go`、`video_zone.go` / `video_zone_model.go` / `video_zone.csv`（分区数据），以及 `type.go` / `avatar_model.go` 中真正跨业务域的基础类型。
+- **根包 `bilibili`（仓库根目录）** —— 只放基础设施：`client.go`（构造与会话）、`request.go` / `response.go` / `params.go` / `raw.go`（请求链路）、`errors.go` 与 `decode_*.go`（错误与解码诊断）、`cookie.go` / `cookie_model.go`（Cookie）、`wbi.go` / `wbi_storage.go`（WBI 签名）、`export.go`（向子包导出 `Execute` 等设施）、`generate.go`（`go:generate` 指令）、`number.go`、`video_zone.go` / `video_zone_model.go` / `video_zone.csv`（分区数据），以及 `type.go` / `avatar_model.go` 中真正跨业务域的基础类型。
 - **业务子包** —— 例如 `video/`、`user/`、`live/`、`dynamic/`、`fav/`、`login/`，共 34 个。每个子包的 `client.go` 定义 `Client`（嵌入 `*bilibili.Client`）与 `New(*bilibili.Client) *Client`；子包不复制会话，也不自行构造 Resty 客户端。
+- **聚合包 `bili`** —— `bili/client.go` 手写 `New` / `NewWith` / `NewAnonymous` 三个构造函数；`bili/client_gen.go` 由 `internal/cmd/genall` 生成，包含 `Client` 的域字段与 `newClient`。聚合包只做包装，不定义业务方法，也不持有独立会话。域级状态必须放在根客户端或聚合层，不要放进子包。
+- **代码生成器 `internal/cmd/genall`** —— 扫描目录下声明了 `func New(*bilibili.Client) *Client` 的子包，生成聚合入口。新增子包或修改构造签名后运行 `go generate ./...`；生成物过期由 CI 的 diff 校验拦截。复合包名需要切词时更新生成器里的 `wordBreaks`。
 - **子包内文件命名** —— 方法与 `*Param` 放在 `info.go`、`live.go`、`topic.go` 这类文件中；响应模型（`*Result` 及子类型）放在同目录的 `model_*.go` 或 `<主题>_model.go`（如 `video/model_info.go`、`dynamic/model_dynamic_feed_all.go`、`live/live_model.go`），少量简单结果可与方法同文件。
 - **返回体独立定义** —— 一个接口的 `*Result` 及其子类型只服务于该接口，即使与其它接口字段相同也不跨接口复用；不要为了复用把某个接口的返回体搬到公共文件。根包 `type.go` 只放真正跨业务域的基础类型。
 

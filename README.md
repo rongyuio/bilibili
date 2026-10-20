@@ -23,6 +23,7 @@
 
 - 本仓库是 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 的 fork。上游已被作者删除（该地址现返回 404）；删除前已归档：README 标注 Deprecated、默认分支改名为 `deprecated`、issues/discussions/wiki 全部关闭，不再接受改动与合并。其所依据的接口文档仓库也已停止维护。
 - 本 fork **继续维护**：跟进新增接口，已实现接口在发现问题时修复。以自用为主，不承诺固定的支持范围与响应时间。
+- **接口封装不等于服务端当前可用性。** 部分接口没有实测记录，B 站服务端也可能随时调整。生产环境请对关键接口自行验证，并处理业务错误与字段漂移。
 - 本仓库保留 fork 关联；`master` 已开启分支保护（改动须经 PR 合入，禁止强制推送与删除）。
 - 版本处于 **v0 阶段**，允许在次版本号内引入破坏性变更。升级前请阅读[迁移指南](docs/migration.md)。
 
@@ -32,7 +33,7 @@
 - **WBI 签名**：按需对 query 参数签名，密钥自动缓存并按周期刷新
 - **统一请求链路**：全部内置接口共用同一套 Cookie 快照、参数编码、context 取消与错误处理
 - **结构化错误诊断**：`HTTPError` / `Error` / `ParamError` / `DecodeError` 均支持 `errors.As`，解码失败时给出 JSON 路径与偏移
-- **容错解码**：单个字段的 JSON 类型与模型不符时只丢弃该字段并经 `SetDroppedFieldHandler` 上报，不连累整条响应
+- **容错解码**：单个字段的 JSON 类型与模型不符时只丢弃该字段并经 `SetDroppedFieldHandler` 上报，不连累整条响应。这是兼容服务端局部漂移的降级解码，不是无损解码；被丢弃的字段保持零值。
 - **逃生通道**：尚未封装的接口可通过 `Client.Do` 复用同一套能力
 
 ## 包结构
@@ -78,6 +79,8 @@
 
 各接口的返回体按接口独立定义，接口之间不共享模型；即使字段相同，也在各自的 `model_*.go` 或 `<主题>_model.go` 中单独定义。
 
+跨域调用可以使用聚合包 `bili`：`bili.New()` 创建根客户端，并把全部业务域挂在同一个对象上，`client.Video`、`client.User` 等字段直接可用。聚合包只做包装，不持有独立会话；字段由 `go generate ./...` 维护，新增子包后需重新生成。只需要单个域时，仍可直接用根包配合子包构造。
+
 ## 快速开始
 
 ### 安装
@@ -89,6 +92,15 @@ go get github.com/rongyuio/bilibili@latest
 ```
 
 v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)与[版本策略](docs/versioning.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
+
+Go 1.26 是当前最低工具链门槛（用于 `errors.AsType` 等标准库能力），与接口稳定性无关。
+
+| 变更 | 版本 |
+| --- | --- |
+| 修复 bug，不改导出 API | patch |
+| 新增接口或能力 | minor |
+| v0 阶段的破坏性变更 | minor，需阅读迁移指南 |
+| 保证兼容 | v1 之后 |
 
 ### 创建客户端并调用接口
 
@@ -102,7 +114,7 @@ import (
     "log"
     "time"
 
-    "github.com/rongyuio/bilibili"
+    "github.com/rongyuio/bilibili/bili"
     "github.com/rongyuio/bilibili/video"
 )
 
@@ -110,9 +122,8 @@ func main() {
     ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
     defer cancel()
 
-    root := bilibili.New()
-    v := video.New(root)
-    info, err := v.GetVideoInfo(ctx, video.GetVideoInfoParam{Bvid: "BV1L9Uoa9EUx"})
+    client := bili.New()
+    info, err := client.Video.GetVideoInfo(ctx, video.GetVideoInfoParam{Bvid: "BV1L9Uoa9EUx"})
     if err != nil {
         log.Printf("获取视频失败: %v", err)
         return
@@ -121,18 +132,57 @@ func main() {
 }
 ```
 
-`bilibili.New()` 只负责会话与网络配置；`video.New(root)` 用同一个根包客户端构造业务子包入口，不会新建会话。所有网络方法以 `ctx context.Context` 为首参，调用后先处理错误再使用结果。普通请求可并发，登录、会话切换及配置修改需串行；不要复制已使用的 `Client`。
+`bili.New()` 创建根客户端并构造聚合入口，所有业务域共享同一个会话。只需要单个域时，也可以直接用 `bilibili.New()` 配合 `video.New(root)`。所有网络方法以 `ctx context.Context` 为首参，调用后先处理错误再使用结果。普通请求可并发，登录、会话切换及配置修改需串行；不要复制已使用的 `Client`。
+
+### 按任务选择入口
+
+聚合入口把全部业务域挂在同一个对象上。常用域：
+
+| 任务 | 入口 |
+| --- | --- |
+| 视频信息、播放地址、观看上报 | `client.Video` |
+| 用户信息、关系、空间 | `client.User` |
+| 动态流、发布、转发 | `client.Dynamic` |
+| 直播房间、勋章、弹幕 | `client.Live` |
+| 登录 | `client.Login` |
+| 收藏与历史 | `client.Fav` / `client.History` |
+| 搜索 | `client.Search` |
+| 尚未封装的接口 | `client.Do` |
+
+只需要单个域时，直接用根包与子包，避免把全部业务包拉进依赖图：
+
+```go
+root := bilibili.New()
+v := video.New(root)
+```
+
+### 客户端构造选择
+
+| 场景 | 用法 |
+| --- | --- |
+| 默认，跨域调用 | `bili.New()` |
+| 已有根客户端 | `bili.NewWith(root)` |
+| 需要游客 Cookie | `bili.NewAnonymous(ctx)` |
+| 只用单个域 | `root := bilibili.New()` 后接 `video.New(root)` |
+| 接管已有 Resty 客户端 | `bilibili.NewWithClient(restyClient)` |
 
 ### 登录与 Cookie
 
 已有浏览器 Cookie 时，在发送请求前导入：
 
 ```go
-root := bilibili.New()
-root.SetRawCookies(cookieHeader) // cookieHeader 由调用方读取，不写入代码或日志。
+client := bili.New()
+client.SetRawCookies(cookieHeader) // cookieHeader 由调用方读取，不写入代码或日志。
 ```
 
-`bilibili.New()` 不联网；需要游客 Cookie 时用 `bilibili.NewAnonymousClient(ctx)`。扫码 / 密码 / 短信登录、Cookie 保存与恢复、Resty 接管见[认证与会话](docs/authentication.md)，完整调用示例见[使用示例](docs/usage.md#登录与-cookie)。
+`bili.New()` 不联网；需要游客 Cookie 时用 `bili.NewAnonymous(ctx)`。扫码 / 密码 / 短信登录、Cookie 保存与恢复、Resty 接管见[认证与会话](docs/authentication.md)，完整调用示例见[使用示例](docs/usage.md#登录与-cookie)。
+
+### 并发与会话
+
+- 普通请求可以并发。
+- 登录、Cookie 修改、`SetDroppedFieldHandler` 与 Resty 配置变更必须在请求之外串行执行。
+- `Client` 首次使用后不可复制；需要独立会话时创建新的客户端。
+- 每次请求只取一次 Cookie 快照，响应 Cookie 自动合并回客户端。
 
 ## 详细文档
 
