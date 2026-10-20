@@ -4,6 +4,12 @@
 
 本文代码片段中的 `ctx`、`client` 及业务参数由调用方提供；客户端导入路径为 `github.com/rongyuio/bilibili`。
 
+## 术语
+
+- `Client.Do` —— 调用方访问尚未封装接口的入口。
+- `Execute` / `ExecuteRaw` —— 子包内部使用的两条请求入口，由 `export.go` 导出。`Execute` 处理标准 `code/message/data` 信封，`ExecuteRaw` 返回原始响应体。普通调用方不需要直接使用。
+- 「逃生通道」—— 指 `Client.Do` 与 `Resty()`。前者复用完整请求链路；后者绕过签名、Cookie 存储与统一错误处理。
+
 ## 调用尚未封装的接口
 
 使用 `Client.Do` 复用客户端的 Cookie、网络配置、签名和解码流程。以下函数只演示调用方式，需由调用方提供 context 和客户端：
@@ -34,6 +40,24 @@ func loadAccount(ctx context.Context, client *bilibili.Client, mid string) error
 - `Query` 可与 `Form` 或 `JSON` 并用，但 `Form` 与 `JSON` 互斥。`JSON` 按标准库规则编码，包括字符串值；`Headers` 使用 `http.Header`。
 - URL 自带查询参数会参与请求，同名键以 `Request.Query` 为准。WBI 只签查询参数，不签表单；签名请求的每个查询键必须只有一个值。CSRF 由调用方按接口要求放在查询或表单中。
 - context 会传到 HTTP 请求和 WBI 密钥刷新；所有内置网络 API 同样以 context 为首参。通过 Resty 自行配置的重试策略仍然有效。
+
+### `Client.Do` 契约
+
+| 项目 | 行为 |
+| --- | --- |
+| URL | 必须是绝对 `http` / `https` URL，不能包含用户信息；库不限制域名 |
+| Method | 必填，库不做方法推断 |
+| Headers | 整体替换默认请求头；需要 User-Agent、Referer 时由调用方自行补齐 |
+| Query | URL 自带查询参数与 `Request.Query` 合并，同名键以 `Request.Query` 为准 |
+| Form / JSON | 互斥；同时设置返回错误 |
+| WBI | 只对 query 签名，每个键只能有一个值；启用时清空 `Referer` |
+| CSRF | 没有专用字段，按接口要求写入 `Query` 或 `Form` |
+| `out == nil` | 只检查 HTTP 状态与业务码，不解码 `data` |
+| 响应 Cookie | 成功、HTTP 错误与业务错误都会合并回客户端 |
+| 容错解码 | 与内置接口一致，丢弃字段经 `SetDroppedFieldHandler` 上报 |
+| 非标准信封 | `Do` 只处理标准信封；protobuf、XML、SVG、JS 等需要自行使用 `Resty()` 或子包内部的 `ExecuteRaw` |
+
+`Do` 复用请求链路，但不复用内置接口的参数校验与业务语义。接口是否需要登录、CSRF、WBI 或特定请求头，仍由调用方按服务端要求提供。
 
 ## 内置接口的参数标签
 
@@ -115,6 +139,8 @@ if errors.As(err, &de) {
 先判断业务 `code`，再解码 `data`，避免业务错误被结果类型不匹配掩盖。`out=nil` 时不会检查 `data` 的字段类型。
 
 ## 单个字段类型不符时的容错
+
+容错是全部内置接口的默认行为，定位是「兼容服务端局部字段漂移的降级解码」，不是无损解码。被丢弃的字段保持零值，零值可能与服务端明确返回的零值相同，不能据此判断「服务端没有提供该字段」。生产环境建议注册回调记录丢弃事件；测试环境可以把丢弃视为失败。
 
 服务端偶尔会改变某个字段的 JSON 类型（例如动态的 `following` 在未登录时返回 `null`、登录态返回布尔、更早的样本返回数字）。这类漂移只会丢弃该字段，不会作废整条响应：
 
