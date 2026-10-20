@@ -179,65 +179,6 @@ type GetHomeUserInfoResult struct {
 	PointBalance     int                      `json:"pointBalance"`      // 0。作用尚不明确
 }
 
-// GetAppAccountMyInfoVipLabel 是 APP 端登录用户信息中的会员标签。
-type GetAppAccountMyInfoVipLabel struct {
-	Path        string `json:"path"`         // (?)
-	Text        string `json:"text"`         // 会员类型文案
-	LabelTheme  string `json:"label_theme"`  // 会员类型。vip：大会员。annual_vip：年度大会员。ten_annual_vip：十年大会员。hundred_annual_vip：百年大会员
-	TextColor   string `json:"text_color"`   // 文字颜色?
-	BgStyle     int    `json:"bg_style"`     // (?)
-	BgColor     string `json:"bg_color"`     // 背景颜色?
-	BorderColor string `json:"border_color"` // 描边颜色?
-}
-
-// GetAppAccountMyInfoVip 是 APP 端登录用户信息中的会员信息。
-type GetAppAccountMyInfoVip struct {
-	Type            int                         `json:"type"`             // 大会员类型。0：无。1：月度。2：年度
-	Status          int                         `json:"status"`           // 会员开通状态。0：无。1：有
-	DueDate         int64                       `json:"due_date"`         // 大会员到期时间。毫秒 时间戳
-	VipPayType      int                         `json:"vip_pay_type"`     // 会员开通状态。0：无。1：有
-	ThemeType       int                         `json:"theme_type"`       // 会员开通状态。0：无。1：有
-	Label           GetAppAccountMyInfoVipLabel `json:"label"`            // 大会员信息
-	AvatarSubscript int                         `json:"avatar_subscript"` // 是否显示会员图标。0：不显示。1：显示
-	NicknameColor   string                      `json:"nickname_color"`   // 会员昵称颜色。颜色码
-}
-
-// GetAppAccountMyInfoOfficial 是 APP 端登录用户信息中的认证信息。
-type GetAppAccountMyInfoOfficial struct {
-	Role  int    `json:"role"`  // 认证类型
-	Title string `json:"title"` // 认证信息。无为空
-	Desc  string `json:"desc"`  // 认证备注。无为空
-	Type  int    `json:"type"`  // 认证备注。无为空
-}
-
-// GetAppAccountMyInfoInvite 是 APP 端登录用户信息中的邀请信息。
-type GetAppAccountMyInfoInvite struct {
-	InviteRemind int  `json:"invite_remind"` // 1。作用尚不明确
-	Display      bool `json:"display"`       // true。作用尚不明确
-}
-
-// GetAppAccountMyInfoResult 是 APP 端登录用户信息接口的 data 对象。
-type GetAppAccountMyInfoResult struct {
-	Mid            int64                       `json:"mid"`            // 用户 mid
-	Name           string                      `json:"name"`           // 用户昵称
-	Sign           string                      `json:"sign"`           // 用户签名
-	Coins          float64                     `json:"coins"`          // 拥有硬币数
-	Birthday       string                      `json:"birthday"`       // 用户生日。YYYY-MM-DD
-	Face           string                      `json:"face"`           // 用户头像 url
-	Sex            int                         `json:"sex"`            // 用户性别。0：私密。1：男。2：女
-	Level          int                         `json:"level"`          // 用户等级。0-6
-	Rank           int                         `json:"rank"`           // 1000。作用尚不明确
-	Silence        int                         `json:"silence"`        // 用户是否被封禁。0：正常。1：封禁
-	Vip            GetAppAccountMyInfoVip      `json:"vip"`            // 会员信息
-	EmailStatus    int                         `json:"email_status"`   // 是否验证邮箱地址。0：未验证。1：已验证
-	TelStatus      int                         `json:"tel_status"`     // 是否验证手机号。0：未验证。1：已验证
-	Official       GetAppAccountMyInfoOfficial `json:"official"`       // 认证信息
-	Identification int                         `json:"identification"` // 1。作用尚不明确
-	Invite         GetAppAccountMyInfoInvite   `json:"invite"`         // 邀请信息
-	IsTourist      int                         `json:"is_tourist"`     // 0。作用尚不明确
-	PinPrompting   int                         `json:"pin_prompting"`  // 0。作用尚不明确
-}
-
 // GetNavStatResult 是登录用户状态数接口的 data 对象。
 type GetNavStatResult struct {
 	Following    int `json:"following"`     // 关注数

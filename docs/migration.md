@@ -155,6 +155,34 @@ default:
 
 具体类型名以子包源码和方法签名为准。
 
+## APP 端接口清理
+
+以下 19 个接口均为 APP 域名（`app.bilibili.com`、`app.biliapi.com`、`app.biliapi.net`、`club.bilibili.com`），由接口补齐时从文档引入，文档中没有独立实测记录。库不提供 appkey 签名，调用方必须自行计算 `appkey` / `sign` 才能使用，实际不可直接调用，现已全部删除：
+
+| 已删除 | 替代 |
+| --- | --- |
+| `appwidget.GetSplashBrandList` | 无（APP 开屏） |
+| `appwidget.GetSplashList` | 无 |
+| `appwidget.GetVersionInfo` | 无 |
+| `appwidget.GetVersionUpgrade` | 无 |
+| `clientinfo.GetResourceIP` | `clientinfo.GetIPInfoNew` / `GetWebRoomIPInfo` |
+| `dynamic.GetRecommendTopic` | 无 |
+| `dynamic.GetTopicDetails` | 无 |
+| `garb.GetGarbColorInfoFromApp` | `garb.GetGarbColorInfo` |
+| `garb.GetGarbSkin` | 无 |
+| `login.GetAppAccountMyInfo` | `login.GetNavInfo` / `GetHomeUserInfo` |
+| `search.GetSearchHotListApp` | `search.GetSearchHotListWeb` |
+| `user.GetUserFollowings2` | `user.GetUserFollowings` / `GetUserFollowings3` |
+| `user.GetUserSpaceArchiveCursor` | 无 |
+| `user.GetUserSpaceCoinVideoListApp` | `user.GetUserSpaceCoinVideoList` |
+| `user.GetUserSpaceLikeVideoListApp` | `user.GetUserSpaceLikeVideoList` |
+| `video.GetShortVideoList` | 无 |
+| `video.GetStoryVideoList` | 无 |
+| `video.GetVideoOnlineInfoApp` | `video.GetVideoOnlineInfo` |
+| `video.GetVideoSnapshotApp` | `video.GetVideoSnapshot` |
+
+`appwidget` 子包保留 `GetAppVersion`（走 `api.bilibili.com`，不需要 APP 签名）。web 接口上原有的可选 `access_key` 参数不受影响，不传时仍走 Cookie。
+
 ## 文件组织
 
 每个业务子包内：

@@ -44,22 +44,6 @@ type GetRecommendSearchTopicResult struct {
 	RequestID  string `json:"request_id"`  // 请求 id。传入 keywords 时不为空
 }
 
-// GetRecommendTopicResult 推荐话题的响应数据。
-type GetRecommendTopicResult struct {
-	TopicItems []GetRecommendTopicItem `json:"topic_items"` // 话题列表
-}
-
-// GetRecommendTopicItem 是推荐话题列表中的一条话题。
-type GetRecommendTopicItem struct {
-	Discuss          int64  `json:"discuss"`            // 讨论数
-	Dynamics         int64  `json:"dynamics"`           // 动态数
-	ID               int64  `json:"id"`                 // 话题 id
-	JumpURL          string `json:"jump_url"`           // 跳转 URL
-	Name             string `json:"name"`               // 话题名
-	ShowInteractData bool   `json:"show_interact_data"` // 是否显示互动数据
-	View             int64  `json:"view"`               // 浏览数
-}
-
 // CheckTopicExistedResult 检查话题是否存在的响应数据。
 type CheckTopicExistedResult struct {
 	AlreadyExisted bool                          `json:"already_existed"` // 是否已经存在
@@ -79,70 +63,6 @@ type CheckTopicExistedSynonymItem struct {
 	ID               int64  `json:"id"`                 // 话题 id
 	JumpURL          string `json:"jump_url"`           // 跳转 URL
 	Name             string `json:"name"`               // 话题名
-	ShowInteractData bool   `json:"show_interact_data"` // 是否显示互动数据
-	View             int64  `json:"view"`               // 浏览数
-}
-
-// GetTopicDetailsResult 获取指定话题详细信息的响应数据。
-type GetTopicDetailsResult struct {
-	ClickAreaCard  GetTopicDetailsClickAreaCard  `json:"click_area_card"` // 点击区域卡片。文档未给出字段
-	FunctionalCard GetTopicDetailsFunctionalCard `json:"functional_card"` // 功能卡片
-	TopDetails     GetTopicDetailsTopDetails     `json:"top_details"`     // 话题详情
-}
-
-// GetTopicDetailsClickAreaCard 是点击区域卡片。文档未给出字段，保留为空结构体以忽略未知字段。
-type GetTopicDetailsClickAreaCard struct{}
-
-// GetTopicDetailsFunctionalCard 是话题页的功能卡片集合。
-type GetTopicDetailsFunctionalCard struct {
-	TrafficCard GetTopicDetailsTrafficCard `json:"traffic_card"` // 引流卡片
-}
-
-// GetTopicDetailsTrafficCard 是引流卡片。
-type GetTopicDetailsTrafficCard struct {
-	BenefitPoint string `json:"benefit_point"` // 奖励点
-	CardDesc     string `json:"card_desc"`     // 卡片描述
-	IconURL      string `json:"icon_url"`      // 图标 URL
-	JumpTitle    string `json:"jump_title"`    // 跳转标题
-	JumpURL      string `json:"jump_url"`      // 跳转 URL
-	Name         string `json:"name"`          // 名称
-}
-
-// GetTopicDetailsTopDetails 是话题页顶部的详情信息。
-type GetTopicDetailsTopDetails struct {
-	ClosePubLayerEntry    bool                            `json:"close_pub_layer_entry"`   // 是否关闭发布层入口
-	HasCreateJurisdiction bool                            `json:"has_create_jurisdiction"` // 是否有创建权限
-	OperationContent      GetTopicDetailsOperationContent `json:"operation_content"`       // 操作内容。文档未给出字段
-	TopicCreator          GetTopicDetailsCreator          `json:"topic_creator"`           // 话题创建者
-	TopicItem             GetTopicDetailsDetailItem       `json:"topic_item"`              // 话题详情
-	WordColor             int                             `json:"word_color"`              // 话题字体颜色
-}
-
-// GetTopicDetailsOperationContent 是操作内容。文档未给出字段，保留为空结构体以忽略未知字段。
-type GetTopicDetailsOperationContent struct{}
-
-// GetTopicDetailsCreator 是话题创建者信息。
-type GetTopicDetailsCreator struct {
-	Face string `json:"face"` // 头像 URL
-	Name string `json:"name"` // 昵称
-	UID  int64  `json:"uid"`  // mid (UID)
-}
-
-// GetTopicDetailsDetailItem 是话题的完整详情。
-type GetTopicDetailsDetailItem struct {
-	BackColor        string `json:"back_color"`         // 背景色
-	Ctime            int64  `json:"ctime"`              // 创建时间
-	Description      string `json:"description"`        // 话题描述
-	Discuss          int64  `json:"discuss"`            // 讨论数
-	Dynamics         int64  `json:"dynamics"`           // 动态数
-	Fav              int64  `json:"fav"`                // 收藏数
-	ID               int64  `json:"id"`                 // 话题 id
-	JumpURL          string `json:"jump_url"`           // 跳转 URL
-	Like             int64  `json:"like"`               // 点赞数
-	Name             string `json:"name"`               // 话题名
-	Share            int64  `json:"share"`              // 分享数
-	SharePic         string `json:"share_pic"`          // 分享图片 URL。似乎就是话题的图标
-	ShareURL         string `json:"share_url"`          // 分享的 URL
 	ShowInteractData bool   `json:"show_interact_data"` // 是否显示互动数据
 	View             int64  `json:"view"`               // 浏览数
 }

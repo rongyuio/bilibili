@@ -45,22 +45,6 @@ func (c *Client) GetRecommendSearchTopic(ctx context.Context, param GetRecommend
 	return bilibili.Execute[*GetRecommendSearchTopicResult](ctx, c.Client, method, url, param)
 }
 
-// GetRecommendTopicParam 指定推荐话题的查询条件。
-type GetRecommendTopicParam struct {
-	Source      string `json:"source,omitempty" request:"query,omitempty"`       // 来源。如 Web
-	PageSize    int    `json:"page_size,omitempty" request:"query,omitempty"`    // 获取数量。默认为 9，留空为 6，最大为 26，最小为 1
-	WebLocation string `json:"web_location,omitempty" request:"query,omitempty"` // 页面来源标识。如 333.1365
-}
-
-// GetRecommendTopic 推荐话题
-func (c *Client) GetRecommendTopic(ctx context.Context, param GetRecommendTopicParam) (*GetRecommendTopicResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.bilibili.com/x/topic/web/dynamic/rcmd"
-	)
-	return bilibili.Execute[*GetRecommendTopicResult](ctx, c.Client, method, url, param)
-}
-
 // CheckTopicExistedParam 指定要检查的话题名。
 type CheckTopicExistedParam struct {
 	Topic string `json:"topic" request:"query"` // 话题名。大小写敏感
@@ -73,20 +57,4 @@ func (c *Client) CheckTopicExisted(ctx context.Context, param CheckTopicExistedP
 		url    = "https://api.bilibili.com/x/topic/pub/is_existed"
 	)
 	return bilibili.Execute[*CheckTopicExistedResult](ctx, c.Client, method, url, param)
-}
-
-// GetTopicDetailsParam 指定要查询的话题与来源。
-type GetTopicDetailsParam struct {
-	TopicID     int64  `json:"topic_id" request:"query"`                         // 话题 id
-	Source      string `json:"source,omitempty" request:"query,omitempty"`       // 来源。如 Web、H5
-	WebLocation string `json:"web_location,omitempty" request:"query,omitempty"` // 页面来源标识。当 source 为 H5 时传 333.1036
-}
-
-// GetTopicDetails 获取指定话题详细信息
-func (c *Client) GetTopicDetails(ctx context.Context, param GetTopicDetailsParam) (*GetTopicDetailsResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.bilibili.com/x/topic/web/details/top"
-	)
-	return bilibili.Execute[*GetTopicDetailsResult](ctx, c.Client, method, url, param)
 }

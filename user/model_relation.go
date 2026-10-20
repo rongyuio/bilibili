@@ -138,60 +138,6 @@ type GetUserFollowingsVipLabel struct {
 	BorderColor string `json:"border_color"` // 描边颜色?
 }
 
-// GetUserFollowings2Result 是查询用户关注明细2的 data 对象。
-type GetUserFollowings2Result struct {
-	List      []GetUserFollowings2Item `json:"list"`       // 明细列表
-	ReVersion json.Number              `json:"re_version"` // （？）（可能是number，可能是string）
-	Total     int                      `json:"total"`      // 关注总数
-}
-
-// GetUserFollowings2Item 是关注明细2列表中的一项。
-type GetUserFollowings2Item struct {
-	Mid            int                              `json:"mid"`             // 用户 mid
-	Attribute      int                              `json:"attribute"`       // 关注属性。0：未关注。2：已关注。6：已互粉
-	Mtime          int                              `json:"mtime"`           // 关注对方时间。时间戳。互关后刷新
-	Tag            []int                            `json:"tag"`             // 分组 id
-	Special        int                              `json:"special"`         // 特别关注标志。0：否。1：是
-	Uname          string                           `json:"uname"`           // 用户昵称
-	Face           string                           `json:"face"`            // 用户头像 url
-	Sign           string                           `json:"sign"`            // 用户签名
-	OfficialVerify GetUserFollowings2OfficialVerify `json:"official_verify"` // 认证信息
-	Vip            GetUserFollowings2Vip            `json:"vip"`             // 会员信息
-	Live           int                              `json:"live"`            // 是否直播。0：未直播。1：直播中
-}
-
-// GetUserFollowings2OfficialVerify 是关注明细2中的认证信息。
-type GetUserFollowings2OfficialVerify struct {
-	Type int    `json:"type"` // 是否认证，-1：无。0：个人认证。1：机构认证
-	Desc string `json:"desc"` // 认证信息，无为空
-}
-
-// GetUserFollowings2Vip 是关注明细2中的会员信息。
-type GetUserFollowings2Vip struct {
-	VipType            int                        `json:"vipType"`              // 大会员类型。0：无。1：月会员。2：年以上会员
-	VipDueDate         int                        `json:"vipDueDate"`           // 大会员到期时间。毫秒 时间戳
-	DueRemark          string                     `json:"dueRemark"`            // (?)
-	AccessStatus       int                        `json:"accessStatus"`         // (?)
-	VipStatus          int                        `json:"vipStatus"`            // 大会员状态。0：无。1：有
-	VipStatusWarn      string                     `json:"vipStatusWarn"`        // (?)
-	ThemeType          int                        `json:"theme_type"`           // 会员样式 id
-	Label              GetUserFollowings2VipLabel `json:"label"`                // 会员铭牌样式
-	AvatarSubscript    int                        `json:"avatar_subscript"`     // (?)
-	AvatarSubscriptURL string                     `json:"avatar_subscript_url"` // (?)
-	NicknameColor      string                     `json:"nickname_color"`       // 昵称颜色
-}
-
-// GetUserFollowings2VipLabel 是关注明细2中的会员铭牌样式。
-type GetUserFollowings2VipLabel struct {
-	Path        string `json:"path"`         // (?)
-	Text        string `json:"text"`         // 会员类型文案
-	LabelTheme  string `json:"label_theme"`  // 会员类型。vip：大会员。annual_vip：年度大会员。ten_annual_vip：十年大会员。hundred_annual_vip：百年大会员
-	TextColor   string `json:"text_color"`   // 文字颜色?
-	BgStyle     int    `json:"bg_style"`     // (?)
-	BgColor     string `json:"bg_color"`     // 背景颜色?
-	BorderColor string `json:"border_color"` // 描边颜色?
-}
-
 // GetUserFollowings3Result 是查询用户关注明细3的 data 对象。
 type GetUserFollowings3Result struct {
 	List []GetUserFollowings3Item `json:"list"` // 明细列表

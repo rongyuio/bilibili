@@ -14,13 +14,3 @@ type GetVideoSnapshotResult struct {
 	VideoShots map[string]any `json:"video_shots"` // 作用尚不明确。实测为空对象
 	Indexs     map[string]any `json:"indexs"`      // 作用尚不明确。实测为空对象
 }
-
-// GetVideoSnapshotAppResult 是视频快照（APP 端）的响应。
-type GetVideoSnapshotAppResult struct {
-	Pvdata   string   `json:"pvdata"`     // bin格式截取时间表url
-	ImgXLen  int      `json:"img_x_len"`  // 每行图片数。一般为10
-	ImgYLen  int      `json:"img_y_len"`  // 每列图片数。一般为10
-	ImgXSize int      `json:"img_x_size"` // 每张图片长。一般为160
-	ImgYSize int      `json:"img_y_size"` // 每张图片宽。一般为90
-	Image    []string `json:"image"`      // 图片拼版url列表。第一张拼版占满时延续第二张
-}

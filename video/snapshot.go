@@ -28,23 +28,3 @@ func (c *Client) GetVideoSnapshot(ctx context.Context, param GetVideoSnapshotPar
 	)
 	return bilibili.Execute[*GetVideoSnapshotResult](ctx, c.Client, method, url, param)
 }
-
-// GetVideoSnapshotAppParam 是获取视频快照（APP 端）的参数。
-type GetVideoSnapshotAppParam struct {
-	Aid    int    `json:"aid" request:"query"`    // 稿件avid
-	Appkey string `json:"appkey" request:"query"` // APP密钥
-	Cid    int    `json:"cid" request:"query"`    // 分P cid
-	Ts     int64  `json:"ts" request:"query"`     // 当前时间戳
-	Sign   string `json:"sign" request:"query"`   // APP签名
-}
-
-// GetVideoSnapshotApp 获取视频快照（APP端）。
-//
-// 该接口走 APP 域名，除 aid 与 cid 外还需按 APP 方式提供 appkey、ts 与 sign。
-func (c *Client) GetVideoSnapshotApp(ctx context.Context, param GetVideoSnapshotAppParam) (*GetVideoSnapshotAppResult, error) {
-	const (
-		method = resty.MethodGet
-		url    = "https://app.bilibili.com/x/v2/view/video/shot"
-	)
-	return bilibili.Execute[*GetVideoSnapshotAppResult](ctx, c.Client, method, url, param)
-}
