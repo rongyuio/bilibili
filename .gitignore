@@ -16,5 +16,5 @@
 test/
 .idea/
 
-# CodeBuddy 计划模式生成的计划稿，不入库（保留 settings.json、rules/、skills/ 等可共享配置）
-.codebuddy/plans/
+# 接口文档比对工具，仅本地开发使用，不入库
+tools/sync_docs/

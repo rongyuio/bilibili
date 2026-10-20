@@ -11,30 +11,17 @@
 GO     ?= go
 LINTER ?= golangci-lint
 
-# `make sync-docs` 要用的接口文档检出位置。
-#
-# **不写死目录名** —— 它跟本地布局绑定、跟代码本身无关，写进仓库会一路带进
-# 公开历史。所以这里按**特征文件**在同级目录里探测：谁有 docs/video/info.md，
-# 谁就是那份检出。
-#
-# 探测不中（检出不在同级、或同时命中多个）时显式指定：
-#
-#     make sync-docs DOCS=../某个目录
-#     BAC_DOCS=/绝对路径 make sync-docs
-DOCS ?= $(or $(BAC_DOCS),$(patsubst %/docs/video/info.md,%,$(firstword $(wildcard ../*/docs/video/info.md))))
-
-.PHONY: help build test race vet fmt lint fmtcheck check sync-docs
+.PHONY: help build test race vet fmt lint fmtcheck check
 
 help:
 	@echo "make build       - build all packages"
 	@echo "make test        - run tests"
-	@echo "make race        - go test -race -count=1 (what CI runs)"
+	@echo "make race        - go test -race -count=1"
 	@echo "make vet         - go vet"
 	@echo "make fmt         - gofmt -s -w ."
 	@echo "make fmtcheck    - fail if anything is unformatted"
 	@echo "make lint        - golangci-lint run"
 	@echo "make check       - the whole CI gate: fmtcheck + vet + race + build + lint"
-	@echo "make sync-docs   - diff structs against the API docs field tables"
 
 build:
 	$(GO) build ./...
@@ -58,7 +45,3 @@ lint:
 	$(LINTER) run
 
 check: fmtcheck vet race build lint
-
-sync-docs:
-	@test -n "$(DOCS)" || { echo "no API docs checkout found. Point at it explicitly:"; echo "    make sync-docs DOCS=../some-dir"; exit 1; }
-	$(GO) run ./tools/sync_docs -check -docs "$(DOCS)"
