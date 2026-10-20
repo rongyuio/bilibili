@@ -11,7 +11,7 @@
 GO     ?= go
 LINTER ?= golangci-lint
 
-.PHONY: help build test race vet fmt lint fmtcheck check
+.PHONY: help build test race vet fmt lint fmtcheck generate gencheck check
 
 help:
 	@echo "make build       - build all packages"
@@ -21,10 +21,18 @@ help:
 	@echo "make fmt         - gofmt -s -w ."
 	@echo "make fmtcheck    - fail if anything is unformatted"
 	@echo "make lint        - golangci-lint run"
-	@echo "make check       - the whole CI gate: fmtcheck + vet + race + build + lint"
+	@echo "make generate    - regenerate bili/client_gen.go"
+	@echo "make gencheck    - fail if generated code is out of date"
+	@echo "make check       - the whole CI gate: gencheck + fmtcheck + vet + race + build + lint"
 
-build:
+build: generate
 	$(GO) build ./...
+
+generate:
+	$(GO) generate ./...
+
+gencheck: generate
+	@out=$$(git diff --name-only -- bili/client_gen.go); if [ -n "$$out" ]; then echo "$$out"; echo "generated code is out of date (run: make generate)"; exit 1; fi
 
 test:
 	$(GO) test ./...
@@ -44,4 +52,4 @@ fmtcheck:
 lint:
 	$(LINTER) run
 
-check: fmtcheck vet race build lint
+check: gencheck fmtcheck vet race build lint

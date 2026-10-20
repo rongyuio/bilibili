@@ -2,7 +2,7 @@
 
 [返回 README](../README.md)
 
-本文代码片段中的 `ctx`、`root` 及业务参数由调用方提供。根包导入路径为 `github.com/rongyuio/bilibili`，登录与会话接口从 `github.com/rongyuio/bilibili/login` 导入。`root` 是根包客户端，登录入口用 `l := login.New(root)` 构造；两者共享同一份 Cookie、WBI 缓存与错误处理。
+本文代码片段中的 `ctx`、`root` 及业务参数由调用方提供。根包导入路径为 `github.com/rongyuio/bilibili`，登录与会话接口从 `github.com/rongyuio/bilibili/login` 导入。`root` 是根包客户端，登录入口用 `l := login.New(root)` 构造；两者共享同一份 Cookie、WBI 缓存与错误处理。使用聚合入口 `bili.New()` 时，`root` 可以直接用返回的 `client`，登录入口对应 `client.Login`。
 
 ## 游客初始化
 
@@ -144,6 +144,19 @@ if result.Status == 0 {
     log.Println("登录成功")
 }
 ```
+
+## 登录完成后的状态
+
+登录接口返回后，先区分两类结果：
+
+- Go `error` 非 nil：请求本身失败，包括网络故障、取消、超时、HTTP 状态错误与参数编码错误。不要按登录成功处理。
+- `error` 为 nil、结果里的业务码非零：请求到达服务端，但登录未完成，例如二维码未确认、密码错误或触发风控。按结果里的状态码与消息处理。
+
+登录成功后：
+
+- Cookie 已合并进构造登录入口时使用的根客户端。后续请求直接复用同一个 `root`，不要重新 `New()`，也不要从登录结果手动拼 Cookie。
+- 需要持久化会话时，在登录成功且没有并发请求的情况下调用 `root.GetCookiesString()`。
+- 登录失败、扫码超时或 context 取消后，客户端仍然可用，但会话状态可能已经变化：请求链路在 HTTP 与业务错误时同样合并响应 Cookie。需要干净状态时创建新的 `Client` 重新登录，不要假设失败后 Cookie 未变。
 
 ## 保存与恢复 Cookie
 

@@ -25,6 +25,14 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Generate
+        run: go generate ./...
+
+      - name: Check generated code
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
