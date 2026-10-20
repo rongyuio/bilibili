@@ -63,9 +63,6 @@ type GetArticleInfoShareChannel struct {
 }
 ```
 
-> [!TIP]
-> [tools目录下](../tools)的 `gen_struct.go` 可以把 Markdown 表格转换成 Go struct，用法见 [tools/README.md](../tools/README.md)。
-
 ## 关于go文件的命名
 
 仓库采用「根包 + 业务子包」结构：根包（仓库根目录）只放客户端、请求链路、参数编码、错误与解码、Cookie、WBI 等基础设施；业务接口按域拆分到`user/`、`video/`、`live/`等 34 个子包，每个子包通过`New(*bilibili.Client)`复用根包客户端。

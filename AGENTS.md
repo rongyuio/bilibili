@@ -27,9 +27,7 @@ go test -race -v ./...            # 输出详细结果（CI 使用的形式）
 
 `Makefile` 把 CI 的口径收成一个入口：`make check`（gofmt + vet + race + build + lint）、`make test`、`make race`、`make fmt`、`make lint`、`make build`。`make help` 列全。
 
-`go run tools/gen_struct.go` 可将粘贴的 Markdown 字段表格转换成 Go 结构体定义。
-
-测试**不会访问真实 API，也不需要凭证**。多数只依赖标准库 `testing`；根包 `util_test.go` 用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，`live/trace_test.go`、`miscellaneous/misc_test.go` 等子包测试直接验证签名、转换等纯逻辑。**都不发出真实请求。** `test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 同时排除了 `test/` 与 `tools/`。
+测试**不会访问真实 API，也不需要凭证**。多数只依赖标准库 `testing`；根包 `util_test.go` 用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，`live/trace_test.go`、`miscellaneous/misc_test.go` 等子包测试直接验证签名、转换等纯逻辑。**都不发出真实请求。** `test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 排除了 `test/`。
 
 CI（`.github/workflows/`）共四个 workflow 文件：
 
@@ -154,4 +152,3 @@ CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它
 - `docs/request.md` —— `Client.Do` 逃生通道、`request` 标签规则、错误分类、解码诊断。
 - `docs/migration.md` —— 模块路径、分包结构、context 签名、会话规则，以及 v0 各轮重构中的模型与字段重命名。
 - `docs/versioning.md` —— tag 与模块版本的格式约束（含禁止 build metadata）、递增规则、v0 与 v1 之后的兼容性约定。
-- `tools/README.md` —— `gen_struct.go`（表格 → 结构体）的用法。
