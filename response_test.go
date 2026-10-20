@@ -2,12 +2,35 @@ package bilibili
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"reflect"
 	"slices"
 	"sync"
 	"testing"
 )
+
+// DynamicInfo 是解码测试用的空间动态示例类型。
+type DynamicInfo struct {
+	HasMore   bool              `json:"has_more"`
+	UpdateNum json.Number       `json:"update_num"`
+	Items     []dynamicInfoItem `json:"items"`
+}
+
+type dynamicInfoItem struct {
+	Modules dynamicInfoModules `json:"modules"`
+}
+
+type dynamicInfoModules struct {
+	ModuleAuthor dynamicInfoAuthor `json:"module_author"`
+}
+
+type dynamicInfoAuthor struct {
+	Following NumberOrString `json:"following"`
+	Mid       json.Number    `json:"mid"`
+	Name      string         `json:"name"`
+	PubTs     json.Number    `json:"pub_ts"`
+}
 
 const spaceFeedEndpoint = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space"
 
