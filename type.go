@@ -173,11 +173,6 @@ type LevelInfo struct {
 	NextExp      int `json:"next_exp"`      // 0
 }
 
-type CardSpace struct {
-	SImg string `json:"s_img"` // 主页头图url 小图
-	LImg string `json:"l_img"` // 主页头图url 正常
-}
-
 type Label struct {
 	Path                  string    `json:"path"`                      // 空。作用尚不明确
 	Text                  string    `json:"text"`                      // 会员类型文案。大会员 年度大会员 十年大会员 百年大会员 最强绿鲤鱼

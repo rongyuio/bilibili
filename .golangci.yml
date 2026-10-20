@@ -97,7 +97,6 @@ linters:
         - omitzero
   exclusions:
     paths:
-      - tools/
       - test/
 run:
   tests: false
