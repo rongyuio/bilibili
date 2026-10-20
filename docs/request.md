@@ -33,7 +33,7 @@ func loadAccount(ctx context.Context, client *bilibili.Client, mid string) error
 - `out` 接收响应的 `data`，不要再次包裹 `code/message/data`。传 `nil` 只检查 HTTP 状态及业务错误；传 `*json.RawMessage` 保留原始 `data`。
 - `Query` 可与 `Form` 或 `JSON` 并用，但 `Form` 与 `JSON` 互斥。`JSON` 按标准库规则编码，包括字符串值；`Headers` 使用 `http.Header`。
 - URL 自带查询参数会参与请求，同名键以 `Request.Query` 为准。WBI 只签查询参数，不签表单；签名请求的每个查询键必须只有一个值。CSRF 由调用方按接口要求放在查询或表单中。
-- context 会传到 HTTP 请求和 WBI 密钥刷新；所有内置网络 API 同样以 context 为首参。此入口不额外启用重试；通过 Resty 自行配置的重试策略仍然有效。
+- context 会传到 HTTP 请求和 WBI 密钥刷新；所有内置网络 API 同样以 context 为首参。通过 Resty 自行配置的重试策略仍然有效。
 
 ## 内置接口的参数标签
 
@@ -52,7 +52,7 @@ func loadAccount(ctx context.Context, client *bilibili.Client, mid string) error
 
 只有 `request` 标签控制请求省略；`json:"-"` 不等于 `request:"-"`，`json:",omitempty"` 也不新增请求省略行为。nil 参数或 nil 指针继续视为未传参；非 nil 参数仅接受结构体或一层结构体指针。没有实际参与编码的字段时，请求保持原状。
 
-query 可以与一种请求体并存，Content-Type 由请求体类型决定。实际参与编码的字段若同时声明多个位置，或混用 JSON 与 multipart，返回错误；已被省略的字段不参与冲突判断。multipart 由 Resty 构造请求体和 boundary，不使用普通 map 加请求头模拟。当前业务参数没有使用 JSON/multipart 标签，图片上传的专用实现保持原样。
+query 可以与一种请求体并存。有实际参与编码的字段时，含 JSON 字段的请求设置 `application/json`；含 multipart 字段的请求由 Resty 构造请求体和 boundary；其余情况（包括只有 query 参数）设置 `application/x-www-form-urlencoded`。实际参与编码的字段若同时声明多个位置，或混用 JSON 与 multipart，返回错误；已被省略的字段不参与冲突判断。业务参数中已有实际用例：`dynamic.LikeDynamicParam`（`dynamic/dynamic_action.go`）、`wallet.GetUserWalletParam`（`wallet/wallet.go`）与 `creativecenter.RemoveDynamicOpusParam`（`creativecenter/opus.go`）使用 `request:"json"`，`video.CreateVideoSeriesParam`（`video/series.go`）使用 `request:"form-data"`。需要文件字段的接口（如 `dynamic.UploadDynamicBfs`）不把文件放进参数结构体，仍由专用实现通过 Resty 的文件字段构造 multipart 请求。
 
 
 ## 分类与判断
@@ -112,7 +112,7 @@ if errors.As(err, &de) {
 
 正常响应只使用标准库解码，不额外遍历 JSON；解码失败后才会扫描：先尝试剪掉类型不兼容的字段重试，重试仍失败才生成诊断。诊断基于**未剪枝的原始响应体**，路径与偏移因此始终对应原始字节。自定义解码器不重复执行，最多定位到其字段边界，多个不确定边界退回共同父级并标记 `Exact=false`；语法错误只报告可用偏移量。诊断记录首个能确认的不匹配，不保证枚举所有问题。错误文本不包含字段值、完整响应或查询参数；JSON 路径中的 map 键仍来自响应，分享日志前请注意这一点。
 
-先判断业务 `code`，再解码 `data`，避免业务错误被结果类型不匹配掩盖。解码失败时不向 `out` 写入部分结果。容错丢弃的字段保持零值，但会显式上报，不是静默转零。`out=nil` 时不会检查 `data` 的字段类型。
+先判断业务 `code`，再解码 `data`，避免业务错误被结果类型不匹配掩盖。`out=nil` 时不会检查 `data` 的字段类型。
 
 ## 单个字段类型不符时的容错
 
@@ -134,6 +134,6 @@ client.SetDroppedFieldHandler(func(field bilibili.DroppedField) {
 })
 ```
 
-`DroppedField` 的字段与 `DecodeError` 对齐（`Method`、`Endpoint`、`RootType`、`GoField`、`JSONPath`、`Expected`、`Actual`、`Offset`），不含字段值。同一条响应可能触发多次调用，回调在请求的 goroutine 中执行，必须并发安全；不同请求之间也可能并发。传入 `nil` 只关闭上报，容错仍然开启。该设置与 Cookie、会话切换一样，必须在请求之外调用。
+`DroppedField` 包含 `Method`、`Endpoint`、`RootType`、`GoField`、`JSONPath`、`Expected`、`Actual`、`Offset`，不含字段值；与 `DecodeError` 不同，它没有 `Exact` 与 `Err` 字段。同一条响应可能触发多次调用，回调在请求的 goroutine 中执行，必须并发安全；不同请求之间也可能并发。传入 `nil` 只关闭上报，容错仍然开启。该设置与 Cookie、会话切换一样，必须在请求之外调用。
 
 此前依赖「漂移字段会返回 `DecodeError`」做告警的代码，请改为在回调中记录。

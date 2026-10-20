@@ -2,83 +2,124 @@
 
 [返回 README](../README.md)
 
-本文代码片段中的 `ctx`、`client` 及业务参数由调用方提供；客户端导入路径为 `github.com/rongyuio/bilibili`。
+本文代码片段中的 `ctx`、`root` 及业务参数由调用方提供。根包导入路径为 `github.com/rongyuio/bilibili`；业务接口从对应子包导入，例如 `github.com/rongyuio/bilibili/video`、`github.com/rongyuio/bilibili/login`。
+
+## 包结构：根包与业务子包
+
+根包 `bilibili` 只保留基础设施：
+
+- `Client` 的构造与会话：`New()`、`NewAnonymousClient(ctx)`、`NewWithClient(restyClient)`；
+- 统一请求链路与参数编码：`Client.Do`、`Request`、`request` 结构体标签，以及供子包复用的 `Execute`、`ExecuteRaw`、`FillCsrf`、`FillParam` 等导出设施；
+- 错误类型：`HTTPError`、`Error`、`ParamError`、`DecodeError`；
+- Cookie 管理：`SetRawCookies`、`GetCookiesString`、`SetCookiesString`、`GetCookies`、`SetCookie`、`SetCookies`；
+- WBI 签名：`WBI`、`NewDefaultWbi()`；
+- 解码容错：`DroppedField`、`SetDroppedFieldHandler`；
+- 跨业务域复用的基础类型：`NumberOrString`、`Size` 等。
+
+业务接口按业务域拆分到 34 个子包，完整清单见 [README 的「包结构」](../README.md#包结构)。
+
+每个子包提供 `New(*bilibili.Client) *Client`，返回嵌入了根包 `Client` 的调用入口。所有子包共享同一个根包客户端的 Cookie、WBI 缓存与错误处理，不会新建会话：
+
+```go
+root := bilibili.New()
+v := video.New(root)
+info, err := v.GetVideoInfo(ctx, video.GetVideoInfoParam{Bvid: "BV1L9Uoa9EUx"})
+if err != nil {
+    log.Printf("获取视频失败: %v", err)
+    return
+}
+log.Println(info.Title)
+```
+
+每个接口的请求参数与响应结果都在所属子包内独立定义，接口之间不共享返回体；即使字段相同，也各自定义。参数类型通常命名为 `XxxParam`，结果类型通常命名为 `XxxResult`；没有参数时传 `nil`。可能为 `null` 的响应字段使用指针，避免 `json.Unmarshal` 失败。
+
+## 从扁平包迁移
+
+旧版把所有接口方法直接定义在根包 `*bilibili.Client` 上，`*Param` 与 `*Result` 类型也位于根包。迁移按以下步骤进行：
+
+1. 为用到的业务域导入子包。
+2. 用 `root := bilibili.New()` 创建根客户端，再用 `<domain>.New(root)` 构造业务入口。
+3. 把 `client.Xxx(...)` 改为业务入口上的 `Xxx(...)`，把 `bilibili.XxxParam` / `bilibili.XxxResult` 改为 `<domain>.XxxParam` / `<domain>.XxxResult`。
+4. Cookie、WBI、错误处理与 Resty 配置仍通过 `root` 操作。
+
+常见对应关系：
+
+| 旧写法（扁平包） | 新写法（子包） |
+| --- | --- |
+| `client.GetQRCode(ctx)` | `l := login.New(root); l.GetQRCode(ctx)` |
+| `bilibili.LoginWithQRCodeParam` | `login.QRCodeLoginParam` |
+| `client.LoginWithPassword(ctx, bilibili.LoginWithPasswordParam{...})` | `l.LoginWithPassword(ctx, login.PasswordLoginParam{...})` |
+| `bilibili.SendSMSParam` / `bilibili.LoginWithSMSParam` | `login.SendSMSParam` / `login.SMSLoginParam` |
+| `client.GetVideoInfo(ctx, bilibili.VideoParam{...})` | `v := video.New(root); v.GetVideoInfo(ctx, video.GetVideoInfoParam{...})` |
+| `client.GetMyUserSpaceDetail(ctx)` | `u := user.New(root); u.GetMyUserSpaceDetail(ctx)` |
+| `client.SetRawCookies(...)`、`client.GetCookiesString()`、`client.SetCookiesString(...)`、`client.SetCookies(...)` | `root.SetRawCookies(...)`、`root.GetCookiesString()`、`root.SetCookiesString(...)`、`root.SetCookies(...)` |
+| `client.Resty()` | `root.Resty()` |
+| `client.SetDroppedFieldHandler(...)` | `root.SetDroppedFieldHandler(...)` |
+| `bilibili.New()`、`bilibili.NewAnonymousClient(ctx)`、`bilibili.NewWithClient(...)` | 不变 |
+
+表中 Cookie、`Resty()` 与 `SetDroppedFieldHandler` 三行涉及的方法仍在 `*bilibili.Client` 上，签名没有变化；变化只是示例中的接收者变量从旧版的 `client` 改为新写法中的 `root`。
+
+登录相关的完整示例见[认证与会话](authentication.md)。
 
 ## 模块路径迁移
 
-原来使用本地模块 `bilibili` 的项目，需要将导入路径统一替换为 `github.com/rongyuio/bilibili`，并更新 `go.mod` 中对应的 `require` 和 `replace`。远程接入请移除旧的本地替换，再执行快速开始中的安装命令；继续本地联调则按 [README 的本地开发说明](../README.md#本地开发)配置。包名和现有 API 签名不因这次模块路径迁移而改变。
+原来使用本地模块 `bilibili` 的项目，需要将导入路径统一替换为 `github.com/rongyuio/bilibili`，并更新 `go.mod` 中对应的 `require` 和 `replace`。远程接入请移除旧的本地替换，再执行快速开始中的安装命令；继续本地联调则按 [README 的本地开发说明](../README.md#本地开发)配置。
 
-## 入口、签名与字段
-
-| 旧用法 | 新用法 |
-| --- | --- |
-| `client.Wbi`、`FillWbiHandler(...)` | `Client.Do(ctx, Request{WBI: true, ...}, &data)`；签名器由客户端管理 |
-| 自定义接口 `SetResult(&response)` | `Do(..., &response.Data)`，并处理返回的业务错误 |
-| `VideoStatusNumber.View` 为 `json.Number` | 改为 `NumberOrString`，仍提供 `String()`、`Int64()`、`Float64()` |
-| 动态的两处 `Following` 为 `json.Number` | 改为 `NumberOrString`，读取改用 `Kind()`、`String()` |
-| 根据错误字符串或堆栈定位 | `errors.As(err, &decodeError)` 获取结构化位置 |
-
-`NumberOrString` 保留数字、字符串（包括 `"--"`）、布尔值与 `null`，`Kind()` 返回 `number`、`string`、`boolean` 或 `null`。数值转换会显式返回错误，布尔与 `"--"` 都会失败；JSON 再编码保留原始类别；零值表示 `null`。原有直接赋值 `json.Number` 或强制转换为字符串的代码需要迁移到这些方法；需要构造值时可使用 `json.Unmarshal`。
-
-其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。动态数据中的两处 `Following` 的类型经历过多次调整，见下文。
+模块路径迁移与包拆分是两件事：模块路径决定从哪个仓库取代码，子包决定导入哪个业务域。模块路径变更不改变子包名称，子包导入路径统一为 `github.com/rongyuio/bilibili/<domain>`。
 
 ## Context 签名
 
-相对旧版，这是破坏性签名变更：所有可能联网的 `Client` 方法统一增加首参 `ctx context.Context`，例如 `client.GetVideoInfo(ctx, param)`、`client.GetMyUserSpaceDetail(ctx)`。本文调用示例中的 `ctx` 均由调用方提供。`Do` 和 `NewAnonymousClient` 已有的 context 签名不变；Cookie 读写、配置和纯计算方法不变。
+所有可能联网的方法都以 `ctx context.Context` 为首参，子包方法沿用同一约定；根包的 `Do` 与 `NewAnonymousClient` 一直使用该签名，未发生变化：
 
-独立使用 WBI 时，改为 `wbi.GetKeys(ctx)`、`wbi.GetMixinKey(ctx)`、`wbi.SignQuery(ctx, query, ts)`、`wbi.SignMap(ctx, payload, ts)`，因为签名可能触发密钥刷新。没有新增 `XxxContext` 或无 context 的兼容包装；调用方接口声明、方法表达式和回调类型也需同步修改。
+```go
+v.GetVideoInfo(ctx, video.GetVideoInfoParam{Bvid: "BV1L9Uoa9EUx"})
+u.GetMyUserSpaceDetail(ctx)
+```
+
+Cookie 读写、配置和纯计算方法不变。
+
+独立使用 WBI 时，通过 `wbi := bilibili.NewDefaultWbi()` 构造签名器，再调用 `wbi.GetKeys(ctx)`、`wbi.GetMixinKey(ctx)`、`wbi.SignQuery(ctx, query, ts)`、`wbi.SignMap(ctx, payload, ts)`，因为签名可能触发密钥刷新。没有新增 `XxxContext` 或无 context 的兼容包装；调用方接口声明、方法表达式和回调类型也需同步修改。
 
 ## 会话与参数编码
 
-`NewAnonymousClient()` 迁移为 `NewAnonymousClient(ctx) (*Client, error)`；`NewWithClient` 接管 Resty 并关闭 Jar，已有 Jar 会话需要构造前显式导出。Cookie 快照和配置约束见[认证与会话](authentication.md)，不要继续通过底层 Cookies 或默认 Cookie 请求头管理会话。
+`NewAnonymousClient(ctx)` 的签名是 `(ctx context.Context) (*Client, error)`，没有变化；`NewWithClient` 接管 Resty 并关闭 Jar，已有 Jar 会话需要在构造前显式导出。Cookie 快照和配置约束见[认证与会话](authentication.md)，不要继续通过底层 Cookies 或默认 Cookie 请求头管理会话。
 
-非 nil 的非结构体参数指针现在返回 `ParamError`，不再触发 panic；标签值中的等号完整保留。参数转换失败会返回错误而不是静默变为空字符串。JSON/multipart 混用或字段位置冲突会报错；依赖 Resty 内部 Body 为普通 map 的代码需适配已编码 JSON 字节或 multipart 构造方式。
+非 nil 的非结构体参数指针返回 `ParamError`，不再触发 panic；标签值中的等号完整保留。参数转换失败会返回错误而不是静默变为空字符串。JSON/multipart 混用或字段位置冲突会报错；依赖 Resty 内部 Body 为普通 map 的代码需适配已编码 JSON 字节或 multipart 构造方式。子包方法同样使用根包的 `request` 标签规则，完整说明见[请求与错误处理](request.md)。
 
-## 错误包装
+## 错误分类
 
-普通业务失败在原有 `Error{Code, Message}` 外补充 HTTP 方法和安全接口地址。WBI 非零业务码且缺少密钥时也采用此包装；非零码但存在密钥时仍沿用原有流程并继续检查密钥合法性。`Error` 的字段和自身错误文本不变，但请求返回错误的最外层类型及整体文本发生变化。将 `err.(bilibili.Error)` 或错误字符串匹配迁移为示例中的 `var be bilibili.Error; errors.As(err, &be)`，不要改为指针类型目标。
+错误类型都定义在根包，子包方法返回的也是这些类型：
 
-## 动态命名类型
+- HTTP 非 200：`*bilibili.HTTPError`，包含 `Method`、`Endpoint`、`StatusCode`；`Endpoint` 已去掉 query、fragment 与 user 信息。
+- 响应信封中的业务码非零：`bilibili.Error`（值类型），包含 `Code`、`Message`。
+- 参数编码失败：`*bilibili.ParamError`。
+- 解码失败：`*bilibili.DecodeError`，包含 JSON 路径、Go 字段、预期/实际类型与偏移。
+- 网络故障、取消与超时：保留原始错误链，不转换成 `HTTPError`。
 
-`DynamicItem`、`DynamicInfo` 和主要模块定义放在 `dynamic_model.go`，接口方法与请求参数放在 `dynamic.go`；话题接口 `GetTopicFeed`、参数放在 `topic.go`，模型放在 `topic_model.go`。仅就模型提取而言，网络方法签名、返回根类型以及 `item.Modules.ModuleAuthor.Name` 等字段访问路径不变。
-
-| 字段 | 命名类型 |
-| --- | --- |
-| `DynamicItem.Basic` / `Modules` | `DynamicItemBasic` / `DynamicItemModules` |
-| 外层作者 / 头像 | `DynamicModuleAuthor` / `DynamicAuthorAvatar` |
-| 外层内容 / 描述 / 主体 | `DynamicModuleDynamic` / `*DynamicDescription` / `*DynamicMajor` |
-| 更多操作 / 统计 | `DynamicModuleMore` / `DynamicModuleStat` |
-| `DynamicItem.Orig` | `DynamicOriginalItem`，保留值类型，不是递归动态 |
-| 原动态 Basic / Modules | `DynamicOriginalBasic` / `DynamicOriginalModules` |
-| 原动态作者 / 头像 | `DynamicOriginalModuleAuthor` / `DynamicOriginalAuthorAvatar` |
-| 原动态内容 / 描述 / 主体 | `DynamicOriginalModuleDynamic` / `*DynamicOriginalDescription` / `DynamicOriginalMajor` |
-| 两套主体中的视频 / 图文 | `DynamicArchive` / `DynamicDraw` |
-
-这是嵌套字段 Go 类型身份的变更，使用命名类型而不是匿名结构别名。普通字段读取无需迁移；手写匿名结构赋值、嵌套复合字面量、函数或接口声明以及依赖类型名称的反射代码需要检查。可改用新类型构造模块，例如：
+将 `err.(bilibili.Error)` 或错误字符串匹配迁移为 `errors.As`：
 
 ```go
-item := bilibili.DynamicItem{
-    Modules: bilibili.DynamicItemModules{
-        ModuleAuthor: bilibili.DynamicModuleAuthor{Name: "作者"},
-    },
-}
-item.Modules.ModuleDynamic.Major = &bilibili.DynamicMajor{
-    Archive: bilibili.DynamicArchive{Bvid: "BV1L9Uoa9EUx"},
-}
-item.Orig.Modules.ModuleDynamic.Major = bilibili.DynamicOriginalMajor{
-    Archive: bilibili.DynamicArchive{Bvid: "BV1L9Uoa9EUx"},
+var be bilibili.Error
+if errors.As(err, &be) {
+    log.Printf("业务错误: %d %s", be.Code, be.Message)
 }
 ```
 
-两套模型的差异完整保留：外层 `Major` 是指针，原动态 `Major` 是值；外层 `Basic.LikeIcon.Id` 为 `json.Number`，原动态对应字段为 `int`。原动态头像、作者和富文本也有不同字段，不能直接复用外层模块。除头像 `fallback_layers` 渲染树外，更深层的匿名结构已在[第二轮重构](#第二轮重构方法模型拆分与去重)中提取为具名类型。
+`Error` 是值类型，`errors.As` 的目标必须是非指针的 `bilibili.Error`，不要写成 `*bilibili.Error`。其余类型按需提取，例如 `var he *bilibili.HTTPError`、`var pe *bilibili.ParamError`、`var de *bilibili.DecodeError`。
 
-模型提取本身没有修改 JSON 标签、字段顺序、叶子类型或指针／切片结构，没有新增自定义反序列化；`DecodeError` 仍按既有规则遍历模型并报告 JSON 路径和 Go 字段。随后单独修复了两处 `Following` 类型，见下文；解码语义也在之后的〈解码容错〉一节中变更，本节描述的是当时的状态。
+## NumberOrString
 
-## Following 类型漂移修复
+`bilibili.NumberOrString` 保留数字、字符串（包括 `"--"`）、布尔值与 `null`，`Kind()` 返回 `number`、`string`、`boolean` 或 `null`。数值转换会显式返回错误，布尔与 `"--"` 都会失败；JSON 再编码保留原始类别；零值表示 `null`。
 
-`DynamicModuleAuthor.Following` 和 `DynamicOriginalModuleAuthor.Following` 经历过两次调整：先由 `bool` 改为 `json.Number`，随后发现线上返回的 JSON 类型并不固定——未登录为 `null`，登录态为布尔，早期调试样本为数字 `1`/`2`。两处现已改为 `NumberOrString`。`topic_model.go` 中同一字段一直沿用 `any`，可作为「该字段在上游文档中没有固定类型」的旁证。
+该类型用于线上类型不稳定的字段，例如 `video.GetVideoStatusNumberResult.View`（播放次数可能是数字或 `"--"`）和动态作者模型中的 `Following`。原有直接赋值 `json.Number` 或强制转换为字符串的代码需要迁移到 `Kind()`、`String()`、`Int64()`、`Float64()`；需要构造值时可使用 `json.Unmarshal`。
 
-字段的完整状态含义仍未确认，本库不定义状态常量，也不把非零值解释为“已关注”。判断原始类别用 `Kind()`，取值用 `String()`；只有确认是数字时才调用 `Int64()` 并处理错误，不要忽略转换失败，也不要把失败转换成零：
+其余字段不批量改型。`json.Number` 支持数字及数字字符串，不支持任意文本。
+
+## 动态关注状态字段
+
+动态接口的作者模型（如 `dynamic.GetDynamicFeedAllModuleAuthor`、`dynamic.GetUserSpaceDynamicModuleAuthor` 及其原动态对应类型）中的 `Following` 字段为 `bilibili.NumberOrString`。线上返回的 JSON 类型不固定：未登录为 `null`，登录态为布尔，部分样本为数字 `1`/`2`。本库不定义状态常量，也不把非零值解释为“已关注”。
+
+判断原始类别用 `Kind()`，取值用 `String()`；只有确认是数字时才调用 `Int64()` 并处理错误：
 
 ```go
 switch following := item.Modules.ModuleAuthor.Following; following.Kind() {
@@ -90,324 +131,42 @@ case "number":
         log.Print("关注状态无法转换为整数")
         return
     }
-    // 按调用方已确认的状态定义处理 status。
     log.Printf("关注状态数值=%d", status)
 default:
     log.Printf("关注状态缺失，原文=%q", following.String())
 }
 ```
 
-原动态对应字段为 `item.Orig.Modules.ModuleAuthor.Following`，读取方式相同。头像尺寸使用 `float64`，支持小数。
+`item` 是当前接口的条目类型（如 `dynamic.GetDynamicFeedAllItem`）；原动态对应字段为 `item.Orig.Modules.ModuleAuthor.Following`。
 
-## 解码容错（破坏性）
+## 解码容错
 
-单个字段的 JSON 类型与模型不符时，库不再让整条响应解码失败：该字段被丢弃（保持零值）并上报，其余字段照常解码，调用返回成功。此前这类漂移会返回 `*DecodeError`。
+单个字段的 JSON 类型与模型不符时，库会丢弃该字段（保持零值）并上报，其余字段照常解码，调用返回成功；只有 `data` 根节点类型不匹配、JSON 语法错误、map 键无法转换等情况才返回 `*DecodeError`。完整规则与 `SetDroppedFieldHandler` 回调见[请求与错误处理](request.md#单个字段类型不符时的容错)。
 
-**迁移**：依赖 `DecodeError` 感知服务端字段漂移的代码，改为注册回调：
+## 旧模型名的处理
 
-```go
-client.SetDroppedFieldHandler(func(field bilibili.DroppedField) {
-    log.Printf("接口=%s 类型=%s JSON路径=%s 预期=%s 实际=%s 偏移=%d",
-        field.Endpoint, field.RootType, field.JSONPath,
-        field.Expected, field.Actual, field.Offset)
-})
-```
+当前版本按接口独立命名返回体，根包不再提供 `DynamicItem`、`AudioOrVideo`、`SearchRespResult` 这类跨接口共享模型。使用旧模型名的代码需要改为对应接口的返回类型，例如：
 
-边界：`data` 根节点的类型不匹配仍然返回 `DecodeError`；实现自定义 `UnmarshalJSON` / `UnmarshalText` 的类型是不透明边界，其内部失败不被容错；map 键无法转换与 JSON 语法错误同样仍然报错。`DecodeError` 的 `JSONPath` 与 `Offset` 始终基于原始响应体，不受容错影响。完整说明见[请求与错误处理](request.md#单个字段类型不符时的容错)。
-
-按 v0 阶段规则，上述破坏性变更随下一个次版本发布即可，无需升主版本或改模块路径。
-
-## 第二轮重构：方法/模型拆分与去重
-
-本轮把响应模型从接口文件中拆出，并为原本内联的匿名结构体命名，同时合并了字段完全一致的重复类型。网络方法签名、请求参数位置、JSON 标签、字段顺序与指针／切片层级都没有变化；下列变更只影响嵌套字段的 **Go 类型身份**。
-
-### 文件组织
-
-接口方法与 `*Param` 保留在各业务文件，响应模型移动到同名 `*_model.go`（同包，导入方式不变）：`article_model.go`、`comment_model.go`、`fav_model.go`、`history_model.go`、`login_model.go`、`message_model.go`、`topic_model.go`、`vip_model.go`，以及既有的 `dynamic_model.go`、`live_model.go`、`user_model.go`、`video_model.go`。
-
-### 合并为别名的类型
-
-| 旧类型 | 现状 |
+| 旧模型 | 当前类型 |
 | --- | --- |
-| `SpaceVip` | `type SpaceVip = CardVip`，字段完全一致 |
-| `LiveMedalWallItemUinfoMedal`、`LiveFansMedalPanelItemUinfoMedal` | `type ... = LiveUinfoMedal`，字段完全一致 |
+| `DynamicItem` | 各动态接口的条目类型，如 `dynamic.GetDynamicFeedAllItem`、`dynamic.GetUserSpaceDynamicItem` |
+| `AudioOrVideo` | `video.GetVideoStreamAudioOrVideo` |
+| `SearchRespResult` | `search.IntegratedSearchResultItem` |
 
-别名赋值与字段访问无需修改；依赖类型名称的反射代码需要改为新类型名。
+具体类型名以子包源码和方法签名为准。
 
-### 新增的具名类型
+## 文件组织
 
-原本内联的匿名结构体现在有了类型名（节选）：
+每个业务子包内：
 
-| 位置 | 命名类型 |
-| --- | --- |
-| `DynamicItemBasic.LikeIcon` / `DynamicOriginalBasic.LikeIcon` | `DynamicLikeIcon` / `DynamicOriginalLikeIcon` |
-| `DynamicModuleAuthor.Vip`、原动态同名字段 | `DynamicAuthorVip`（外层与原动态字段一致，合并） |
-| `DynamicModuleAuthor.Pendant` / 原动态 `Pendant` | `DynamicPendant` / `DynamicOriginalPendant`（`pid` 类型不同，保留两个） |
-| 外层与原动态头像 `container_size` | `AvatarContainerSize` |
-| 外层与原动态描述 `rich_text_nodes` | `DynamicRichTextNode` / `DynamicOriginalRichTextNode` |
-| 外层与原动态 `emoji` | `DynamicEmoji`（字段一致，共用） |
-| `DynamicModuleMore.ThreePointItems` | `DynamicThreePointItem` |
-| `DynamicModuleStat` 的评论/转发与点赞 | `DynamicStat` / `DynamicLikeStat` |
-| `DynamicArchive.Badge` / `Stat` | `DynamicArchiveBadge` / `DynamicArchiveStat` |
-| `DynamicDraw.Items` | `DynamicDrawItem` |
-| `DynamicRepostDetail.Items` 及其 `desc`、`origin`、`previous`、`display` | `DynamicRepostItem` / `DynamicRepostDesc` / `DynamicRepostOrigin` / `DynamicRepostPrevious` / `DynamicRepostDisplay` 等 |
-| `DynamicLikeList.ItemLikes[].UserInfo` | `DynamicLikeUserInfo`，其中 `Vip`/`Pendant`/`LevelInfo` 复用 `DynamicUserVip`/`DynamicUserPendant`/`DynamicUserLevelInfo` |
-| `DynamicUpList.Items[].UserProfile` | `DynamicUpUserProfile`、`DynamicUpUserInfo`、`DynamicUpVip`、`DynamicUpVipLabel`、`DynamicUpPendant`、`DynamicUpLevelInfo` |
-| `DynamicPortal.MyInfo` / `UpList` | `DynamicPortalMyInfo`（`LevelInfo` 为 `DynamicPortalLevelInfo`） / `DynamicPortalUp` |
-| `TopicModuleAuthor.OfficialVerify` | 复用共享的 `OfficialVerify` |
-| `TopicModuleAuthor.Pendant` / `Vip` | `TopicPendant` / `TopicVip`（`Label` 复用共享的 `Label`） |
-| `TopicDynamicBasic.LikeIcon` | `TopicLikeIcon` |
-| `TopicArchive.Badge` / `Stat` | `TopicArchiveBadge` / `TopicArchiveStat` |
-| `TopicModuleStat` | `TopicStat` / `TopicLikeStat` |
-| `TopicSortByConf.AllSortBy` | `[]TopicSortByItem` |
-| `AllFavourFolderInfo.List` | `[]AllFavourFolderItem` |
-| `FavourInfo` / `FavourList.Medias` 的 `upper`、`cnt_info`、`ugc` | `FavourUpper` / `FavourResourceCntInfo` / `FavourUgc` |
-| `FavourList.Info` | `FavourFolderDetail`，其 `upper`/`cnt_info` 复用 `Upper`/`CntInfo` |
-| `SelfFavourList.MediaListResponse` | `SelfFavourMediaListResponse`，`list` 为 `[]SelfFavourMediaItem` |
-| `Elec.ShowInfo` | `ElecShowInfo` |
-| `UserSpaceDetail.UserHonourInfo` / `Series` | `UserHonourInfo` / `UserSeries` |
-| `PrivateMessageList.SessionList[].LastMsg` / `AccountInfo` | `PrivateMessageSession` / `PrivateMessageLastMsg` / `PrivateMessageAccountInfo` |
+- `client.go` 定义 `Client` 与 `New(*bilibili.Client) *Client`；
+- 按接口或子领域命名的 `.go` 文件定义方法与 `*Param`；
+- 响应模型放在同目录的 `*_model.go` 或 `model_*.go` 中，由该接口独立定义，例如 `video/model_info.go`、`video/model_stream.go`、`dynamic/model_dynamic_feed_all.go`、`live/live_model.go`。
 
-普通字段读取无需迁移；手写匿名结构赋值、嵌套复合字面量、函数或接口声明以及依赖类型名称的反射代码需要检查。
+根包只保留跨业务域的基础设施与基础类型；新增业务接口应放入对应子包，不要向根包添加业务方法。
 
-### 刻意保留的差异类型
+## 版本策略
 
-以下类型字段集或字段命名不同，继续保留为独立类型，不做合并：`VipUserVip`、`MyVip`、`UserCardVip`、`StaffVip`（会员变体）；`VipLabel` 与 `Label`（会员铭牌）；`OfficialVerify` 与 `Official`；`Owner`、`Author` 与各业务作者类型；`DynamicModuleStat` 与 `TopicModuleStat`；`DynamicArchive` 与 `TopicArchive`；各业务分页类型（`CommentsPage`、`UserVideoPage`、`CollectionPage`、`ZoneVideoPage`、`LiveFansMedalPanelPageInfo`）。
+本模块处于 v0 阶段：破坏性变更随次版本号发布，不需要升主版本，也不需要改模块路径。发布 `v1.0.0` 之后再出现破坏性变更，才需要升主版本并把模块路径改为 `github.com/rongyuio/bilibili/v2` 这类形式。
 
-### 保留的匿名结构
-
-动态头像 `fallback_layers` 是随接口版本漂移的一次性渲染配置树，层级极深且无复用价值，继续保留为内联匿名结构体。
-
-### 请求框架收敛
-
-本轮复核了仍然直接使用 `newRequest`/`sendRaw` 的接口，确认它们都有正当理由，保持现状：短链解析 `UnwrapShortUrl`（只读 302 `Location`）、`GetWebCookieRefreshCsrf`（返回 HTML）、`RefreshCookie`（CSRF 允许留空并回退到 Cookie 快照）、`StartLive`（签名依赖 Cookie 快照）、`UploadDynamicBfs`（multipart）、`NewAnonymousClient`（初始化匿名 Cookie）。其余接口的参数编码、CSRF 与错误处理都继续走 `execute`/`encodeParams`/`fillCsrf`。
-
-### 文档
-
-仓库根目录的 `AGENTS.md` 已删除，贡献规则以 [CONTRIBUTING.md](../.github/CONTRIBUTING.md) 为准。
-
-## 第三轮重构：缺陷修复、类型合并与命名统一
-
-本轮修复了若干真实缺陷，合并字段完全一致的重复类型，补齐剩余模型文件，并统一命名与文件职责。请求参数位置、JSON 标签、字段顺序与指针/切片层级除下列明确列出的项以外均未变化。
-
-### 缺陷修复
-
-| 项 | 说明 |
-| --- | --- |
-| `HistoryList.Uri` | 该字段此前被误写入 `Covers` 的注释中，实际从未解析；现已补回 `Uri string \`json:"uri"\``（剧集/直播的重定向 url）。属于**新增可解析字段**，不影响原有字段。 |
-| `IntergratedSearch` | 方法名拼写修正为 `IntegratedSearch`。**破坏性变更**，请同步修改调用处；无兼容包装。 |
-| `SeachRespResult` | 类型名拼写修正为 `SearchRespResult`。**破坏性变更**。 |
-| `SearchRespTopTList` | 类型名拼写修正为 `SearchRespTopList`。**破坏性变更**。`SearchRespData.TopTList` 字段名与 `top_tlist` 标签不变。 |
-
-### 合并为别名的类型
-
-字段名、JSON 标签、类型三者完全一致的类型已合并为一处，旧名以别名承接，字段访问与复合字面量无需修改：
-
-| 旧类型 | 现状 |
-| --- | --- |
-| `GetUserFollowersResult`、`GetUserFollowingsResult`、`SearchUserFollowingsResult`、`GetSameFollowingsResult` | `type ... = RelationUserPage`（`list`/`re_version`/`total`） |
-| `GetWhispersResult`、`GetFriendsResult`、`GetBlacksResult` | `type ... = RelationUserList`（`list`/`re_version`） |
-| `FavourUpper` | `type FavourUpper = Owner`（`mid`/`name`/`face`） |
-| `RecommendPendant`、`RecommendCard` | `type ... = RecommendItem`（`id`/`name`/`image`/`jump_url`） |
-
-`video_model.go` 文件头与 `type.go` 中「Owner 不与其他作者类型合并」的旧注释已同步更新。依赖类型名称的反射代码需要改为新类型名。
-
-### 新增具名类型
-
-`GetTopicFeedResult.RelatedTopics` 由空匿名结构改为具名类型 `TopicRelatedTopics`（仍为空结构体，维持“忽略未知字段”的解码行为）。普通字段读取无需迁移。
-
-### `AudioOrVideo` 字段命名规范化
-
-该接口对同一份数据同时返回 camelCase 与 snake_case 两种键，因此每种键各保留一个字段：规范化命名对应 camelCase 键，以 `Snake` 结尾的字段对应 snake_case 键。**JSON 标签全部原样保留**。
-
-| 旧字段名 | 新字段名 | JSON 标签 |
-| --- | --- | --- |
-| `Baseurl` | `BaseURL` | `baseUrl` |
-| `BaseUrl` | `BaseURLSnake` | `base_url` |
-| `Backupurl` | `BackupURL` | `backupUrl` |
-| `BackupUrl` | `BackupURLSnake` | `backup_url` |
-| `Mimetype` | `MimeType` | `mimeType` |
-| `MimeType` | `MimeTypeSnake` | `mime_type` |
-| `Framerate` | `FrameRate` | `frameRate` |
-| `FrameRate` | `FrameRateSnake` | `frame_rate` |
-| `Startwithsap` | `StartWithSap` | `startWithSap` |
-| `StartWithSap` | `StartWithSapSnake` | `start_with_sap` |
-| `Segmentbase` | `SegmentBase` | `SegmentBase` |
-| `SegmentBase` | `SegmentBaseSnake` | `segment_base` |
-
-这是**破坏性字段改名**，读取 DASH 流的调用方需要按上表调整字段名；未删除任何字段，两种响应形态都仍然被解析。
-
-### 文件组织
-
-- 类型归位：`Notice` 从 `live.go` 上移到共享的 `type.go`（它同时被 `CommentsDetail` 与 `StartLiveResult` 引用）。
-- 新增模型文件：`emote_model.go`、`search_model.go`、`video_ranking_model.go`、`lottery_model.go`；直播响应模型移入既有的 `live_model.go`。
-- 职责拆分：`wbi.go` 拆出 `wbi_storage.go`（`Storage` 接口与 `MemoryStorage`）；`decode_diagnostic.go` 拆出 `decode_fields.go`（字段匹配与诊断类型名）。
-- `cookie.go` 的 `type ( ... )` 分组声明改为逐个声明，与其它文件保持一致。
-
-同包内的文件搬移不影响导入方式；`wbi.go` 与 `decode_diagnostic.go` 拆分后对外签名、错误语义与 `DecodeError` 可解包性均未变化（错误语义此后在〈解码容错〉一节中变更）。
-
-## 第四轮重构：初始缩写规范化、清理与模型文件细分
-
-### Go 初始缩写命名规范化（破坏性）
-
-按 Go 惯例把初始缩写统一为大写，规则为：`Id`→`ID`、`Ids`→`IDs`、`Uid`→`UID`、`Uids`→`UIDs`、`Url`→`URL`、`Urls`→`URLs`、`Uri`→`URI`、`Uuid`→`UUID`、`Json`→`JSON`。规则只作用于标识符，**JSON 标签一个都没有改动**（改名前后的 2857 个标签集合完全一致），请求与响应数据不受影响。
-
-共涉及 107 个不同标识符、29 个源码文件。常见对照：
-
-| 旧名 | 新名 |
-| --- | --- |
-| `Id`、`Ids` | `ID`、`IDs` |
-| `DynamicId`、`DynamicIdStr` | `DynamicID`、`DynamicIDStr` |
-| `RoomId`、`TargetId`、`AreaId` | `RoomID`、`TargetID`、`AreaID` |
-| `Uid`、`Uids`、`SenderUid`、`UidType` | `UID`、`UIDs`、`SenderUID`、`UIDType` |
-| `MediaIdParam`、`FavourId`、`GetFavourIds` | `MediaIDParam`、`FavourID`、`GetFavourIDs` |
-| `Url`、`Urls`、`JumpUrl`、`AvatarSubscriptUrl` | `URL`、`URLs`、`JumpURL`、`AvatarSubscriptURL` |
-| `UnwrapShortUrl` | `UnwrapShortURL` |
-| `Uri`、`BackdropUri`、`HistoryList.Uri` | `URI`、`BackdropURI`、`HistoryList.URI` |
-| `Json`、`ExtendJson` | `JSON`、`ExtendJSON` |
-| `deviceId`（包内变量） | `deviceID` |
-
-迁移方式：调用方按同一规则批量改名即可，无兼容别名（字段与方法名无法用别名承接）。上一轮新增的 `HistoryList.Uri` 在本轮已改名为 `HistoryList.URI`。
-
-**刻意未纳入**的缩写字：`Mid`、`Aid`、`Cid`、`Tid`、`Rid`、`Fid`、`Pid`、`Oid`、`Bvid`、`Vmid`、`Vip`、`Nft`、`Md5`。它们不在 Go 官方初始缩写表内（属 B 站专有缩写或商品名），改动收益低而破坏面大。若后续要一并调整，应作为单独的大版本变更处理。
-
-被忽略的本地工具 `test/` 也已同步改名，以保持 `go build ./...` 通过。
-
-### 死代码清理（破坏性）
-
-| 删除项 | 说明 |
-| --- | --- |
-| `ResultData` | `search_model.go` 中的空结构体，全仓零引用 |
-| `VideoSubtitles` | `video_model.go` 中全仓零引用的类型；字幕列表请使用 `[]VideoSubtitle` |
-
-### 机械一致性
-
-- `live_model.go`、`topic_model.go` 中的 10 处 `interface{}` 统一为 `any`。
-- `emote_model.go` 的 `User_panel_packages`、`All_packages` 改为 `UserPanelPackages`、`AllPackages`（JSON 标签 `user_panel_packages`、`all_packages` 保持不变）。
-- 清理 `fav_model.go` 封面字段注释中的游离制表符、`search.go` 参数注释中的制表符，并把 `article.go` 的两条 `import` 语句合并为一个 import 块。
-
-### 文件组织
-
-`dynamic_model.go` 原先 775 行、79 个类型，现按子领域拆为 5 个文件（同包，导入方式不变）：
-
-| 文件 | 内容 |
-| --- | --- |
-| `dynamic_model.go` | 整体动态（`DynamicItem` 及其各 `Module*`）、`AvatarContainerSize` |
-| `dynamic_original_model.go` | 转发动态内嵌的原动态（`DynamicOriginal*`、`DynamicDecorate*`） |
-| `dynamic_repost_model.go` | 转发列表与转发用户、`@` 搜索（`DynamicRepost*`、`DynamicUserVip` 等） |
-| `dynamic_interact_model.go` | 点赞列表、直播中关注者、更新 UP 主（`DynamicLike*`、`DynamicLiveUser*`、`DynamicUp*`） |
-| `dynamic_portal_model.go` | 动态卡片、门户与发布接口（`DynamicCard`、`DynamicPortal*`、`CreateDynamicResult` 等） |
-
-### 版本影响
-
-导出标识符与字段改名、以及删除导出类型，按语义化版本约定都属于**破坏性变更**。本模块目前只有 `v0.1.0`，处于 **v0 阶段**：v0 允许在次版本号内引入破坏性变更，因此上述改动随 **v0.2.0** 发布即可，**不需要**升主版本，也**不需要**改模块路径。只有发布 `v1.0.0` 之后再出现破坏性变更，才需要升主版本并把模块路径改为 `github.com/rongyuio/bilibili/v2` 这类形式。
-
-## 第五轮重构：模型去重、头像渲染树具名化与文件细分
-
-### 字段命名修正（破坏性，JSON 标签不变）
-
-把被压平成「首字母大写 + 其余全小写」的字段名恢复词边界，共 45 处：
-
-| 结构体 | 改名 |
-| --- | --- |
-| `Vip` / `UserCardVip` | `Viptype`→`VipType`、`Vipduedate`→`VipDueDate`、`Dueremark`→`DueRemark`、`Accessstatus`→`AccessStatus`、`Vipstatus`→`VipStatus`、`Vipstatuswarn`→`VipStatusWarn` |
-| `Member` / `UserCardInfo` / `VideoCard` | `Displayrank`→`DisplayRank` |
-| `LiveRoom` | `Roomstatus`→`RoomStatus`、`Livestatus`→`LiveStatus`、`Roundstatus`→`RoundStatus`、`Roomid`→`RoomID` |
-| `Dash` | `Minbuffertime`→`MinBufferTime`；对应 snake_case 键的字段定为 `MinBufferTimeSnake` |
-| `ZoneVideoRankInfo` | `Numpages`→`NumPages`、`Numresults`→`NumResults`、`Pagesize`→`PageSize` |
-| `CheckNickNameParam` | `Nickname`→`NickName` |
-| `comment_model` | `Showadmin/Showentry/Showfloor/Showtopic`→`ShowAdmin/ShowEntry/ShowFloor/ShowTopic`、`Fansgrade`→`FansGrade` |
-| 其它 | `Pubdate`→`PubDate`、`Codecid`→`CodecID`、`Timelength`→`TimeLength`、`Badgepay`→`BadgePay`、`Senddate`→`SendDate`、`Arcrank`→`ArcRank` |
-
-### 模型合并（非破坏性，旧名保留为别名）
-
-全仓扫描出 9 组字段签名（字段名、类型、JSON 标签、request 标签）完全一致的结构体，
-合并为类型别名，调用方无需修改：
-
-- `DynamicOriginalMajor` → `DynamicMajor`
-- `TopicArchiveBadge` / `TopicArchiveStat` → `DynamicArchiveBadge` / `DynamicArchiveStat`
-- `FavourFolderDetail` → `FavourFolderInfo`
-- `CoinArticleResult` → `CoinVideoResult`
-- `GetDynamicDetailParam` → `RemoveDynamicParam`
-- `GetArticleInfoParam`、`FavoritesArticleParam` → `GetArticlesInfoParam`
-- `GetUserRelation2Param` → `GetUserSpaceDetailParam`
-- `GetUserFollowings3Param`、`GetSameFollowingsParam` → `GetUserFollowersParam`
-
-会员 / 铭牌 / 认证 / 分页 / 计数类型逐字段复核后确认字段集或键名不同（如 `UserCardVip`
-是 `Vip` 的真子集、`VipUserVip` 键名带 `vip_` 前缀、`DynamicAuthorVip.DueDate` 为
-`json.Number`），保持独立，差异记录在 `type.go` 注释中。
-
-### 头像渲染树具名化（破坏性，JSON 标签不变）
-
-- 新建 `avatar_model.go`：三处头像（整体动态 / 原动态 / 话题）字节级一致的
-  `general_spec` 子树提为 `AvatarLayerPosSpec` / `AvatarLayerRenderSpec` /
-  `AvatarLayerSizeSpec` / `AvatarLayerGeneralSpec`；整体动态与原动态共用的四字段
-  `web_css_style` 提为 `AvatarLayerWebCssStyle`。
-- 统一残留全大写字段名：`AVATARLAYER`→`AvatarLayer`、`GENERALCFG`→`GeneralCfg`、
-  `PENDENTLAYER`→`PendantLayer`、`ICONLAYER`→`IconLayer`、`WebCSSStyle`→`WebCssStyle`。
-- `wbi.go` 取密钥的内联响应具名化为 `wbiNavResult` / `wbiImg`。
-
-### 文件组织
-
-- `video_model.go` 拆出 `video_stream_model.go`（`Durl`/`Dash`/`Dolby`/`Flac`/
-  `AudioOrVideo`/`SegmentBase`/`SupportFormat`/`GetVideoStreamResult`）与
-  `video_collection_model.go`（合集相关）。
-- `user_model.go` 拆出 `user_relation_model.go`（关注 / 粉丝 / 黑名单等关系模型）。
-- `live_model.go` 拆出 `live_room_model.go`（直播间信息 / 开播 / 分区）。
-- 方法文件中的残留响应模型下沉到模型文件：`login.go` 的 `QRCode`、`video_zone.go`
-  的 `ZoneInfo`、`cookie.go` 的结果类型、`misc.go` 的 `ZoneLocation`/`RegionDailyCount`；
-  方法文件只保留接口方法与请求参数。
-
-### 版本影响
-
-按 v0 阶段规则，上述破坏性变更（导出字段改名、头像渲染树嵌套字段改名）随下一版本
-发布即可，无需升主版本或改模块路径。
-
-## 第六轮重构：抽奖与话题接口的 web_location 收敛
-
-### 破坏性变更
-
-| 项 | 说明 |
-| --- | --- |
-| `GetDynamicLotteryInfoParam.DeviceReqJSON` | **删除**。`x-bili-device-req-json` 改由库按 `WebLocation` 生成，`platform`/`device` 固定为 `web`/`pc`，不提供兼容包装。 |
-| `GetDynamicLotteryInfoParam.WebLocation`、`GetLiveActivatedMedalInfoParam.WebLocation`、`GetTopicFeedParam.WebLocation` | 改为可选。留空时由库填入接口默认值（动态抽奖 `333.1330`，直播勋章与话题动态 `0.0`）；**无法再发送空的 `web_location`**。其中 `GetTopicFeedParam` 此前默认省略该参数，现在默认发送 `0.0`。 |
-
-改为可选后，调用方不再需要手写这串设备信息 JSON；如果你此前传过自己的 `DeviceReqJSON`，其中的 `spmid` 应迁移为 `WebLocation` 的值，`platform`/`device` 则固定为 `web`/`pc`。
-
-### 版本影响
-
-按 v0 阶段规则，上述破坏性变更随下一版本发布即可，无需升主版本或改模块路径。
-
-## 第七轮：字段补齐与 `CaptchaResult.Tencent` 类型收敛
-
-v0.8.0 补齐了 104 个响应字段与 29 个导出类型，其中只有一处破坏性变更。
-
-### 破坏性变更
-
-| 项 | 说明 |
-| --- | --- |
-| `CaptchaResult.Tencent` | 类型由 `any` 收紧为具名结构体 `Tencent`。此前把该字段断言成 `map[string]any`（或其它具体类型）的代码需要改。 |
-
-```go
-// 旧：字段是 any，只能做类型断言
-if m, ok := result.Tencent.(map[string]any); ok {
-    appid, _ := m["appid"].(string)
-    _ = appid
-}
-
-// 新：直接读字段
-appid := result.Tencent.Appid
-```
-
-该字段此前没有对应的类型，文档里也只标注「作用尚不明确」；这次按实机响应建了结构体，
-目前只有一个 `Appid` 字段（实测为空串）。
-
-### 非破坏性变更
-
-`FavourInfo.MediaListLink` 挪到了 `FavourMedia.MediaListLink` —— 它描述的是单条收藏内容，
-不是收藏夹元数据，原先放错了结构体。`FavourInfo` 在 `v0.7.0` 里还没有这个字段
-（它和这次一起加进去，随即挪走的），所以**对已发布版本没有影响**。
-
-### 版本影响
-
-按 v0 阶段规则，上述破坏性变更随次版本（`v0.8.0`）发布即可，无需升主版本或改模块路径。
+包的拆分、接口在子包之间的移动、`*Param` / `*Result` 的改名都属于破坏性变更。完整规则见[版本策略](versioning.md)。
