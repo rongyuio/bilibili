@@ -4,7 +4,7 @@
 
 ## 概述
 
-封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.26+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是上游 `CuteReimu/bilibili` 的持续维护 fork；上游已被作者删除（原地址 404），删除前已归档并停止维护，其所依据的接口文档仓库也已停止维护。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
+封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.27.3+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是上游 `CuteReimu/bilibili` 的持续维护 fork；上游已被作者删除（原地址 404），删除前已归档并停止维护，其所依据的接口文档仓库也已停止维护。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
 
 代码分为根包与业务子包：根包 `bilibili` 位于仓库根目录，只保留客户端、请求链路、参数编码、错误与解码、Cookie、WBI 等基础设施；业务接口按域拆分到 34 个业务子包（`video`、`user`、`live` 等），每个子包通过 `New(*bilibili.Client)` 复用根包客户端。聚合包 `bili` 把这些入口挂到同一个对象上（`client.Video`、`client.User` 等），字段与初始化由 `go generate ./...` 生成，新增子包后必须重新生成并提交。文档与代码注释使用中文；修改既有文档和注释时请保持这一风格。
 
@@ -18,7 +18,7 @@
 go build ./...                    # 编译
 go vet ./...                      # 静态检查
 gofmt -s -w <file.go>             # 格式化（CI 要求 gofmt -s -l . 输出为空）
-golangci-lint run                 # 使用 .golangci.yml（v2 schema，lint 版本 v2.13.2）
+golangci-lint run                 # 使用 .golangci.yml（v2 schema，lint 版本 v2.15.0）
 go test ./...                     # 运行全部测试
 go test -run TestName ./...       # 运行单个测试
 go test -run 'TestCookie|TestSignMap' ./...   # 按正则运行一组测试
@@ -37,7 +37,7 @@ CI（`.github/workflows/`）共四个 workflow 文件：
 - `label.yml`（workflow 名 `Label`）—— 只在 PR 事件运行，按 PR 标题的 Conventional Commits 前缀自动打 label（含 `!` 时额外打 `breaking`），供 `release.yml` 生成分类 Release Notes。
 - `release.yml`（workflow 名 `Release`）—— 只在推 `v*` 标签时运行（见下）。
 
-前三个的 Go 版本均由 `go-version-file: go.mod` 决定，因此改 `go.mod` 的 `go` 指令即可切换验证环境；该指令表示最低支持版本（当前 1.26），提升需在 PR 中说明理由。`master` 已开启分支保护，改动通过 PR 合入。
+前三个的 Go 版本均由 `go-version-file: go.mod` 决定，因此改 `go.mod` 的 `go` 指令即可切换验证环境；该指令表示最低支持版本（当前 1.27.3），提升需在 PR 中说明理由。`master` 已开启分支保护，改动通过 PR 合入。
 
 发版由 `release.yml` 处理：推送 `v*` 标签后，先校验标签名符合语义化版本（`v<major>.<minor>.<patch>`）且该标签指向的提交位于 `master`（任一不满足即拒绝发布），再运行 `go test -race ./...` 与 `go build ./...`，最后执行 `gh release create --generate-notes` 创建 GitHub Release，无需手动操作。
 
