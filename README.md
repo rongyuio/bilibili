@@ -8,7 +8,7 @@
 
 基于 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 继续维护的 Go 客户端，封装 Bilibili API，提供 Cookie 管理、WBI 签名、context 取消和结构化错误定位。
 
-模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.26 或更新版本，依赖以 [go.mod](go.mod) 为准。接口可能随服务端变化。
+模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.27.3 或更新版本，依赖以 [go.mod](go.mod) 为准。接口可能随服务端变化。
 
 - [维护状态](#维护状态)
 - [特性](#特性)
@@ -93,7 +93,7 @@ go get github.com/rongyuio/bilibili@latest
 
 v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)与[版本策略](docs/versioning.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
 
-Go 1.26 是当前最低工具链门槛（用于 `errors.AsType` 等标准库能力），与接口稳定性无关。
+Go 1.27.3 是当前最低工具链门槛：代码本身只需要 Go 1.26 的 `errors.AsType`，提高到 1.27.3 是为了带上 `crypto/x509` 对 CVE-2026-111943 的修复，与接口稳定性无关。
 
 | 变更 | 版本 |
 | --- | --- |
