@@ -8,7 +8,7 @@ body:
       label: 调用的方法
       value: |-
         ```go
-        client.GetXXXXXX(param)
+        client.Video.GetVideoInfo(ctx, video.GetVideoInfoParam{...})
         ```
     validations:
       required: true
@@ -19,7 +19,7 @@ body:
       label: 请求
       value: |-
         ```go
-        VideoParam {
+        video.GetVideoInfoParam{
             Bvid: "bvXX1234XXXX",
         }
         ```
