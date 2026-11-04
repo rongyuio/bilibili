@@ -8,7 +8,7 @@
 
 基于 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 继续维护的 Go 客户端，封装 Bilibili API，提供 Cookie 管理、WBI 签名、context 取消和结构化错误定位。
 
-模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.27.3 或更新版本，依赖以 [go.mod](go.mod) 为准。接口可能随服务端变化。
+模块路径为 `github.com/rongyuio/bilibili`，依赖以 [go.mod](go.mod) 为准。接口可能随服务端变化。
 
 - [维护状态](#维护状态)
 - [特性](#特性)
@@ -21,10 +21,8 @@
 
 ## 维护状态
 
-- 本仓库是 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 的 fork。上游已被作者删除（该地址现返回 404）；删除前已归档：README 标注 Deprecated、默认分支改名为 `deprecated`、issues/discussions/wiki 全部关闭，不再接受改动与合并。其所依据的接口文档仓库也已停止维护。
-- 本 fork **继续维护**：跟进新增接口，已实现接口在发现问题时修复。以自用为主，不承诺固定的支持范围与响应时间。
+- 本仓库是 [CuteReimu/bilibili](https://github.com/CuteReimu/bilibili) 的 fork，上游已被作者删除并停止维护；本 fork 继续维护，跟进新增接口，已实现接口在发现问题时修复。以自用为主，不承诺固定的支持范围与响应时间。
 - B 站服务端可能随时调整接口与字段。生产环境请对关键接口自行验证，并处理业务错误与字段漂移。
-- 本仓库保留 fork 关联；`master` 已开启分支保护（改动须经 PR 合入，禁止强制推送与删除）。
 - 版本处于 **v0 阶段**，允许在次版本号内引入破坏性变更。升级前请阅读[迁移指南](docs/migration.md)。
 
 ## 特性
@@ -37,6 +35,14 @@
 - **逃生通道**：尚未封装的接口可通过 `Client.Do` 复用同一套能力
 
 ## 包结构
+
+```text
+bili/                  # 聚合入口：New / NewWith / NewAnonymous
+<domain>/              # 业务子包，一个域一个包：video、user、live、dynamic……
+internal/cmd/genall/   # 生成 bili/client_gen.go 的代码生成器
+docs/                  # 详细文档
+*.go                   # 根包 bilibili：请求链路、参数编码、错误、解码、Cookie、WBI
+```
 
 根包 `bilibili` 提供基础设施：`Client` 的构造与会话、统一请求链路、参数编码、错误类型、解码诊断、Cookie 管理、WBI 签名，以及供子包复用的 `Execute` / `ExecuteRaw` / `FillCsrf` 等导出设施。根包的 `type.go` 只保留真正跨业务域的基础类型。
 
@@ -79,7 +85,7 @@
 
 各接口的返回体按接口独立定义，接口之间不共享模型；即使字段相同，也在各自的 `model_*.go` 或 `<主题>_model.go` 中单独定义。
 
-跨域调用可以使用聚合包 `bili`：`bili.New()` 创建根客户端，并把全部业务域挂在同一个对象上，`client.Video`、`client.User` 等字段直接可用。聚合包只做包装，不持有独立会话；字段由 `go generate ./...` 维护，新增子包后需重新生成。只需要单个域时，仍可直接用根包配合子包构造。
+跨域调用可以使用聚合包 `bili`：`bili.New()` 创建根客户端，并把全部业务域挂在同一个对象上，`client.Video`、`client.User` 等字段直接可用。聚合包只做包装，不持有独立会话；字段由 `go generate ./...` 维护。只需要单个域时，用根包配合子包构造即可，不必把全部业务包拉进依赖图。
 
 ## 快速开始
 
@@ -91,16 +97,7 @@
 go get github.com/rongyuio/bilibili@latest
 ```
 
-v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)与[版本策略](docs/versioning.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。
-
-Go 1.27.3 是当前最低工具链门槛：代码本身只需要 Go 1.26 的 `errors.AsType`，提高到 1.27.3 是为了带上 `crypto/x509` 对 CVE-2026-111943 的修复，与接口稳定性无关。
-
-| 变更 | 版本 |
-| --- | --- |
-| 修复 bug，不改导出 API | patch |
-| 新增接口或能力 | minor |
-| v0 阶段的破坏性变更 | minor，需阅读迁移指南 |
-| 保证兼容 | v1 之后 |
+要求 Go 1.27.3 或更新版本，原因见[版本策略](docs/versioning.md#最低-go-版本)。v0 阶段 API 仍可能调整，升级前请阅读[迁移指南](docs/migration.md)与[版本策略](docs/versioning.md)。需要开发分支代码时可使用 `@master`，Go 会记录对应提交的伪版本。本库不读取环境变量，也不需要配置文件。
 
 ### 创建客户端并调用接口
 
@@ -132,29 +129,7 @@ func main() {
 }
 ```
 
-`bili.New()` 创建根客户端并构造聚合入口，所有业务域共享同一个会话。只需要单个域时，也可以直接用 `bilibili.New()` 配合 `video.New(root)`。所有网络方法以 `ctx context.Context` 为首参，调用后先处理错误再使用结果。普通请求可并发，登录、会话切换及配置修改需串行；不要复制已使用的 `Client`。
-
-### 按任务选择入口
-
-聚合入口把全部业务域挂在同一个对象上。常用域：
-
-| 任务 | 入口 |
-| --- | --- |
-| 视频信息、播放地址、观看上报 | `client.Video` |
-| 用户信息、关系、空间 | `client.User` |
-| 动态流、发布、转发 | `client.Dynamic` |
-| 直播房间、勋章、弹幕 | `client.Live` |
-| 登录 | `client.Login` |
-| 收藏与历史 | `client.Fav` / `client.History` |
-| 搜索 | `client.Search` |
-| 尚未封装的接口 | `client.Do` |
-
-只需要单个域时，直接用根包与子包，避免把全部业务包拉进依赖图：
-
-```go
-root := bilibili.New()
-v := video.New(root)
-```
+`bili.New()` 创建根客户端并构造聚合入口，所有业务域共享同一个会话。只需要单个域时，也可以直接用 `bilibili.New()` 配合 `video.New(root)`。所有网络方法以 `ctx context.Context` 为首参，调用后先处理错误再使用结果。
 
 ### 客户端构造选择
 
@@ -168,14 +143,7 @@ v := video.New(root)
 
 ### 登录与 Cookie
 
-已有浏览器 Cookie 时，在发送请求前导入：
-
-```go
-client := bili.New()
-client.SetRawCookies(cookieHeader) // cookieHeader 由调用方读取，不写入代码或日志。
-```
-
-`bili.New()` 不联网；需要游客 Cookie 时用 `bili.NewAnonymous(ctx)`。扫码 / 密码 / 短信登录、Cookie 保存与恢复、Resty 接管见[认证与会话](docs/authentication.md)，完整调用示例见[使用示例](docs/usage.md#登录与-cookie)。
+浏览器 Cookie 用 `SetRawCookies(cookieHeader)` 在发送请求前导入，`cookieHeader` 由调用方读取，不写入代码或日志。`bili.New()` 不联网；需要游客 Cookie 时用 `bili.NewAnonymous(ctx)`。扫码 / 密码 / 短信登录、Cookie 保存与恢复、Resty 接管见[认证与会话](docs/authentication.md)，完整调用示例见[使用示例](docs/usage.md#登录与-cookie)。
 
 ### 并发与会话
 
@@ -188,7 +156,7 @@ client.SetRawCookies(cookieHeader) // cookieHeader 由调用方读取，不写�
 
 | 文档 | 内容 |
 | --- | --- |
-| [使用示例](docs/usage.md) | 常用接口、登录与 Cookie、自定义请求、错误处理 |
+| [使用示例](docs/usage.md) | 常用接口、登录与 Cookie、自定义请求 |
 | [认证与会话](docs/authentication.md) | 游客、扫码、密码与短信登录，Cookie 保存及 Resty 接管 |
 | [请求与错误处理](docs/request.md) | 自定义请求、参数标签、错误分类与解码定位 |
 | [迁移指南](docs/migration.md) | 模块路径、context 签名、会话规则和模型类型变更 |
@@ -210,20 +178,21 @@ replace github.com/rongyuio/bilibili => ../bilibili
 
 ### 验证与贡献
 
-- `make check`：一次跑完 `fmtcheck + vet + race + build + lint`，与 CI 口径一致。
+- `make check`：一次跑完 `gencheck + fmtcheck + vet + race + build + lint`，与 CI 门禁同口径。
+- `make help`：列出全部可用 target。
 - `go build ./...`：编译，不执行程序。
 - `go vet ./...`：静态检查。
 - `gofmt -s -w <文件.go>`：格式化修改的文件。
-- `golangci-lint run`：使用仓库 v2 配置。
+- `golangci-lint run`：使用仓库 v2 配置，版本见 CI。
 - `go test ./...`：运行单元测试；CI 使用 `go test -race -v ./...`。
 
-测试均为纯逻辑单元测试，**不会**访问真实 API，也不需要凭证；CI 在向 `master` 的 push 与 PR 上运行上述全部检查。编译与测试通过不等于实机或并发行为已验证——`test/` 下的账号工具需自行运行。
+测试均为纯逻辑单元测试，**不会**访问真实 API，也不需要凭证。`.github/workflows/gofmt.yml` 与 `golangci-lint.yml` 在向 `master` 的 push 与 PR 上运行；`release.yml` 只在推 tag 时运行。编译与测试通过不等于实机行为已验证；需要真实账号的验证在本地进行，相关工具不入库。
 
-贡献规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)；安全问题请按 [SECURITY.md](.github/SECURITY.md) 私下报告，参与讨论请遵守 [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md)。反馈问题请说明方法、错误类型和必要的脱敏信息，不提交凭证。被忽略的 `test/` 为本地工具，不随仓库分发。
+贡献规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)；安全问题请按 [SECURITY.md](.github/SECURITY.md) 私下报告，参与讨论请遵守 [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md)。反馈问题请说明方法、错误类型和必要的脱敏信息，不提交凭证。
 
 ### 发版
 
-推送合法的语义化版本 tag（形如 `v<major>.<minor>.<patch>`）即触发 [release.yml](.github/workflows/release.yml)，自动校验、测试、构建并创建 GitHub Release。完整流程与 tag 格式见 [CONTRIBUTING.md](.github/CONTRIBUTING.md) 的「关于发版」与[版本策略](docs/versioning.md)。
+推送合法的语义化版本 tag（形如 `v<major>.<minor>.<patch>`）即触发 [release.yml](.github/workflows/release.yml)，自动校验、测试、构建并创建 GitHub Release，产物是 Release 与对应的 Go 模块版本，没有其他部署步骤。发错了删除 tag 与 Release 后重发即可；已被下游 `go.sum` 记录的版本只能靠新版本修正。tag 格式与递增规则见[版本策略](docs/versioning.md)。
 
 ## License
 

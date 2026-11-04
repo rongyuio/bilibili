@@ -1,166 +1,90 @@
 # AGENTS.md
 
-本文件为在此仓库中工作的编码助手提供指引。
+封装 Bilibili HTTP API 的 Go 客户端库，模块路径 `github.com/rongyuio/bilibili`。上游 `CuteReimu/bilibili` 已被作者删除，本仓库接手维护；当前处于 v0 阶段，破坏性变更随次版本号发布，并记录到 `docs/migration.md`。要求 Go 1.27.3+：`go.mod` 的 `go` 指令表示最低支持版本，提升需说明理由，见 `docs/versioning.md`。新增或修改的文档与注释用中文；根包核心文件里既有的英文注释保持原样，不要为统一语言改写。
 
-## 概述
-
-封装 Bilibili HTTP API 的 Go 客户端库。模块路径为 `github.com/rongyuio/bilibili`，要求 Go 1.27.3+（`go.mod` 的 `go` 指令是最低支持版本，提升需说明理由，见 `docs/versioning.md`）。本仓库是上游 `CuteReimu/bilibili` 的持续维护 fork；上游已被作者删除（原地址 404），删除前已归档并停止维护，其所依据的接口文档仓库也已停止维护。版本处于 v0 阶段，允许在次版本号内引入破坏性变更（见 `docs/migration.md`）。
-
-代码分为根包与业务子包：根包 `bilibili` 位于仓库根目录，只保留客户端、请求链路、参数编码、错误与解码、Cookie、WBI 等基础设施；业务接口按域拆分到 34 个业务子包（`video`、`user`、`live` 等），每个子包通过 `New(*bilibili.Client)` 复用根包客户端。聚合包 `bili` 把这些入口挂到同一个对象上（`client.Video`、`client.User` 等），字段与初始化由 `go generate ./...` 生成，新增子包后必须重新生成并提交。文档与代码注释使用中文；修改既有文档和注释时请保持这一风格。
-
-## 分支与提交
-
-`master` 已开启分支保护（禁止强推与删除，要求走 PR），**不要直接向 `master` 提交或推送**，即使当前账号有权限绕过保护。改动一律从最新 `master` 切分支、在分支上提交、推送后开 PR 合入，分支名用 `<type>/<简短描述>`。若不慎已在本地 `master` 提交且尚未推送，先 `git branch <新分支>` 保住提交，再 `git reset --hard origin/master`，**不要强推**。细节见 `.github/CONTRIBUTING.md` 的「分支与提交流程」。
-
-## 常用命令
+## 构建与验证
 
 ```bash
+make check                        # 门禁全量：gencheck + fmtcheck + vet + race + build + lint
+make help                         # 列出全部 target
 go build ./...                    # 编译
 go vet ./...                      # 静态检查
-gofmt -s -w <file.go>             # 格式化（CI 要求 gofmt -s -l . 输出为空）
-golangci-lint run                 # 使用 .golangci.yml（v2 schema，lint 版本 v2.15.0）
-go test ./...                     # 运行全部测试
-go test -run TestName ./...       # 运行单个测试
-go test -run 'TestCookie|TestSignMap' ./...   # 按正则运行一组测试
-go test -race -v ./...            # 输出详细结果（CI 使用的形式）
+gofmt -s -w <file.go>             # 格式化；CI 要求 gofmt -s -l . 输出为空
+golangci-lint run                 # 读取 .golangci.yml（v2 schema），CI 版本 v2.15.0
+go test ./...                     # 全部测试
+go test -run 'TestCookie|TestSignMap' ./...   # 按正则跑一组测试
+go test -race -v ./...            # CI 使用的形式
 go generate ./...                 # 重新生成 bili/client_gen.go
 ```
 
-`Makefile` 把 CI 的口径收成一个入口：`make check`（gencheck + gofmt + vet + race + build + lint）、`make test`、`make race`、`make fmt`、`make lint`、`make build`、`make generate`、`make gencheck`。`make help` 列全。
+CI 位于 `.github/workflows/`，四个文件：
 
-测试**不会访问真实 API，也不需要凭证**。多数只依赖标准库 `testing`；根包 `util_test.go` 用 `resty.New().R()` 构造请求对象来验证 `withParams` 的编码结果，`live/trace_test.go`、`miscellaneous/misc_test.go` 等子包测试直接验证签名、转换等纯逻辑。**都不发出真实请求。** `test/` 存放本地账号相关脚本，已被 gitignore，且是**独立的 Go 模块**（自带 `go.mod`，用 `replace` 指向本仓库），其依赖与 Go 版本要求都不影响主模块；`.golangci.yml` 的 `exclusions.paths` 排除了 `test/`。
+- `gofmt.yml`（GoFmt）—— 向 `master` 的 push / PR，要求 `gofmt -s -l .` 输出为空。
+- `golangci-lint.yml`（Go）—— 向 `master` 的 push / PR，依次 `go generate ./...` → `git diff --exit-code` + `git status --porcelain`（生成物必须干净）→ golangci-lint → `go test -race -v ./...` → `go build -v ./...`。
+- `label.yml`（Label）—— 仅 PR，按标题前缀打 label，供 Release Notes 分类。
+- `release.yml`（Release）—— 仅 `v*.*.*` tag。
 
-CI（`.github/workflows/`）共四个 workflow 文件：
+除 `label.yml` 外都通过 `go-version-file: go.mod` 取 Go 版本，因此改 `go.mod` 的 `go` 指令即可切换验证环境。
 
-- `gofmt.yml`（workflow 名 `GoFmt`）—— 在向 `master` 的 push / PR 时运行，要求 `gofmt -s -l .` 输出为空。
-- `golangci-lint.yml`（workflow 名 `Go`）—— 同样在 push / PR 时运行，依次执行 `go generate ./...`、生成物 diff 校验、golangci-lint、`go test -race -v ./...`、`go build -v ./...`。
-- `label.yml`（workflow 名 `Label`）—— 只在 PR 事件运行，按 PR 标题的 Conventional Commits 前缀自动打 label（含 `!` 时额外打 `breaking`），供 `release.yml` 生成分类 Release Notes。
-- `release.yml`（workflow 名 `Release`）—— 只在推 `v*` 标签时运行（见下）。
+## 发版
 
-前三个的 Go 版本均由 `go-version-file: go.mod` 决定，因此改 `go.mod` 的 `go` 指令即可切换验证环境；该指令表示最低支持版本（当前 1.27.3），提升需在 PR 中说明理由。`master` 已开启分支保护，改动通过 PR 合入。
+纯库，没有部署环节。推 `v<major>.<minor>.<patch>` tag 触发 `release.yml`：校验 tag 名（semver，禁 build metadata）与「提交位于 `master`」→ `go test -race ./...` → `go build ./...` → `gh release create --generate-notes`（带预发布后缀的发为 Pre-release）。tag 格式与递增规则见 `docs/versioning.md`。
 
-发版由 `release.yml` 处理：推送 `v*` 标签后，先校验标签名符合语义化版本（`v<major>.<minor>.<patch>`）且该标签指向的提交位于 `master`（任一不满足即拒绝发布），再运行 `go test -race ./...` 与 `go build ./...`，最后执行 `gh release create --generate-notes` 创建 GitHub Release，无需手动操作。
+## 分支与推送
 
-## 文件组织约定
+提交、分支、推送按全局约定。本仓库额外：`master` 有分支保护（禁强推与删除，必须走 PR），不要直接向 `master` 提交或推送，即使当前账号能绕过。误在本地 `master` 提交且尚未推送时，先用 `git branch <新分支>` 保住提交，确认工作区干净（`git status --porcelain` 为空，否则先 stash），再 `git reset --hard origin/master`；绝不强推。流程细节见 `.github/CONTRIBUTING.md`。
 
-仓库采用「根包 + 业务子包」结构，子包按 API 业务域划分，与上游接口文档的目录结构保持一致：
+## 结构
 
-- **根包 `bilibili`（仓库根目录）** —— 只放基础设施：`client.go`（构造与会话）、`request.go` / `response.go` / `params.go` / `raw.go`（请求链路）、`errors.go` 与 `decode_*.go`（错误与解码诊断）、`cookie.go` / `cookie_model.go`（Cookie）、`wbi.go` / `wbi_storage.go`（WBI 签名）、`export.go`（向子包导出 `Execute` 等设施）、`generate.go`（`go:generate` 指令）、`number.go`、`video_zone.go` / `video_zone_model.go` / `video_zone.csv`（分区数据），以及 `type.go` / `avatar_model.go` 中真正跨业务域的基础类型。
-- **业务子包** —— 例如 `video/`、`user/`、`live/`、`dynamic/`、`fav/`、`login/`，共 34 个。每个子包的 `client.go` 定义 `Client`（嵌入 `*bilibili.Client`）与 `New(*bilibili.Client) *Client`；子包不复制会话，也不自行构造 Resty 客户端。
-- **聚合包 `bili`** —— `bili/client.go` 手写 `New` / `NewWith` / `NewAnonymous` 三个构造函数；`bili/client_gen.go` 由 `internal/cmd/genall` 生成，包含 `Client` 的域字段与 `newClient`。聚合包只做包装，不定义业务方法，也不持有独立会话。域级状态必须放在根客户端或聚合层，不要放进子包。
-- **代码生成器 `internal/cmd/genall`** —— 扫描目录下声明了 `func New(*bilibili.Client) *Client` 的子包，生成聚合入口。新增子包或修改构造签名后运行 `go generate ./...`；生成物过期由 CI 的 diff 校验拦截。复合包名需要切词时更新生成器里的 `wordBreaks`。
-- **子包内文件命名** —— 方法与 `*Param` 放在 `info.go`、`live.go`、`topic.go` 这类文件中；响应模型（`*Result` 及子类型）放在同目录的 `model_*.go` 或 `<主题>_model.go`（如 `video/model_info.go`、`dynamic/model_dynamic_feed_all.go`、`live/live_model.go`），少量简单结果可与方法同文件。
-- **返回体独立定义** —— 一个接口的 `*Result` 及其子类型只服务于该接口，即使与其它接口字段相同也不跨接口复用；不要为了复用把某个接口的返回体搬到公共文件。根包 `type.go` 只放真正跨业务域的基础类型。
+- **根包 `bilibili`（仓库根目录）** —— 只放跨业务域的基础设施：构造与会话、请求链路、参数编码、错误类型与解码诊断、Cookie、WBI 签名，以及 `export.go` 中向子包导出的设施；不放业务方法和业务模型。`type.go` 只放真正跨业务域的基础类型（如 `Size`、`FormatCtrl`）。
+- **业务子包** —— 按域拆分（`video/`、`user/`、`live/` 等，清单见 README「包结构」）。每个子包的 `client.go` 定义 `Client`（嵌入 `*bilibili.Client`）与 `New(*bilibili.Client) *Client`；不复制会话，也不自建 Resty 客户端。文件命名与命名规范见 `.github/CONTRIBUTING.md`。
+- **聚合包 `bili`** —— `client.go` 手写 `New` / `NewWith` / `NewAnonymous`，`client_gen.go` 由 `internal/cmd/genall` 生成域字段。只做包装，不定义业务方法，也不持有独立会话；域级状态放根客户端或聚合层，不要塞进子包。
+- **硬约束**：新增子包或改 `New` 构造签名后必须 `go generate ./...` 并提交 `bili/client_gen.go`，CI 以 diff 拦截过期生成物；复合包名需要切词时更新生成器的 `wordBreaks`。
+- **返回体独立定义**：一个接口的 `*Result` 及其子类型只服务该接口，字段再像也不跨接口复用，也不要为了复用把返回体搬进根包。
 
-新增接口时，在对应子包中新增方法、`*Param` / `*Result`，并为该接口单独定义返回模型。
-
-## 接口来源与验证状态
-
-新增接口前先看接口文档仓库里该接口的 `验证时间` 标注：
-
-- 标注具体日期表示文档维护者实测过。`2026-09-26` 是只读 GET 的全量实测日，但**只覆盖 web 端**；APP 域名（`app.bilibili.com`、`app.biliapi.com`、`app.biliapi.net`、`club.bilibili.com`）与 appkey 鉴权接口不在其中，不得据该日期推断已验证。
-- 标注 `未验证` 表示没有实测记录。实现后不得在注释、文档或提交信息里暗示该接口已验证。
-- 本库不实现 APP 域名接口（`app.bilibili.com`、`app.biliapi.com`、`app.biliapi.net`、`club.bilibili.com`）：它们要求 appkey 签名，库不计算。新增接口时遇到这些域名直接跳过；web 接口上的可选 `access_key` 参数不受此限。
-- 新增或修改验证标注时，只能依据文档仓库里可追溯的实测提交；抓包文件不在仓库内时，不要凭 `只读 GET` 之类的属性反推。
-
-## 请求链路（核心架构）
-
-绝大多数内置接口调用走同一条链路。实现位于根包 `request.go`，并通过 `export.go` 导出给子包复用。少数需要读取 302 `Location` 或 HTML 的接口直接走 `Resty()` 逃生通道（`miscellaneous.UnwrapShortURL`、`login.GetWebCookieRefreshCsrf`）：
+## 请求链路
 
 ```
-subpackage.Client.<Method>(ctx, param)
-  -> bilibili.Execute[Out](ctx, c.Client, method, endpoint, in, handlers...)  // export.go -> execute
-     -> c.newRequest(ctx)                                      // 只取一次 Cookie 快照
-     -> executeRequest[Out]
-        -> withParams(r, in)                                   // params.go：结构体标签 -> query/json/multipart
-        -> handlers...                                         // FillCsrf / FillFormCsrf / FillParam / MoveFormParams / (*Client).FillWbi
-        -> c.send(r, method, endpoint, &out)
-           -> c.sendRaw                                         // 执行请求；即使出错也合并响应 Cookie
-           -> 非 200 时返回 newHTTPError
-           -> decodeResponse                                    // response.go
+子包方法 -> Execute[Out]（export.go）-> newRequest（只取一次 Cookie 快照）
+  -> withParams（request 标签 -> query/json/multipart）
+  -> handlers（FillCsrf / FillParam / MoveFormParams / FillWbi）
+  -> send -> sendRaw（出错也合并响应 Cookie）-> decodeResponse
 ```
 
-子包可用的导出设施（`export.go`）：
+子包可用 `export.go` 的 `Execute` / `ExecuteRaw`（非标准信封走后者）、`Handler`、`FillCsrf` / `FillFormCsrf`、`FillParam` / `MoveFormParams`、`(*Client).FillWbi`、`NewDecodeError`。需要读 302 `Location` 或 HTML 的接口直接走 `Resty()` 逃生通道（如 `(*miscellaneous.Client).UnwrapShortURL`）。
 
-- `Execute[Out]` / `ExecuteRaw` —— 标准 JSON 信封与原始响应体两条入口；后者用于非标准信封（protobuf、XML、SVG、JS 等）。
-- `Handler` —— 处理函数类型别名；子包自定义 handler 时使用。
-- `FillCsrf` / `FillFormCsrf` —— 把 CSRF 写入 query 或表单。
-- `FillParam` / `MoveFormParams` —— 追加固定 query 参数、把 query 字段移入 URL 编码表单。
-- `(*Client).FillWbi()` —— 对 query 做 WBI 签名。
-- `NewDecodeError` —— 子包手动解码非标准响应时构造 `*DecodeError`。
+改动链路时必须守住的约束：
 
-修改这条链路时需保持的关键约束：
+- **context 永远首参**。`checkContext` 在任何工作开始前拒绝 nil / 已结束的 context，WBI 密钥刷新也用它。
+- **每次请求只取一次 Cookie 快照**（`newRequest` 深拷贝 `GetCookies`）；响应 Cookie 在 `sendRaw` 合并，HTTP 与业务错误时同样合并。`Client` 首次使用后不可复制；普通请求可并发，登录 / 会话切换 / `SetDroppedFieldHandler` / Resty 配置变更必须在请求之外串行。
+- **解码到全新值**，失败不部分写入。容错只剪枝 JSON kind 与 Go 类型不兼容的叶子，`data` 根节点与实现了自定义 unmarshaler 的类型是不透明边界；诊断基于未剪枝的原始字节。WBI nav 是例外，走 `decodeWBIResponse`，忽略非零 code 且不容错。
+- **参数位置只由 `request` 标签决定**（与 `json` 标签无关）：query / json / form-data / `-` / `field=name` / `default=v`。`omitempty` 优先于 `default`；同字段声明多个位置、或 JSON 与 multipart 混用，返回 `ParamError`。
+- **WBI 只签 query**，每个键必须且只能有一个值；`FillWbi` 会显式清空 `Referer`，WBI 请求带 Referer 必失败。
+- **CSRF 只从请求 Cookie 快照的 `bili_jct` 取**，缺失返回稳定的「登录过期」错误；`FillCsrf` / `FillFormCsrf` 同时写 `csrf` 与 `csrf_token`。
+- **新增错误必须用包级静态变量**（`var errXxx = errors.New(...)`）。golangci 的 `err113` 与 staticcheck `ST1005` 只认标准库 `errors`；历史代码那些内联写法走的是 `github.com/pkg/errors`，不要照抄，中文错误串（「B站…」的 B 是拉丁大写）尤其容易触发 ST1005。
+- 错误类型 `*HTTPError` / `Error` / `*ParamError` / `*DecodeError` 为 `errors.Is` / `errors.As` 设计，分类与诊断字段见 `docs/request.md`。`ParamError.Err`、响应值、Cookie 与凭证不要进日志。
 
-- **context 永远作为首参。** 所有网络方法都以 `ctx context.Context` 为第一个参数。`checkContext` 在任何工作开始前拒绝 nil / 已结束的 context。context 也会传入 WBI 密钥刷新。
-- **每次请求只取一次 Cookie 快照。** `newRequest` 通过 `GetCookies()` 深拷贝一次快照；CSRF 和各接口签名都读取这份快照。响应 Cookie 在 `sendRaw` 中合并回客户端（HTTP / 业务错误时同样合并）。`Client` 首次使用后不可复制；普通请求可并发，但登录 / 会话切换 / 配置变更必须在请求之外串行进行。
-- **解码到全新的值。** `decodeResponse`（response.go）先检查 `code` 信封，非零时返回 `Error`，再把 `data` 严格反序列化到一个全新值，因此 `out` 绝不会被部分写入。严格解码失败时，`decode_tolerate.go` 会把 JSON kind 与 Go 类型不兼容的叶子替换成 `null`，再解码到**另一个全新值**重试；重试成功则写入 `out`，并通过 `DroppedFieldHandler` 上报被丢弃的字段。根节点不参与剪枝（`data` 整体形态变化仍然报错），实现了自定义 unmarshaler 的类型是不透明边界。容错重试仍失败时才用**未剪枝的原始字节**生成诊断。WBI 密钥请求是例外：它走 `decodeWBIResponse`，忽略非零业务码且不容错，因为 nav 可能在返回可用签名密钥的同时给出非零 `code`。`out == nil` 表示"只检查状态码与业务码"。
-- **`Execute[Out]` 对返回类型泛型**；子包方法通常实例化为 `*XxxResult`、切片或 `any`。
+客户端构造：`New()` 离线创建；`NewAnonymousClient(ctx)` 取游客 Cookie；`NewWithClient` 独占 Resty 客户端，把其 `Cookies` 复制进 Client 存储并关闭 Jar。直接调 `Resty()` 发请求会绕过签名、Cookie 存储与统一错误处理。
 
-### 参数编码（`params.go`）
+## 接口实现规则
 
-`withParams` 通过反射处理参数结构体。位置与省略行为**只**由 `request` 结构体标签控制，与 `json` 标签无关：
+- **不实现 APP 域名接口**（`app.bilibili.com`、`app.biliapi.com`、`app.biliapi.net`、`club.bilibili.com`）：它们要求 appkey 签名，库不计算。web 接口上的可选 `access_key` 不受此限。
+- 没实测过的接口，不得在注释、文档或提交信息里写成「已验证」；要标注验证状态，只写有可追溯实测记录支撑的结论，不能凭「只读 GET」之类的属性反推。
+- 新接口在对应子包加方法、`XxxParam` / `XxxResult`，并为它单独定义返回模型。
+- `csrf` 通常不作为调用方参数；`RefreshCookieParam.Csrf` 这类字段允许显式覆盖，缺省才回退到 Cookie 快照。
 
-| 标签 | 行为 |
-| --- | --- |
-| （无）／`request:"query"` | URL 查询参数（POST 不会自动转为表单） |
-| `request:"json"` | JSON 请求体字段 |
-| `request:"form-data"` | multipart 文本字段 |
-| `request:"-"` | 跳过该字段（未导出字段同样总是跳过） |
-| `request:"field=name"` | 显式指定参数名；否则取 `json` 标签名；再否则用 Go 字段名的 snake_case |
-| `request:"default=1"` | 零值时使用字符串默认值；与 `omitempty` 同时出现时 `omitempty` 优先，`default` 不生效 |
+## 测试
 
-参数名推导（`toSnakeCase`）把 Go 初始缩写（`ID`、`URL`、`UID`、`API` 等）整体视作一个词，因此 `IDs` -> `ids`、`DynamicID` -> `dynamic_id`。同一字段声明多个位置，或混用 JSON 与 multipart，都会返回错误（`ParamError`）。请求体中只允许一种编码（json **或** form-data）；query 可以与一种请求体并存。
-
-### WBI 签名（`wbi.go`）
-
-`WBI` 从 `/x/web-interface/nav` 获取 `img_url`/`sub_url`，把派生密钥缓存到可替换的 `Storage`（`wbi_storage.go`，默认 `MemoryStorage`），并且**只对 query 参数**签名：追加 `wts` + `w_rid`（排序、清洗后的 query 拼接 mixin key 的 MD5）。密钥在 `updateCheckerInterval`（默认 60 分钟）后刷新。一个可取消的 channel（`wbi.refresh`）用于串行化刷新，且不会产生后台请求。根包通过 `Request.WBI`、子包通过 `(*Client).FillWbi()` 处理函数逐请求启用。注意已记录的坑：WBI 请求不能带 `Referer` 头 —— `FillWbi` 会显式清空它。query 的每个键必须且只能有一个值。
-
-### CSRF
-
-CSRF 从不作为用户填写的字段。处理函数调用 `csrfValue(r)`，它从请求 Cookie 快照读取 `bili_jct`，缺失时返回稳定的"登录过期"错误。`FillCsrf` / `FillFormCsrf` 同时写入 `csrf` 与 `csrf_token`；各接口的处理函数按该接口要求把值放入 query 或表单（两种写法可参考 `live/live.go`）。
-
-## 错误与解码诊断
-
-错误类型定义在 `errors.go`，为 `errors.Is` / `errors.As` 设计：
-
-- `*HTTPError` —— `Method`、`Endpoint`、`StatusCode`。Endpoint 经 `safeEndpoint` 清洗（去掉 query/fragment/user）。不包含响应体、请求头或 Cookie。
-- `Error` —— 响应信封中的业务错误（`code`/`message`）。
-- `*ParamError` —— `RootType`、`GoField`（可能含切片下标，如 `IDs[2]`）、`Parameter`、`Location`，以及包装的 `Err`（`Unwrap`）。`Error()` 刻意不输出参数值和原始错误文本。
-- `*DecodeError` —— `Method`、`Endpoint`、`RootType`、`GoField`、`JSONPath`（例如 `$.data.items[3].modules.module_author.mid`）、`Expected`、`Actual`、从 1 开始计数的 `Offset`、`Exact`，以及包装的 `Err`。
-
-网络故障、取消和超时保留原始错误链（不会转换成 `HTTPError`）。`decode_diagnostic.go` / `decode_fields.go` 实现失败后的 JSON 路径 / 偏移定位；它**仅在**解码失败后运行，绝不重复执行自定义 unmarshaler，当只能定位到边界时标记 `Exact=false`，且始终基于未剪枝的原始字节，因此 `JSONPath` 与 `Offset` 不受容错影响。`DecodeError` 只在容错也失败时返回；被容错丢弃的字段不是错误，改用 `DroppedField` 上报（`decode_tolerate.go`，经 `SetDroppedFieldHandler` 注册），同样不含字段值。不要把 `ParamError.Err`、响应值、Cookie 或凭证泄漏到日志中。
-
-⚠️ **新增的错误要用包级静态变量**（`var errXxx = errors.New(...)`），别在函数里现写。golangci-lint 开着 `err113`（不许定义动态错误）与 `staticcheck` 的 `ST1005`（错误串不能以大写字母开头），而**这两条规则只认标准库的 `errors.New`** —— 库里既有的那些内联写法走的是 `github.com/pkg/errors`，所以历史代码从没被扫到。**新代码别照抄它们**：2026-09-26 加转发接口时，同一个 `errors.New` 连撞这两条。中文错误串尤其容易中 `ST1005`（「B站…」的 B 是拉丁大写）。
-
-## 客户端构造与会话
-
-- `New()` —— 离线创建，不联网；只构造带 B 站风格默认请求头和 20 秒超时的 Resty 客户端，并使用 `NoRedirectPolicy`。
-- `NewAnonymousClient(ctx)` —— 从首页获取游客 Cookie；非 200 或 Cookie 为空时返回错误。构造失败后不要继续使用该客户端。
-- `NewWithClient(restyClient)` —— 取得**独占所有权**：把显式 `Cookies` 复制到 `Client` 存储，清空 `restyClient.Cookies`，并关闭 CookieJar，保证只有一份会话来源。
-- Cookie 辅助方法：`SetRawCookies`（浏览器 `k=v; k=v` 格式）、`GetCookiesString`/`SetCookiesString`（以换行分隔的 `Cookie.String()` 形式）。不要混用这两种格式。同名 Cookie 仅按名称合并（不匹配 domain/path）；正的 `MaxAge` 会被归一化为绝对 `Expires` 并清零 `MaxAge`，因此快照不会续期。
-- `Resty()` 暴露底层客户端以供配置，但直接使用 Resty 发请求会跳过签名、Client Cookie 存储与统一错误处理。
-- 认证流程（扫码 / 密码 / 短信）、Cookie 持久化与 Resty 接管详见 `docs/authentication.md`。
-
-## 命名规范（见 `.github/CONTRIBUTING.md`）
-
-- 方法名逐词翻译中文接口描述（例如 `GetLiveAreaList`）。术语遵循上游接口文档（专栏文集为 `Articles`，专栏文章为 `Article`）。
-- 参数结构体：`XxxParam`；结果结构体：`XxxResult`；列表项使用 `XxxItem` / `XxxListItem`。没有参数就不要建空结构体，传 `nil`。
-- `csrf` 通常不作为调用方传入的参数；`RefreshCookieParam.Csrf` 这类字段允许显式覆盖，缺省时才回退到 Cookie 快照。
-- 返回体隔离规则见「文件组织约定」；同一子包内仍通过前缀避免文件之间的命名冲突。
-- 可能为 `null` 的字段应使用指针，避免 `json.Unmarshal` 失败。
+测试不访问真实 API、不需要凭证，全是纯逻辑用例（签名、参数编码、解码容错等）。`test/` 是独立 Go 模块（自带 `go.mod` + `replace`），被 gitignore，也被 `.golangci.yml` 的 `exclusions.paths` 排除，其依赖与 Go 版本不影响主模块。
 
 ## 行尾
 
-`.gitattributes` 强制 `*.go` 使用 LF。不要让 `core.autocrlf` 检出 CRLF —— 否则 gofmt CI 会把每个文件都报为未格式化。
+`.gitattributes` 强制 `*.go` 与 `Makefile` 为 LF。不要让 `core.autocrlf` 检出 CRLF：gofmt CI 会全量报错，Makefile 的 `\` 续行也会散架。
 
 ## 被忽略的目录
 
-`.gitignore` 忽略了 `test/`、`.idea/`，以及编码助手在本地生成的计划稿目录（具体路径见 `.gitignore`）。该目录下自动生成的内容不要提交；其余可共享的助手配置（如 `settings.json`、`rules/` 等）仍可入库供团队共享。
+`.gitignore` 忽略 `test/`、`.idea/` 与 `tools/sync_docs/`（早期的本地接口文档比对工具，已从仓库移除）。不要提交这些目录的内容。
 
 ## 文档
 
-- `README.md` —— 概览、特性、快速开始、各业务域用法示例、贡献、验证与发版。
-- `docs/authentication.md` —— 游客初始化、扫码 / 密码 / 短信登录、Cookie 保存与恢复、Resty 接管。
-- `docs/request.md` —— `Client.Do` 逃生通道、`request` 标签规则、错误分类、解码诊断。
-- `docs/migration.md` —— 模块路径、分包结构、context 签名、会话规则，以及 v0 各轮重构中的模型与字段重命名。
-- `docs/versioning.md` —— tag 与模块版本的格式约束（含禁止 build metadata）、递增规则、v0 与 v1 之后的兼容性约定。
+索引见 README。细节在 `docs/`：`usage.md`（常用接口示例）、`authentication.md`（登录与会话）、`request.md`（`Client.Do` 契约、参数标签、错误分类）、`migration.md`（迁移记录）、`versioning.md`（tag 与版本规则）。

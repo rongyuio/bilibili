@@ -86,27 +86,28 @@ type GetArticleInfoShareChannel struct {
 
 `master` 已开启分支保护：禁止强推与删除，改动必须经 Pull Request 合入。**不要直接向 `master` 提交或推送**，即使当前账号有权限绕过保护。
 
-1. 从最新的 `master` 切分支，命名为 `<type>/<简短描述>`，`type` 与提交消息的 type 保持一致（如 `ci/race-and-release-guard`、`docs/contributing-and-contacts`）：
+1. 开工前先看当前分支与工作区（`git status`），再按任务目的从最新的 `master` 切分支，命名为 `<type>/<简短描述>`，`type` 只取 `feat`、`fix`、`chore`（如 `feat/aggregate-client`、`fix/param-encoding`）：
 
    ```bash
    git switch master && git pull
-   git switch -c ci/release-guard
+   git switch -c fix/param-encoding
    ```
 
 2. 在分支上提交，消息按下一节的规范书写。
-3. 推送并开 PR，等 CI 通过后合并：
+3. 验收通过后推送并开 PR，CI 通过后合并：
 
    ```bash
-   git push -u origin ci/release-guard
+   git push -u origin fix/param-encoding
    gh pr create --fill
    ```
 
 若不慎已在本地 `master` 提交、且尚未推送，按下面方式补救，**不要强推**：
 
 ```bash
-git branch <type>/<描述>        # 在当前位置建分支，保住提交
+git status --porcelain          # 工作区必须为空；有改动先 git stash
+git branch <type>/<描述>         # 在当前位置建分支，保住提交
 git reset --hard origin/master  # 本地 master 回退到远端状态
-git switch <type>/<描述>        # 切到分支继续
+git switch <type>/<描述>         # 切到分支继续
 ```
 
 ## 关于提交消息
@@ -126,18 +127,13 @@ git switch <type>/<描述>        # 切到分支继续
 | type | 用途 |
 | --- | --- |
 | `feat` | 新增接口或功能 |
-| `feature` | `feat` 的别名，label 同样归入 `feat` |
 | `fix` | 修复缺陷 |
-| `refactor` | 重构，不改变对外行为 |
 | `docs` | 文档、注释、示例 |
+| `refactor` | 重构，不改变对外行为 |
 | `test` | 测试 |
-| `chore` | 构建、依赖、工具链等杂项 |
-| `build` | 构建系统或依赖变更，label 归入 `chore` |
-| `ci` | CI 配置 |
-| `style` | 仅格式调整，label 归入 `chore` |
-| `perf` | 性能优化，label 归入 `chore` |
+| `chore` | 构建、依赖、工具链、CI 等杂项 |
 
-PR 标题同样使用上述格式：`.github/workflows/label.yml` 会根据前缀自动打 label——`feat`/`feature` 打 `feat`，`fix`、`docs`、`refactor`、`test`、`ci` 各打同名 label，`chore`/`build`/`style`/`perf` 统一打 `chore`；标题含 `!` 时追加 `breaking`。Release Notes 依据这些 label 分类——所以 PR 标题的 `type` 不要省略，也不要使用上表之外的 `type`，否则不会打 label，只会落到兜底的「其它变更」。
+PR 标题同样使用上述格式：`.github/workflows/label.yml` 会根据前缀自动打 label——`feat`、`fix`、`docs`、`refactor`、`test`、`chore` 各打同名 label；标题含 `!` 时追加 `breaking`。历史提交里出现过的 `feature` / `build` / `style` / `perf` / `ci` 仍按既有映射打 label（`feature`→`feat`，`build`/`style`/`perf`→`chore`，`ci`→`ci`），只为兼容旧记录，新提交不要使用。Release Notes 依据这些 label 分类——所以 PR 标题的 `type` 不要省略。新提交与 PR 标题只使用上表六类；上表之外的 `type` 不会打 label，只会落到兜底的「其它变更」。上句列出的历史别名是唯一例外，仍按既有映射归档。
 
 `scope` 使用受影响的模块或文件名，例如：
 

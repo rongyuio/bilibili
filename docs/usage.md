@@ -229,33 +229,6 @@ err := root.Do(ctx, bilibili.Request{
 
 ## 错误处理
 
-错误类型按 `errors.Is` / `errors.As` 设计：网络故障、取消与超时保留原始错误链，`*HTTPError`、`Error`、`*ParamError`、`*DecodeError` 可依次提取。子包接口返回的也是这些根包类型。
+子包接口返回的错误与根包一致，都可用 `errors.Is` / `errors.As`：网络故障、取消与超时保留原始错误链，`*HTTPError`、`Error`、`*ParamError`、`*DecodeError` 依次可提取。
 
-```go
-var he *bilibili.HTTPError
-var be bilibili.Error
-switch {
-case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
-    return
-case errors.As(err, &he):
-    log.Printf("接口=%s %s HTTP状态=%d", he.Method, he.Endpoint, he.StatusCode)
-case errors.As(err, &be):
-    log.Printf("业务错误码=%d", be.Code)
-default:
-    // 参数与解码失败仍可继续用 errors.As 提取 ParamError、DecodeError。
-    log.Print("请求失败")
-}
-```
-
-`ParamError` 提供参数类型、字段与位置；`DecodeError` 提供 JSON 路径、Go 字段及预期类型。完整示例见 [请求与错误处理](request.md)；记录错误时不要输出 Cookie、凭证或完整响应。
-
-单个字段的 JSON 类型与模型不符时，该字段被丢弃（保持零值）并上报，其余字段照常解码；`DecodeError` 只在这类容错也失败时返回。需要感知漂移时注册回调：
-
-```go
-root.SetDroppedFieldHandler(func(field bilibili.DroppedField) {
-    log.Printf("接口=%s JSON路径=%s 预期=%s 实际=%s",
-        field.Endpoint, field.JSONPath, field.Expected, field.Actual)
-})
-```
-
-回调在同一条响应内可能被多次调用，且可能在并发请求中执行。规则边界见 [请求与错误处理](request.md#单个字段类型不符时的容错)。
+错误分类与判定顺序、解码失败的路径定位、单字段类型漂移的容错与 `SetDroppedFieldHandler` 上报，见 [请求与错误处理](request.md)。记录错误时不要输出 Cookie、凭证或完整响应。

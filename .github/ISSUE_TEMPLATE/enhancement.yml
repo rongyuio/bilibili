@@ -1,6 +1,6 @@
 name: 新的API接口
 description: "某个API接口在本项目中没有"
-labels: [新特性]
+labels: [feat]
 body:
 - type: textarea
   id: request
