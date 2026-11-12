@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/rongyuio/bilibili"
@@ -14,6 +16,11 @@ import (
 
 // sendLiveDanmakuOKResponse 是发送弹幕成功的标准响应。
 const sendLiveDanmakuOKResponse = `{"code":0,"message":"0","data":{"mode_info":{"mode":1,"show_player_type":0,"extra":""}}}`
+
+// sendLiveDanmakuNavResponse 提供 WBI 签名所需的固定密钥。
+const sendLiveDanmakuNavResponse = `{"code":0,"message":"0","data":{"wbi_img":{` +
+	`"img_url":"https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png",` +
+	`"sub_url":"https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08f87e641.png"}}}`
 
 // sendLiveDanmakuCapture 记录测试服务收到的表单与 query。
 type sendLiveDanmakuCapture struct {
@@ -39,30 +46,38 @@ func TestSendLiveDanmakuDmType(t *testing.T) {
 	tests := []struct {
 		name       string
 		dmType     int
-		wantDmType string // 空字符串表示表单里不应出现 dm_type
+		dataExtend string
+		rnd        int64
+		wantDmType string
+		wantData   string
 	}{
-		{name: "文本弹幕不带 dm_type", dmType: 0, wantDmType: ""},
-		{name: "表情弹幕带 dm_type=1", dmType: 1, wantDmType: "1"},
-		{name: "非 1 的类型保留原值", dmType: 2, wantDmType: "2"},
+		{name: "文本弹幕", wantData: "{}"},
+		{name: "表情弹幕", dmType: 1, wantDmType: "1", wantData: "{}"},
+		{name: "保留非 1 类型", dmType: 2, wantDmType: "2", wantData: "{}"},
+		{name: "自定义附加上报", dataExtend: `{"room_category":"1"}`, wantData: `{"room_category":"1"}`},
+		{name: "固定随机数", rnd: 1234567890, wantData: "{}"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			capture := &sendLiveDanmakuCapture{}
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.URL.Path == "/x/web-interface/nav" {
+					_, _ = w.Write([]byte(sendLiveDanmakuNavResponse))
+					return
+				}
 				if err := r.ParseForm(); err != nil {
 					t.Errorf("解析表单失败: %v", err)
 				}
 				capture.record(r.PostForm, r.URL.Query())
-				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(sendLiveDanmakuOKResponse))
 			}))
 			defer server.Close()
 
 			client := sendLiveDanmakuClientForTest(t, server.URL)
 			result, err := client.SendLiveDanmaku(context.Background(), SendLiveDanmakuParam{
-				RoomID: 196,
-				Msg:    "测试弹幕",
-				DmType: tt.dmType,
+				RoomID: 196, Msg: "测试弹幕", DmType: tt.dmType,
+				DataExtend: tt.dataExtend, Rnd: tt.rnd,
 			})
 			if err != nil {
 				t.Fatalf("SendLiveDanmaku 返回错误: %v", err)
@@ -82,27 +97,34 @@ func TestSendLiveDanmakuDmType(t *testing.T) {
 			case tt.wantDmType != "" && (len(got) != 1 || got[0] != tt.wantDmType):
 				t.Fatalf("dm_type = %v，期望 %q", got, tt.wantDmType)
 			}
-			if len(query) != 0 {
-				t.Errorf("表单字段应全部从 query 移出，残留: %v", query)
+			if query.Get("web_location") != liveDanmakuWebLocation ||
+				query.Get("w_rid") == "" || query.Get("wts") == "" {
+				t.Fatalf("query 缺少 web_location 或 WBI 签名: %v", query)
+			}
+			if len(query) != 3 {
+				t.Errorf("query 只应包含 web_location 与 WBI 字段: %v", query)
 			}
 
 			want := map[string]string{
-				"msg":        "测试弹幕",
-				"roomid":     "196",
-				"bubble":     "0",
-				"color":      "16777215",
-				"fontsize":   "25",
-				"mode":       "1",
-				"rnd":        "1",
-				"csrf":       "test-csrf",
-				"csrf_token": "test-csrf",
+				"msg": "测试弹幕", "roomid": "196", "bubble": "0",
+				"color": "16777215", "fontsize": "25", "mode": "1",
+				"data_extend": tt.wantData,
+				"csrf":        "test-csrf", "csrf_token": "test-csrf",
 			}
 			for key, value := range want {
 				if gotValue := form.Get(key); gotValue != value {
 					t.Errorf("表单 %s = %q，期望 %q", key, gotValue, value)
 				}
 			}
-			wantLen := len(want)
+			if tt.rnd != 0 {
+				if gotValue := form.Get("rnd"); gotValue != strconv.FormatInt(tt.rnd, 10) {
+					t.Errorf("rnd = %q，期望 %d", gotValue, tt.rnd)
+				}
+			} else if rnd, err := strconv.ParseInt(form.Get("rnd"), 10, 64); err != nil ||
+				rnd < time.Now().Add(-time.Minute).Unix() {
+				t.Errorf("默认 rnd 不是当前 Unix 秒: %q", form.Get("rnd"))
+			}
+			wantLen := len(want) + 1
 			if tt.wantDmType != "" {
 				wantLen++
 			}
@@ -112,7 +134,6 @@ func TestSendLiveDanmakuDmType(t *testing.T) {
 		})
 	}
 }
-
 func sendLiveDanmakuClientForTest(t *testing.T, endpoint string) *Client {
 	t.Helper()
 	target, err := url.Parse(endpoint)

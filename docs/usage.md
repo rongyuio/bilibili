@@ -189,7 +189,7 @@ for _, module := range list.RoomList {
 
 `l.GetLiveHotRankList` 获取首页人气榜，条目中的 `LotStatus`/`RedPocketStatus` 可低成本初筛有抽奖或红包活动的房间。
 
-`l.SendLiveDanmaku` 向直播间发送一条文本弹幕，CSRF 自动从 Cookie 的 `bili_jct` 填入。服务端对弹幕有频率与长度限制（普通用户单条 20 字符），库不代为限流，需要批量发送时由调用方控制节奏：
+`l.SendLiveDanmaku` 向直播间发送一条弹幕，CSRF 自动从 Cookie 的 `bili_jct` 填入。请求与网页播放器一致：query 带 `web_location=444.8` 并做 WBI 签名；表单带 `data_extend`（默认 `{}`）和 `rnd`（默认当前 Unix 秒）。服务端对弹幕有频率与长度限制（普通用户单条 20 字符），库不代为限流，需要批量发送时由调用方控制节奏：
 
 ```go
 _, err := l.SendLiveDanmaku(ctx, live.SendLiveDanmakuParam{
