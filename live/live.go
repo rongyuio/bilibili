@@ -460,7 +460,8 @@ const (
 	liveDanmakuDefaultColor    = 16777215 // 白色
 	liveDanmakuDefaultFontSize = 25       // 标准字号
 	liveDanmakuDefaultMode     = 1        // 滚动弹幕
-	liveDanmakuDefaultRnd      = 1        // 固定值，源实现如此
+	liveDanmakuWebLocation     = "444.8"  // 直播间页面的 spm_prefix，WBI 签名用
+	liveDanmakuEmptyDataExtend = "{}"     // 无附加上报时网页端发送的 JSON
 )
 
 // SendLiveDanmakuParam 指定要发送的直播弹幕，CSRF 自动填入表单。
@@ -474,20 +475,28 @@ type SendLiveDanmakuParam struct {
 	FontSize int    // 弹幕字号；0 表示默认 25
 	Mode     int    // 弹幕模式；0 表示默认滚动弹幕
 	Bubble   int    // 气泡 id；0 表示不使用气泡
+	DmType   int    // 弹幕类型；0 表示文本弹幕，1 表示表情弹幕；非 0 时才随表单发送
+
+	// Rnd 是请求随机数；0 表示使用当前 Unix 秒，与网页端一致。
+	Rnd int64
+	// DataExtend 是附加上报 JSON；留空时发送 {}，与网页端一致。
+	DataExtend string
 }
 
 // sendLiveDanmakuForm 是发送直播弹幕的表单字段。
 type sendLiveDanmakuForm struct {
-	Msg      string `json:"msg"`
-	RoomID   int64  `json:"roomid"`
-	Bubble   int    `json:"bubble"`
-	Color    int    `json:"color"`
-	FontSize int    `json:"fontsize"`
-	Mode     int    `json:"mode"`
-	Rnd      int    `json:"rnd"`
+	Msg        string `json:"msg"`
+	RoomID     int64  `json:"roomid"`
+	Bubble     int    `json:"bubble"`
+	Color      int    `json:"color"`
+	FontSize   int    `json:"fontsize"`
+	Mode       int    `json:"mode"`
+	DmType     int    `json:"dm_type" request:"query,omitempty"` // 弹幕类型；0 时不发送该字段
+	Rnd        int64  `json:"rnd"`
+	DataExtend string `json:"data_extend"`
 }
 
-// SendLiveDanmaku 发送一条直播弹幕（文本，非表情）。需要登录态：CSRF 取自 Cookie
+// SendLiveDanmaku 发送一条直播弹幕。需要登录态：CSRF 取自 Cookie
 // 的 bili_jct，由库自动填入。
 func (c *Client) SendLiveDanmaku(ctx context.Context, param SendLiveDanmakuParam) (*SendLiveDanmakuResult, error) {
 	color := param.Color
@@ -503,19 +512,40 @@ func (c *Client) SendLiveDanmaku(ctx context.Context, param SendLiveDanmakuParam
 		mode = liveDanmakuDefaultMode
 	}
 
+	rndSec := param.Rnd
+	if rndSec == 0 {
+		rndSec = time.Now().Unix()
+	}
+	dataExtend := param.DataExtend
+	if dataExtend == "" {
+		dataExtend = liveDanmakuEmptyDataExtend
+	}
+
 	const (
 		method = resty.MethodPost
 		url    = "https://api.live.bilibili.com/msg/send"
 	)
+	formKeys := []string{"msg", "roomid", "bubble", "color", "fontsize", "mode", "rnd", "data_extend"}
+	if param.DmType != 0 {
+		// dm_type 是可选字段，只有表情弹幕等非文本类型才随表单发送。
+		formKeys = append(formKeys, "dm_type")
+	}
+	// 网页播放器把表单字段放进 body，只对 query 里的 web_location 做 WBI 签名。
+	// 因此先移走表单字段，再补 web_location 并签名；FillWbi 会清空 Referer，
+	// liveReferer 必须放在最后恢复直播域请求头。
 	return bilibili.Execute[*SendLiveDanmakuResult](ctx, c.Client, method, url, sendLiveDanmakuForm{
-		Msg:      param.Msg,
-		RoomID:   param.RoomID,
-		Bubble:   param.Bubble,
-		Color:    color,
-		FontSize: fontSize,
-		Mode:     mode,
-		Rnd:      liveDanmakuDefaultRnd,
-	}, bilibili.MoveFormParams("msg", "roomid", "bubble", "color", "fontsize", "mode", "rnd"),
+		Msg:        param.Msg,
+		RoomID:     param.RoomID,
+		Bubble:     param.Bubble,
+		Color:      color,
+		FontSize:   fontSize,
+		Mode:       mode,
+		DmType:     param.DmType,
+		Rnd:        rndSec,
+		DataExtend: dataExtend,
+	}, bilibili.MoveFormParams(formKeys...),
+		bilibili.FillParam("web_location", liveDanmakuWebLocation),
+		c.FillWbi(),
 		bilibili.FillFormCsrf(c.Client),
 		liveReferer(param.RoomID))
 }

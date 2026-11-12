@@ -189,13 +189,42 @@ for _, module := range list.RoomList {
 
 `l.GetLiveHotRankList` 获取首页人气榜，条目中的 `LotStatus`/`RedPocketStatus` 可低成本初筛有抽奖或红包活动的房间。
 
-`l.SendLiveDanmaku` 向直播间发送一条文本弹幕，CSRF 自动从 Cookie 的 `bili_jct` 填入。服务端对弹幕有频率与长度限制（普通用户单条 20 字符），库不代为限流，需要批量发送时由调用方控制节奏：
+`l.SendLiveDanmaku` 向直播间发送一条弹幕，CSRF 自动从 Cookie 的 `bili_jct` 填入。请求与网页播放器一致：query 带 `web_location=444.8` 并做 WBI 签名；表单带 `data_extend`（默认 `{}`）和 `rnd`（默认当前 Unix 秒）。服务端对弹幕有频率与长度限制（普通用户单条 20 字符），库不代为限流，需要批量发送时由调用方控制节奏：
 
 ```go
 _, err := l.SendLiveDanmaku(ctx, live.SendLiveDanmakuParam{
     RoomID: 23058, Msg: "打卡",
 })
+// 表情弹幕：DmType = 1，Msg 传表情的显示文本。
+_, err = l.SendLiveDanmaku(ctx, live.SendLiveDanmakuParam{
+    RoomID: 23058, Msg: "[微笑]", DmType: 1,
+})
 ```
+
+### 直播弹幕信息流
+
+`livestream.New(root).Connect` 建立直播弹幕 WebSocket 信息流。库会解析房间真实 id、用根客户端的 WBI 签名取 `getDanmuInfo`、补全 `buvid3`、构造认证包、维持 30 秒心跳，并展开 zlib / brotli 压缩帧。断线后自动轮换节点重连，认证回复 `-101` 时刷新 token，`-352` 时切到公共节点。`Events()` 返回带 `Cmd` 与原始 JSON 的事件；`Parse` 可把常见命令解析为弱结构化对象，`SEND_GIFT_V2`、`INTERACT_WORD_V2`、`ONLINE_RANK_V2/V3` 会解码为 protobuf 模型，`dm_v2` 可用 `ParseDanmakuPB` 单独解析。未登录也能连接，但服务端会隐藏部分用户昵称。
+
+```go
+ls := livestream.New(root)
+stream, err := ls.Connect(ctx, livestream.ConnectOptions{RoomID: 23058})
+if err != nil {
+    return err
+}
+defer stream.Close()
+for event := range stream.Events() {
+    switch event.Cmd {
+    case "DANMU_MSG":
+        parsed, _ := livestream.Parse(event)
+        message := parsed.(livestream.DanmakuMessage)
+        _ = message.Text
+    default:
+        // 其它命令保留 event.Raw，由调用方自行解析。
+    }
+}
+```
+
+`Connect` 的 ctx 只约束连接准备阶段；连接生命周期由 `Stream.Close()` 控制。主动关闭时 `Done()` 关闭、`Events()` 关闭，结束原因可读取 `Err()`。需要测试或自定义代理时提供 `WebSocketDialer`；需要明文 WS、调整认证协议版本、心跳间隔、入房时限、读空闲时限、重连间隔或事件缓冲时使用 `ConnectOptions`。`Parse` 覆盖常见 JSON 命令和主要 V2 protobuf 命令，B 站命令字段随版本变化，未覆盖或字段漂移的命令仍可通过 `Event.Raw` 处理。V2 字段号来自 `Akegarasu/blivedm-go` 的 MIT 授权定义，本库手写 wire-format 解码，不引入 protobuf 运行时。
 
 ### Web 端观看时长上报
 
