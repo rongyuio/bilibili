@@ -187,7 +187,7 @@ func exprString(fset *token.FileSet, e ast.Expr) string {
 var wordBreaks = []string{
 	"video", "ranking", "app", "widget", "black", "room",
 	"client", "info", "creative", "center", "customer", "service",
-	"newbie", "exam", "web",
+	"newbie", "exam", "web", "live", "stream",
 }
 
 func fieldName(pkg string) string {

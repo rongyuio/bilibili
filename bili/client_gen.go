@@ -24,6 +24,7 @@ import (
 	"github.com/rongyuio/bilibili/garb"
 	"github.com/rongyuio/bilibili/history"
 	"github.com/rongyuio/bilibili/live"
+	"github.com/rongyuio/bilibili/livestream"
 	"github.com/rongyuio/bilibili/login"
 	"github.com/rongyuio/bilibili/lottery"
 	"github.com/rongyuio/bilibili/message"
@@ -63,6 +64,7 @@ type Client struct {
 	Garb            *garb.Client
 	History         *history.Client
 	Live            *live.Client
+	LiveStream      *livestream.Client
 	Login           *login.Client
 	Lottery         *lottery.Client
 	Message         *message.Client
@@ -102,6 +104,7 @@ func newClient(root *bilibili.Client) *Client {
 		Garb:            garb.New(root),
 		History:         history.New(root),
 		Live:            live.New(root),
+		LiveStream:      livestream.New(root),
 		Login:           login.New(root),
 		Lottery:         lottery.New(root),
 		Message:         message.New(root),
