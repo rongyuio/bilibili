@@ -474,6 +474,7 @@ type SendLiveDanmakuParam struct {
 	FontSize int    // 弹幕字号；0 表示默认 25
 	Mode     int    // 弹幕模式；0 表示默认滚动弹幕
 	Bubble   int    // 气泡 id；0 表示不使用气泡
+	DmType   int    // 弹幕类型；0 表示文本弹幕，1 表示表情弹幕；非 0 时才随表单发送
 }
 
 // sendLiveDanmakuForm 是发送直播弹幕的表单字段。
@@ -484,10 +485,11 @@ type sendLiveDanmakuForm struct {
 	Color    int    `json:"color"`
 	FontSize int    `json:"fontsize"`
 	Mode     int    `json:"mode"`
+	DmType   int    `json:"dm_type" request:"query,omitempty"` // 弹幕类型；0 时不发送该字段
 	Rnd      int    `json:"rnd"`
 }
 
-// SendLiveDanmaku 发送一条直播弹幕（文本，非表情）。需要登录态：CSRF 取自 Cookie
+// SendLiveDanmaku 发送一条直播弹幕。需要登录态：CSRF 取自 Cookie
 // 的 bili_jct，由库自动填入。
 func (c *Client) SendLiveDanmaku(ctx context.Context, param SendLiveDanmakuParam) (*SendLiveDanmakuResult, error) {
 	color := param.Color
@@ -507,6 +509,11 @@ func (c *Client) SendLiveDanmaku(ctx context.Context, param SendLiveDanmakuParam
 		method = resty.MethodPost
 		url    = "https://api.live.bilibili.com/msg/send"
 	)
+	formKeys := []string{"msg", "roomid", "bubble", "color", "fontsize", "mode", "rnd"}
+	if param.DmType != 0 {
+		// dm_type 是可选字段，只有表情弹幕等非文本类型才随表单发送。
+		formKeys = append(formKeys, "dm_type")
+	}
 	return bilibili.Execute[*SendLiveDanmakuResult](ctx, c.Client, method, url, sendLiveDanmakuForm{
 		Msg:      param.Msg,
 		RoomID:   param.RoomID,
@@ -514,8 +521,9 @@ func (c *Client) SendLiveDanmaku(ctx context.Context, param SendLiveDanmakuParam
 		Color:    color,
 		FontSize: fontSize,
 		Mode:     mode,
+		DmType:   param.DmType,
 		Rnd:      liveDanmakuDefaultRnd,
-	}, bilibili.MoveFormParams("msg", "roomid", "bubble", "color", "fontsize", "mode", "rnd"),
+	}, bilibili.MoveFormParams(formKeys...),
 		bilibili.FillFormCsrf(c.Client),
 		liveReferer(param.RoomID))
 }

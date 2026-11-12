@@ -195,6 +195,10 @@ for _, module := range list.RoomList {
 _, err := l.SendLiveDanmaku(ctx, live.SendLiveDanmakuParam{
     RoomID: 23058, Msg: "打卡",
 })
+// 表情弹幕：DmType = 1，Msg 传表情的显示文本。
+_, err = l.SendLiveDanmaku(ctx, live.SendLiveDanmakuParam{
+    RoomID: 23058, Msg: "[微笑]", DmType: 1,
+})
 ```
 
 ### 直播弹幕信息流
