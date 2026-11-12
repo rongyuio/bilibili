@@ -1,10 +1,7 @@
 package livestream
 
 import (
-	"errors"
 	"io"
-
-	"github.com/gorilla/websocket"
 )
 
 // danmakuReadResult 是一次异步读取的结果。
@@ -23,23 +20,4 @@ func readAllLimited(reader io.Reader) ([]byte, error) {
 		return nil, errDanmakuPacketTooLarge
 	}
 	return data, nil
-}
-
-// readDanmakuPacket 把阻塞读取交给独立 goroutine，使心跳不依赖服务端是否下发消息。
-func readDanmakuPacket(conn *websocket.Conn, result chan<- danmakuReadResult) {
-	messageType, reader, err := conn.NextReader()
-	if err != nil {
-		if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-			result <- danmakuReadResult{err: errDanmakuClosed}
-			return
-		}
-		result <- danmakuReadResult{err: err}
-		return
-	}
-	if messageType != websocket.BinaryMessage {
-		result <- danmakuReadResult{err: errors.New("live danmaku expected binary message")}
-		return
-	}
-	data, err := readAllLimited(reader)
-	result <- danmakuReadResult{data: data, err: err}
 }

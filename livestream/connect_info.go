@@ -59,10 +59,19 @@ type ConnectOptions struct {
 	RoomID int64
 	// UseTLS 为 true 时使用 WSS，默认 true；false 时使用明文 WS。
 	UseTLS *bool
-	// AuthProtover 是认证包声明的协议版本，默认 2（zlib）；可传 0、1、2、3。
-	AuthProtover uint16
+	// AuthProtover 是认证包声明的协议版本，可传 0（明文 JSON）、1（心跳明文）、
+	// 2（zlib）、3（brotli）。nil 表示使用默认值 3；需要强制某个版本时传指针。
+	AuthProtover *uint16
 	// HeartbeatInterval 是心跳间隔，默认 30 秒；小于等于 0 时使用默认值。
 	HeartbeatInterval time.Duration
+	// JoinTimeout 是等待认证回复的时限，默认 10 秒；小于等于 0 时使用默认值。
+	JoinTimeout time.Duration
+	// ReadIdleTimeout 是连接建立后允许的最长无有效消息间隔，默认 75 秒。
+	// 小于等于 0 时使用默认值。
+	ReadIdleTimeout time.Duration
+	// ReconnectDelay 是自动重连的基础等待时间，默认 3 秒；小于等于 0 时使用默认值。
+	// 不希望断线重连时主动调用 Stream.Close。
+	ReconnectDelay time.Duration
 	// EventBufferSize 是事件 channel 缓冲，默认 64；小于等于 0 时使用默认值。
 	EventBufferSize int
 	// Dialer 覆盖 WebSocket 拨号器；nil 时使用默认拨号器。
@@ -75,7 +84,7 @@ type danmakuConnectionInfo struct {
 	UID      int64
 	Buvid3   string
 	Token    string
-	Host     getDanmuInfoHost
+	Hosts    []getDanmuInfoHost
 	UseTLS   bool
 	Protover uint16
 }
@@ -95,24 +104,27 @@ func (c *Client) connectInfo(ctx context.Context, options ConnectOptions) (danma
 	}
 	info.RoomID = room.RoomID
 
-	danmuInfo, err := bilibili.Execute[*getDanmuInfoResult](ctx, c.Client, http.MethodGet,
-		"https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo",
-		getDanmuInfoParams{ID: room.RoomID, Type: 0, WebLocation: "444.8"}, c.FillWbi())
+	danmuInfo, err := c.danmuInfo(ctx, room.RoomID)
 	if err != nil {
 		return info, fmt.Errorf("get live danmaku info: %w", err)
 	}
-	if danmuInfo == nil || len(danmuInfo.HostList) == 0 {
+	if danmuInfo == nil {
 		return info, errDanmakuInfoNoHost
 	}
 	info.Token = danmuInfo.Token
-	info.Host = danmuInfo.HostList[0]
+	info.Hosts = append(info.Hosts, danmuInfo.HostList...)
+	// 公共节点始终作为最后一个候选，触发风控或主要节点不可达时可轮换到它。
+	// 服务端偶发返回空列表或重复节点，这里去重，避免把同一节点试两遍。
+	if len(info.Hosts) == 0 || !sameDanmakuHost(info.Hosts[len(info.Hosts)-1], fallbackDanmakuHost()) {
+		info.Hosts = append(info.Hosts, fallbackDanmakuHost())
+	}
 	info.UseTLS = options.UseTLS == nil || *options.UseTLS
-	info.Protover = options.AuthProtover
+	info.Protover = danmakuDefaultAuthProto
+	if options.AuthProtover != nil {
+		info.Protover = *options.AuthProtover
+	}
 	if info.Protover > danmakuProtoBrotli {
 		return info, fmt.Errorf("%w: %d", errDanmakuUnknownProto, info.Protover)
-	}
-	if info.Protover == 0 {
-		info.Protover = danmakuDefaultAuthProto
 	}
 
 	info.UID, info.Buvid3, err = c.identity(ctx)
@@ -120,6 +132,13 @@ func (c *Client) connectInfo(ctx context.Context, options ConnectOptions) (danma
 		return info, err
 	}
 	return info, nil
+}
+
+// danmuInfo 获取弹幕服务器 token 与节点列表，WBI 签名复用根客户端缓存。
+func (c *Client) danmuInfo(ctx context.Context, roomID int64) (*getDanmuInfoResult, error) {
+	return bilibili.Execute[*getDanmuInfoResult](ctx, c.Client, http.MethodGet,
+		"https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo",
+		getDanmuInfoParams{ID: roomID, Type: 0, WebLocation: "444.8"}, c.FillWbi())
 }
 
 // identity 从会话 Cookie 读取 UID，缺失 buvid3 时向指纹接口补全。
@@ -181,6 +200,16 @@ func authPacket(info danmakuConnectionInfo) ([]byte, error) {
 	return encodeDanmakuPacket(danmakuProtoHeartbeat, danmakuOpAuth, body), nil
 }
 
+// fallbackDanmakuHost 是网页端在主要节点之外追加的公共回退节点。
+func fallbackDanmakuHost() getDanmuInfoHost {
+	return getDanmuInfoHost{Host: danmakuFallbackHost, WSPort: 2244, WSSPort: 443}
+}
+
+func sameDanmakuHost(a, b getDanmuInfoHost) bool {
+	return a.Host == b.Host && a.WSPort == b.WSPort && a.WSSPort == b.WSSPort
+}
+
+// heartbeatPacket 使用空对象作为心跳体，与网页端及主流开源实现一致。
 func heartbeatPacket() []byte {
-	return encodeDanmakuPacket(danmakuProtoHeartbeat, danmakuOpHeartbeat, []byte("[object Object]"))
+	return encodeDanmakuPacket(danmakuProtoHeartbeat, danmakuOpHeartbeat, []byte("{}"))
 }

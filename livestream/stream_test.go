@@ -76,7 +76,7 @@ func TestConnectLiveDanmakuStream(t *testing.T) {
 	stream, err := client.Connect(context.Background(), ConnectOptions{
 		RoomID:            1,
 		UseTLS:            &useWS,
-		AuthProtover:      danmakuProtoPlain,
+		AuthProtover:      protoverPointer(danmakuProtoPlain),
 		HeartbeatInterval: 40 * time.Millisecond,
 		Dialer:            testWSDialer(t, server.URL),
 	})
@@ -160,3 +160,6 @@ func testWSDialer(t *testing.T, endpoint string) WebSocketDialer {
 		dialer:  &dialer,
 	}
 }
+
+// protoverPointer 便于测试指定认证协议版本。
+func protoverPointer(value uint16) *uint16 { return &value }

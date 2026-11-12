@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // 直播弹幕常见命令的结构化事件。未知命令保留 Event.Raw，由调用方自行解析。
@@ -67,22 +68,37 @@ type InteractMessage struct {
 }
 
 // Parse 把原始事件解码为常见命令的弱结构化对象。
-// 字段随 B 站命令版本变化；未识别字段与该命令的完整 JSON 仍保留在 Raw 中。
+// V2 命令返回 protobuf 解析结果；未识别字段与该命令的完整 JSON 仍保留在 Raw 中。
 func Parse(event Event) (any, error) {
-	switch event.Cmd {
-	case "DANMU_MSG":
+	cmd := commandName(event.Cmd)
+	switch cmd {
+	case "DANMU_MSG", "DANMU_MSG_MIRROR":
 		return parseDanmakuMessage(event.Raw)
 	case "SEND_GIFT":
 		return parseGiftMessage(event.Raw)
-	case "GUARD_BUY", "USER_TOAST_MSG":
+	case "SEND_GIFT_V2":
+		return ParseSendGiftV2(event.Raw)
+	case "GUARD_BUY", "USER_TOAST_MSG", "USER_TOAST_MSG_V2":
 		return parseGuardMessage(event.Raw)
 	case "SUPER_CHAT_MESSAGE":
 		return parseSuperChatMessage(event.Raw)
 	case "INTERACT_WORD", "ENTRY_EFFECT", "LIKE_INFO_V3_CLICK":
 		return parseInteractMessage(event.Raw)
+	case "INTERACT_WORD_V2":
+		return ParseInteractWordV2(event.Raw)
+	case "ONLINE_RANK_V2", "ONLINE_RANK_V3":
+		return ParseOnlineRankPB(event.Raw)
+	case "LIVE", "PREPARING":
+		return event.Raw, nil
 	default:
 		return nil, fmt.Errorf("%w: unsupported command %q", errDanmakuDecodeEvent, event.Cmd)
 	}
+}
+
+// commandName 去掉 DANMU_MSG:4:0:2:2:2:0 这类命令后缀参数。
+func commandName(cmd string) string {
+	name, _, _ := strings.Cut(cmd, ":")
+	return name
 }
 
 func parseDanmakuMessage(raw []byte) (DanmakuMessage, error) {
@@ -99,35 +115,94 @@ func parseDanmakuMessage(raw []byte) (DanmakuMessage, error) {
 	if err := json.Unmarshal(envelope.Info[1], &message.Text); err != nil {
 		return DanmakuMessage{}, fmt.Errorf("%w: %w", errDanmakuDecodeEvent, err)
 	}
-	if len(envelope.Info) > 2 {
-		var user []json.RawMessage
-		if json.Unmarshal(envelope.Info[2], &user) == nil && len(user) > 0 {
-			_ = json.Unmarshal(user[0], &message.UID)
-			if len(user) > 1 {
-				_ = json.Unmarshal(user[1], &message.Uname)
-			}
-			if len(user) > 2 {
-				_ = json.Unmarshal(user[2], &message.Admin)
-			}
-			if len(user) > 3 {
-				_ = json.Unmarshal(user[3], &message.VIP)
-			}
-		}
-	}
-	if len(envelope.Info) > 3 {
-		var medal []json.RawMessage
-		if json.Unmarshal(envelope.Info[3], &medal) == nil && len(medal) > 10 {
-			_ = json.Unmarshal(medal[10], &message.Guard)
-		}
-	}
-	if len(envelope.Info) > 0 {
-		var basic []json.RawMessage
-		if json.Unmarshal(envelope.Info[0], &basic) == nil && len(basic) > 3 {
-			_ = json.Unmarshal(basic[3], &message.Color)
-			_ = json.Unmarshal(basic[1], &message.Mode)
+	user := parseDanmakuUser(envelope.Info)
+	message.UID, message.Uname, message.Admin, message.VIP = user.UID, user.Uname, user.Admin, user.VIP
+	message.Guard = parseDanmakuGuard(envelope.Info)
+	style := parseDanmakuStyle(envelope.Info)
+	message.Color, message.Mode = style.Color, style.Mode
+	// info[0][15].user 是网页端展开 dm_v2 后的用户信息，比 info[2] 更完整。
+	// 只在旧字段缺失时补齐，避免覆盖 JSON 主结构已有的值。
+	if message.UID == 0 {
+		uid, name := parseDanmakuNestedUser(envelope.Info)
+		message.UID = uid
+		if message.Uname == "" {
+			message.Uname = name
 		}
 	}
 	return message, nil
+}
+
+type danmakuJSONUser struct {
+	UID   int64
+	Uname string
+	Admin bool
+	VIP   bool
+}
+
+func parseDanmakuUser(info []json.RawMessage) danmakuJSONUser {
+	var user []json.RawMessage
+	if len(info) < 3 || json.Unmarshal(info[2], &user) != nil {
+		return danmakuJSONUser{}
+	}
+	var uid int64
+	var uname string
+	var admin, vip bool
+	assign := func(index int, dst any) {
+		if len(user) > index {
+			_ = json.Unmarshal(user[index], dst)
+		}
+	}
+	assign(0, &uid)
+	assign(1, &uname)
+	assign(2, &admin)
+	assign(3, &vip)
+	return danmakuJSONUser{UID: uid, Uname: uname, Admin: admin, VIP: vip}
+}
+
+func parseDanmakuGuard(info []json.RawMessage) int {
+	var medal []json.RawMessage
+	if len(info) < 4 || json.Unmarshal(info[3], &medal) != nil {
+		return 0
+	}
+	var guard int
+	if len(medal) > 10 {
+		_ = json.Unmarshal(medal[10], &guard)
+	}
+	return guard
+}
+
+type danmakuJSONStyle struct {
+	Color int
+	Mode  int
+}
+
+func parseDanmakuStyle(info []json.RawMessage) (style danmakuJSONStyle) {
+	var basic []json.RawMessage
+	if len(info) == 0 || json.Unmarshal(info[0], &basic) != nil || len(basic) <= 3 {
+		return style
+	}
+	_ = json.Unmarshal(basic[3], &style.Color)
+	_ = json.Unmarshal(basic[1], &style.Mode)
+	return style
+}
+
+func parseDanmakuNestedUser(info []json.RawMessage) (int64, string) {
+	var basic []json.RawMessage
+	if len(info) == 0 || json.Unmarshal(info[0], &basic) != nil || len(basic) <= 15 {
+		return 0, ""
+	}
+	var extra struct {
+		User struct {
+			UID  int64 `json:"uid"`
+			Base struct {
+				Name string `json:"name"`
+			} `json:"base"`
+		} `json:"user"`
+	}
+	if json.Unmarshal(basic[15], &extra) != nil {
+		return 0, ""
+	}
+	return extra.User.UID, extra.User.Base.Name
 }
 
 func parseGiftMessage(raw []byte) (GiftMessage, error) {

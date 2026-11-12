@@ -199,7 +199,7 @@ _, err := l.SendLiveDanmaku(ctx, live.SendLiveDanmakuParam{
 
 ### 直播弹幕信息流
 
-`livestream.New(root).Connect` 建立直播弹幕 WebSocket 信息流。库会解析房间真实 id、用根客户端的 WBI 签名取 `getDanmuInfo`、补全 `buvid3`、构造认证包、维持 30 秒心跳，并展开 zlib / brotli 压缩帧。`Events()` 返回带 `Cmd` 与原始 JSON 的事件；`Parse` 可把常见命令解析为弱结构化对象。未登录也能连接，但服务端会隐藏部分用户昵称。
+`livestream.New(root).Connect` 建立直播弹幕 WebSocket 信息流。库会解析房间真实 id、用根客户端的 WBI 签名取 `getDanmuInfo`、补全 `buvid3`、构造认证包、维持 30 秒心跳，并展开 zlib / brotli 压缩帧。断线后自动轮换节点重连，认证回复 `-101` 时刷新 token，`-352` 时切到公共节点。`Events()` 返回带 `Cmd` 与原始 JSON 的事件；`Parse` 可把常见命令解析为弱结构化对象，`SEND_GIFT_V2`、`INTERACT_WORD_V2`、`ONLINE_RANK_V2/V3` 会解码为 protobuf 模型，`dm_v2` 可用 `ParseDanmakuPB` 单独解析。未登录也能连接，但服务端会隐藏部分用户昵称。
 
 ```go
 ls := livestream.New(root)
@@ -220,7 +220,7 @@ for event := range stream.Events() {
 }
 ```
 
-`Connect` 的 ctx 只约束连接准备阶段；连接生命周期由 `Stream.Close()` 控制。主动关闭时 `Done()` 关闭、`Events()` 关闭，结束原因可读取 `Err()`。需要测试或自定义代理时提供 `WebSocketDialer`；需要明文 WS、调整认证协议版本、心跳间隔或事件缓冲时使用 `ConnectOptions`。`Parse` 只覆盖弹幕、礼物、上舰、Super Chat 与常见互动命令，B 站命令字段随版本变化，未覆盖或字段漂移的命令仍可通过 `Event.Raw` 处理。
+`Connect` 的 ctx 只约束连接准备阶段；连接生命周期由 `Stream.Close()` 控制。主动关闭时 `Done()` 关闭、`Events()` 关闭，结束原因可读取 `Err()`。需要测试或自定义代理时提供 `WebSocketDialer`；需要明文 WS、调整认证协议版本、心跳间隔、入房时限、读空闲时限、重连间隔或事件缓冲时使用 `ConnectOptions`。`Parse` 覆盖常见 JSON 命令和主要 V2 protobuf 命令，B 站命令字段随版本变化，未覆盖或字段漂移的命令仍可通过 `Event.Raw` 处理。V2 字段号来自 `Akegarasu/blivedm-go` 的 MIT 授权定义，本库手写 wire-format 解码，不引入 protobuf 运行时。
 
 ### Web 端观看时长上报
 

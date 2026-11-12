@@ -33,7 +33,7 @@ type danmakuPacket struct {
 // encodeDanmakuPacket 把业务体打包成发送帧。
 func encodeDanmakuPacket(protover uint16, operation uint32, body []byte) []byte {
 	packet := make([]byte, danmakuHeaderSize+len(body))
-	binary.BigEndian.PutUint32(packet[0:4], uint32(len(packet)))
+	binary.BigEndian.PutUint32(packet[0:4], uint32(len(packet)&0xffffffff))
 	binary.BigEndian.PutUint16(packet[4:6], danmakuHeaderSize)
 	binary.BigEndian.PutUint16(packet[6:8], protover)
 	binary.BigEndian.PutUint32(packet[8:12], operation)
@@ -118,7 +118,7 @@ func decodeDanmakuPacket(data []byte) (danmakuPacket, error) {
 	}
 	return danmakuPacket{
 		Length:    uint32(length),
-		Header:    uint16(header),
+		Header:    uint16(header & 0xffff),
 		Protover:  binary.BigEndian.Uint16(data[6:8]),
 		Operation: binary.BigEndian.Uint32(data[8:12]),
 		Sequence:  binary.BigEndian.Uint32(data[12:16]),
@@ -136,5 +136,5 @@ func danmakuCommandOf(body []byte) string {
 	if json.Unmarshal(body, &command) != nil {
 		return ""
 	}
-	return command.Cmd
+	return commandName(command.Cmd)
 }
