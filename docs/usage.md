@@ -157,7 +157,20 @@ log.Printf("剩余抽奖次数: %d", result.Times)
 
 ### 直播间列表与天选时刻
 
-`l.GetLiveWebRoomList` 获取直播间列表（网页端新接口，WBI 签名）。旧的 second/getList 接口已被风控拦截（-352），请勿再使用。天选时刻的房间集中在互动玩法下的天选分区：
+`l.GetLiveAreaRoomList` 按直播分区获取正在直播的房间；`l.GetLiveAreaList` 返回的父分区与子分区 id 可直接作为参数。`AreaID` 为 0 时取父分区全部房间，两者均为 0 时取全站房间。响应是房间数组，不含总数或 `has_more`；翻页到末尾会返回空数组：
+
+```go
+rooms, err := l.GetLiveAreaRoomList(ctx, live.GetLiveAreaRoomListParam{
+    ParentAreaID: 2, AreaID: 86, // 网游 / 英雄联盟
+    Page: 1, PageSize: 30,
+})
+for _, room := range rooms {
+    // room.RoomID 是长号；room.Link 是网页端相对链接。
+    _ = room
+}
+```
+
+`l.GetLiveWebRoomList` 获取首页推荐模块下的直播间列表（WBI 签名）。首页模块不是分区筛选结果，需要分区下的房间时优先使用 `l.GetLiveAreaRoomList`；旧的 `second/getList` 与 `second/getListByArea` 已被风控拦截（-352），请勿再用。互动玩法分区可用 `ParentAreaID: 15` 获取；下列 `AreaID: 1457` 只适用于首页模块，不是 `GetLiveAreaRoomList` 的分区 id：
 
 ```go
 list, err := l.GetLiveWebRoomList(ctx, live.GetLiveWebRoomListParam{
